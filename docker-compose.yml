@@ -3,7 +3,11 @@ services:
   front:
     build:
       context: ./front
-      dockerfile: Dockerfile
-    ports:
-      - "8080:80"
+      dockerfile: Dockerfile_Dev
+    #restart: always
+    command: vue ui --host 0.0.0.0 --port 8000 --headless # dev purpose
+    #command: npm run serve
     container_name: front
+    ports:
+      - "8080:8080" # use 80 on production build
+      - "8000:8000" # dev prupose
