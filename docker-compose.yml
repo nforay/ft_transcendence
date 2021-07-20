@@ -1,0 +1,24 @@
+version: '3'
+services:
+  back:
+    build:
+      context: ./back
+      dockerfile: Dockerfile
+    #restart: always
+    command: npm run start:dev
+    # command: npm run start:prod
+    container_name: back
+    ports:
+      - "3000:3000"
+  database:
+    image: postgres:latest
+    # restart: always
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_DATABASE: ft_transcendence
+      POSTGRES_PASSWORD: password
+    volumes:
+      - ./dbdata:/var/lib/postgresql/data
+    container_name: database
+    ports:
+      - "5432:5432"
