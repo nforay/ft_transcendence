@@ -30,24 +30,21 @@
       <li><a href="https://vue-loader.vuejs.org" target="_blank" rel="noopener">vue-loader</a></li>
       <li><a href="https://github.com/vuejs/awesome-vue" target="_blank" rel="noopener">awesome-vue</a></li>
     </ul>
+    <md-button class="md-raised md-primary">Login with 42</md-button>
   </div>
 </template>
 
 <script lang="ts">
-import { Options, Vue } from 'vue-class-component'
+import { Component, Prop, Vue } from 'vue-property-decorator'
 
-@Options({
-  props: {
-    msg: String
-  }
-})
+@Component
 export default class HelloWorld extends Vue {
-  msg!: string
+  @Prop() private msg!: string;
 }
 </script>
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
-<style scoped>
+<style scoped lang="scss">
 h3 {
   margin: 40px 0 0;
 }
