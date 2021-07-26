@@ -14,8 +14,8 @@ services:
     image: postgres:latest
     # restart: always
     environment:
-      POSTGRES_USER: user
-      POSTGRES_DATABASE: ft_transcendence
+      POSTGRES_USER: postgres
+      POSTGRES_DB: ft_transcendence
       POSTGRES_PASSWORD: password
     volumes:
       - ./dbdata:/var/lib/postgresql/data
