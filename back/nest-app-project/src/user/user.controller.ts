@@ -2,6 +2,7 @@ import { Get, Post, Put, Delete, Param, Controller, UseFilters } from '@nestjs/c
 import { UserService } from './user.service';
 import { UserDTO } from './user.dto'
 import { Body } from '@nestjs/common';
+import { ParseUUIDPipe } from '@nestjs/common';
 
 @Controller('user')
 export class UserController {
@@ -19,17 +20,17 @@ export class UserController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
+  findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.userService.findOne(id);
   }
 
   @Put(':id')
-  update(@Param('id') id: string, @Body() data: Partial<UserDTO>) {
+  update(@Param('id', ParseUUIDPipe) id: string, @Body() data: Partial<UserDTO>) {
     return this.userService.update(id, data);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
+  remove(@Param('id', ParseUUIDPipe) id: string) {
     return this.userService.remove(id);
   }
 
