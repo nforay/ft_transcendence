@@ -20,5 +20,12 @@ export class UserDTO {
   @IsString()
   @Length(0, 1000)
   bio: string;
+}
 
+export class UserResponseObject {
+  id: string;
+  name: string;
+  role: string;
+  bio: string;
+  token?: string;
 }
