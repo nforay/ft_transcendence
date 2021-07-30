@@ -16,4 +16,13 @@ export class UserEntity {
   private async hashPassword() {
     this.password = await bcrypt.hash(this.password, 10);
   }
+
+  toResponseUser() {
+    return {
+      id: this.id,
+      name: this.name,
+      role: this.role,
+      bio: this.bio,
+    };
+  }
 }

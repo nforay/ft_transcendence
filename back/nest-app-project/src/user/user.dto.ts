@@ -20,4 +20,5 @@ export class UserDTO {
   @IsString()
   @Length(0, 1000)
   bio: string;
+
 }
