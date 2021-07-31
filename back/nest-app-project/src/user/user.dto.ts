@@ -1,16 +1,19 @@
-import { IsString, IsEmail, Length } from 'class-validator'
+import { IsString, IsEmail, Length, IsNotEmpty } from 'class-validator'
 
 
 export class UserDTO {
 
   @IsString()
   @Length(3, 20)
+  @IsNotEmpty()
   name: string;
 
   @IsEmail()
+  @IsNotEmpty()
   email: string;
 
   @IsString()
+  @IsNotEmpty()
   @Length(8, 32)
   password: string;
 

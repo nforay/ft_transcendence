@@ -5,6 +5,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { HttpErrorFilter } from './shared/http-error.filter';
 import { LoggingInterceptor } from './shared/logging.interceptor';
+import { QueryErrorFilter } from './shared/query-error.filter';
 import { UserModule } from './user/user.module';
 
 @Module({
@@ -14,6 +15,10 @@ import { UserModule } from './user/user.module';
     {
       provide: APP_FILTER,
       useClass: HttpErrorFilter
+    },
+    {
+      provide: APP_FILTER,
+      useClass: QueryErrorFilter
     },
     {
       provide: APP_INTERCEPTOR,
