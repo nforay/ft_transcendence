@@ -1,0 +1,12 @@
+FROM node:lts-alpine
+
+MAINTAINER Nicolas Foray <nforay@student.42.fr>
+
+EXPOSE 8080
+
+RUN npm i -g @vue/cli
+
+RUN mkdir /app
+COPY ./ /app
+WORKDIR /app/vue-app-project
+RUN npm install
