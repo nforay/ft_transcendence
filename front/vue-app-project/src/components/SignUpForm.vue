@@ -1,5 +1,5 @@
 <template>
-  <div class="login-form-content">
+  <div class="signup-form-content">
     <div v-if="this.errors.length !== 0">
       <b class="error-text">Please correct the following errors:</b>
       <li class="error-text" v-for="error in this.errors" :key="error">{{ error }}</li>
@@ -11,10 +11,18 @@
         <input class="username" type="text" v-model="username" id="username" placeholder="Username">
       </div>
       <div class="form-group">
+        <label for="email">Email</label>
+        <input class="email" type="text" v-model="email" id="username" placeholder="Email">
+      </div>
+      <div class="form-group">
         <label for="password">Password</label>
         <input class="password" type="password" v-model="password" id="password" placeholder="Password">
       </div>
-      <button @click="login">Log In</button>
+      <div class="form-group">
+        <label for="password">Confirm Password</label>
+        <input class="confirm-password" type="password" v-model="confirmPassword" id="confirm-password" placeholder="Password">
+      </div>
+      <button @click="signup">Sign Up</button>
     </div>
   </div>
 </template>
@@ -27,9 +35,11 @@ import store from '@/store'
 import router from '@/router'
 
 @Component
-export default class LoginForm extends Vue {
+export default class SignUpForm extends Vue {
   public username = ''
+  public email = ''
   public password = ''
+  public confirmPassword = ''
 
   public errors : string[] = []
 
@@ -40,25 +50,34 @@ export default class LoginForm extends Vue {
       this.errors.push('Username cannot be empty')
     }
 
+    if (this.email.length === 0) {
+      this.errors.push('Email cannot be empty')
+    }
+
     if (this.password.length === 0) {
       this.errors.push('Password cannot be empty')
+    }
+
+    if (this.confirmPassword !== this.password) {
+      this.errors.push('Passwords doesn\'t match')
     }
 
     return this.errors.length === 0
   }
 
-  async login () : Promise<void> {
+  async signup () : Promise<void> {
     if (!this.checkForm()) {
       return
     }
 
-    const response = await fetch('http://localhost:4000/user/login', {
+    const response = await fetch('http://localhost:4000/user/', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
         name: this.username,
+        email: this.email,
         password: this.password
       })
     })
@@ -68,7 +87,7 @@ export default class LoginForm extends Vue {
       document.cookie = 'Token=;expires=Thu, 01 Jan 1970 00:00:00 GMT'
       store.commit('setLogged', false)
       console.log(response.status + ' ' + response.statusText + ' : ' + data.message)
-      this.errors.push(data.message)
+      router.push('/login')
     } else {
       const data = await response.json()
       const expires = new Date(new Date().getTime() + data.expiresIn).toUTCString()
@@ -87,8 +106,9 @@ export default class LoginForm extends Vue {
     color: red;
   }
 
-  .login-form-content {
+  .signup-form-content {
     margin: 0 auto;
+    width: 100%;
   }
 
   .form-group {

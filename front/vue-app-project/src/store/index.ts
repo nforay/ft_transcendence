@@ -1,15 +1,19 @@
 import Vue from 'vue'
-import Vuex from 'vuex'
+import Vuex, { StoreOptions } from 'vuex'
+import { StoreType } from './types'
 
 Vue.use(Vuex)
 
-export default new Vuex.Store({
+const store : StoreOptions<StoreType> = {
   state: {
+    isLogged: false,
+    username: ''
   },
   mutations: {
-  },
-  actions: {
-  },
-  modules: {
+    setLogged (state : StoreType, value : boolean) : void {
+      state.isLogged = value
+    }
   }
-})
+}
+
+export default new Vuex.Store<StoreType>(store)
