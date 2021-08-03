@@ -1,8 +1,9 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { UserEntity } from './user.entity'
 import { UserDTO, UserResponseObject } from './user.dto'
+import * as jwt from 'jsonwebtoken'
 
 @Injectable()
 export class UserService {
@@ -54,8 +55,9 @@ export class UserService {
   }
 
   async login(data: Partial<UserDTO>) : Promise<UserResponseObject> {
-    const { email, password } = data;
-    const user = await this.repository.findOne({ where: { email } });
+    const { name, password } = data;
+    Logger.log(`Name: ${name}, Password: ${password}`, "DEBUG");
+    const user = await this.repository.findOne({ where: { name } });
     if (!user)
       throw new HttpException('User not found', HttpStatus.NOT_FOUND);
     if (!(await user.checkPassword(password)))
@@ -68,5 +70,15 @@ export class UserService {
     if (!user)
       throw new HttpException('User not found', HttpStatus.NOT_FOUND);
     return user.toResponseUser();
+  }
+
+  async isLogged(data: string) : Promise<boolean> {
+    try {
+      const decoded = jwt.verify(data, 'secret');
+      return true;
+    }
+    catch (err) {
+      return false;
+    }
   }
 }

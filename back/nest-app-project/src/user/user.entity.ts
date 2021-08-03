@@ -28,7 +28,8 @@ export class UserEntity {
       name: this.name,
       role: this.role,
       bio: this.bio,
-      token: (withToken) ? this.token : undefined
+      token: (withToken) ? this.token : undefined,
+      expiresIn: (withToken) ? this.expiresIn : undefined
     };
   }
 
@@ -38,5 +39,9 @@ export class UserEntity {
 
   private get token() {
     return (jwt.sign({id: this.id, name: this.name}, process.env.JWT_SECRET, {expiresIn: '1h'}));
+  }
+
+  private get expiresIn() {
+    return 60 * 60 * 1000;
   }
 }

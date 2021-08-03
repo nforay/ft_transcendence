@@ -31,4 +31,5 @@ export class UserResponseObject {
   role: string;
   bio: string;
   token?: string;
+  expiresIn?: number;
 }

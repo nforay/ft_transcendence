@@ -48,4 +48,9 @@ export class UserController {
   login(@Body() data: Partial<UserDTO>) {
     return this.userService.login(data);
   }
+
+  @Post('islogged')
+  isLogged(@Body() data: string) {
+    return this.userService.isLogged(data);
+  }
 }
