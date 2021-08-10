@@ -9,7 +9,7 @@ services:
     # command: npm run start:prod
     container_name: back
     volumes:
-      - ./back/nest-app-project/uploads:/home/uploads
+      - ./back/uploads:/uploads
     ports:
       - "3000:3000"
   database:

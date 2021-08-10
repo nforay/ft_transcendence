@@ -29,6 +29,7 @@ export class UserEntity {
       name: this.name,
       role: this.role,
       bio: this.bio,
+      avatar: this.avatar,
       token: (withToken) ? this.token : undefined,
       expiresIn: (withToken) ? this.expiresIn : undefined
     };

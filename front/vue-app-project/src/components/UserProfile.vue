@@ -5,7 +5,7 @@
         <div class="user-avatar-content">
           <img class="avatar" :src="avatar" alt="Avatar">
           <label class="avatar-edit">
-            <input hidden type="file" @change="onAvatarChange">
+            <input hidden type="file" @change="onAvatarChange" accept=".jpg,.jpeg,.png">
             <img src="../assets/camera.png" class="avatar-edit-icon">
           </label>
         </div>
@@ -36,6 +36,7 @@ export default class UserProfile extends Vue {
     super()
     this.username = ''
     this.bio = ''
+    this.avatar = ''
   }
 
   async mounted () : Promise<void> {
@@ -75,6 +76,9 @@ export default class UserProfile extends Vue {
       body: formData
     })
     if (response.ok) {
+      const data = await response.json()
+      this.avatar = data.avatar
+      console.log(this.avatar)
     }
   }
 }
@@ -94,8 +98,8 @@ export default class UserProfile extends Vue {
 
   img.avatar {
     display: block;
-    width: 60%;
-    height: 60%;
+    width: 250px;
+    height: 250px;
     margin: 10px 10px 10px 10px;
     border-radius: 30%;
   }
@@ -125,7 +129,7 @@ export default class UserProfile extends Vue {
     left: 0;
     right: 0;
     height: 100%;
-    width: 60%;
+    width: 250px;
     background-color: rgba(0, 0, 0, 0.5);
     border-radius: 30%;
     opacity: 0;

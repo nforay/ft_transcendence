@@ -1,4 +1,4 @@
-import { Get, Post, Put, Delete, Param, Controller, Headers, Logger, Query, UploadedFile, HttpStatus, HttpException } from '@nestjs/common';
+import { Get, Post, Put, Delete, Param, Controller, Headers, Logger, Query, UploadedFile, HttpStatus, HttpException, Res } from '@nestjs/common';
 import { UserService } from './user.service';
 import { UserDTO } from './user.dto'
 import { Body } from '@nestjs/common';
@@ -10,6 +10,8 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import * as path from 'path'
 import * as jwt from 'jsonwebtoken';
+import * as FileType from 'file-type'
+import * as fs from 'fs';
 
 @Controller('user')
 export class UserController {
@@ -69,10 +71,34 @@ export class UserController {
           throw new HttpException('Invalid token', HttpStatus.UNAUTHORIZED);
         }
       }
-    })
+    }),
+    fileFilter: async (req, file, cb) => {
+      const allowedDottedExtensions = [ '.jpg', '.jpeg', '.png' ];
+      cb(null, allowedDottedExtensions.includes(path.parse(file.originalname).ext));
+    }
   }))
-  changeAvatar(@Headers() headers, @UploadedFile() file) {
+  async changeAvatar(@Headers() headers, @UploadedFile() file) {
+    if (!file)
+      throw new HttpException('File must be of type png/jpeg/jpg', HttpStatus.BAD_REQUEST);
+    
+    Logger.log('Bonjour !!!! ' + file.path, 'info');
+
+    const filetype = await FileType.fromFile(file.path);
+    const allowedMimes = [ 'image/jpg', 'image/jpeg', 'image/png' ];
+    const allowedExtensions = [ 'jpg', 'jpeg', 'png' ];
+
+    if (!allowedMimes.includes(filetype.mime) || !allowedExtensions.includes(filetype.ext.toLowerCase()))
+    {
+      fs.unlinkSync(file.path);
+      throw new HttpException('File must be of type png/jpeg/jpg', HttpStatus.BAD_REQUEST);
+    }
+
     return this.userService.changeAvatar(file);
+  }
+
+  @Get('avatar/:id')
+  getAvatar(@Param('id', ParseUUIDPipe) id: string, @Res() response) {
+    return response.sendFile(path.join(process.cwd(), '../uploads/avatars', id + '.jpg'));
   }
 
   @Post('islogged')

@@ -94,9 +94,23 @@ export class UserService {
     }
   }
 
-  async changeAvatar(file: Express.Multer.File) : Promise<void> {
-    if (file.filename.endsWith('.jpg'))
-      return;
+  async changeAvatar(file: Express.Multer.File) : Promise<UserResponseObject> {
+    if (!file)
+      throw new HttpException('No file', HttpStatus.BAD_REQUEST);
+    const id = path.parse(file.filename).name;
+    const user = await this.repository.findOne({ where: { id } })
+    if (!user)
+      throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+    if (file.filename.toLowerCase().endsWith('.png'))
+      await this.convertToJpeg(file);
+    else if (file.filename.toLowerCase().endsWith('.jpeg'))
+      fs.renameSync(file.path, path.join(file.destination, path.parse(file.filename).name + '.jpg'));
+    user.avatar = `http://localhost:4000/user/avatar/${id}`;
+    await this.repository.save(user);
+    return user.toResponseUser();
+  }
+
+  private async convertToJpeg(file: Express.Multer.File) {
     try {
       let buffer = fs.readFileSync(file.path);
       const output = await pngToJpeg({quality: 90})(buffer);
@@ -104,7 +118,7 @@ export class UserService {
       fs.unlinkSync(file.path);
     }
     catch (err) {
-      Logger.log(err, "ERROR");
+      fs.unlinkSync(file.path);
       throw new HttpException('Unexpected error trying to convert avatar to jpeg', HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }

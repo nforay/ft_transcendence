@@ -16,5 +16,3 @@ ENV NODE_ENV=${NODE_ENV}
 
 WORKDIR /app
 COPY --from=backend-builder /app ./
-
-EXPOSE 3000
