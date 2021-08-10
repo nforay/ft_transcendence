@@ -105,8 +105,6 @@ export class UserService {
       await this.convertToJpeg(file);
     else if (file.filename.toLowerCase().endsWith('.jpeg'))
       fs.renameSync(file.path, path.join(file.destination, path.parse(file.filename).name + '.jpg'));
-    user.avatar = `http://localhost:4000/user/avatar/${id}`;
-    await this.repository.save(user);
     return user.toResponseUser();
   }
 

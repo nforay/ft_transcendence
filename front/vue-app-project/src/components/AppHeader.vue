@@ -1,17 +1,17 @@
 <template>
   <header>
     <md-toolbar>
-      <md-icon md-src="assets/42logo.svg" />
+      <md-icon :md-src="require('../assets/42logo.svg')" />
       <h3 class="md-title" style="flex: 1">ft_transcendence</h3>
       <md-menu md-size="medium">
         <md-badge v-if="this.notificationsCount > 0" class="md-primary" :md-content="this.notificationsCount" md-menu-trigger>
           <md-avatar>
-            <img class="avatar" src="../assets/avatar.jpg" alt="Avatar">
+            <img class="avatar" :src="avatar" alt="Avatar">
             <md-tooltip v-if="this.username.length !== 0" md-direction="left">{{ this.username }}</md-tooltip>
           </md-avatar>
         </md-badge>
         <md-avatar v-else md-menu-trigger>
-          <img class="avatar" src="../assets/avatar.jpg" alt="Avatar">
+          <img class="avatar" :src="avatar" alt="Avatar">
           <md-tooltip v-if="this.username.length !== 0" md-direction="left">{{ this.username }}</md-tooltip>
         </md-avatar>
 
@@ -53,6 +53,7 @@ export default class AppHeader extends Vue {
   public logout () : void {
     store.commit('logout')
     document.cookie = 'Token=; expires=Thu, 01 Jan 1970 00:00:00 GMT;'
+    router.push('/')
   }
 
   public get username () : string {
@@ -74,20 +75,35 @@ export default class AppHeader extends Vue {
   public redirectToLogin () : void {
     router.push('/login')
   }
+
+  public get avatar () : string {
+    if (store.state.userId !== null && store.state.userId !== '') {
+      return `http://localhost:4000/user/avatar/${store.state.userId}`
+    } else {
+      return 'http://localhost:4000/user/avatar'
+    }
+  }
 }
 </script>
 
 <style scoped lang="scss">
+
 .md-menu-item {
     margin: 12px;
 }
+
 .avatar {
   vertical-align: middle;
   width: 40px;
   height: 40px;
   border-radius: 50%;
 }
+
+.avatar:hover {
+  cursor: pointer;
+}
+
 .md-toolbar + .md-toolbar {
     margin-top: 16px;
-  }
+}
 </style>

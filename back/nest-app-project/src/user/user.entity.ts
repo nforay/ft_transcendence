@@ -13,7 +13,6 @@ export class UserEntity {
   @Column({ type: 'text', unique: true }) email: string;
   @Column({ type: 'text', default: 'user' }) role: string;
   @Column({ type: 'text', default: '' }) bio: string;
-  @Column({ type: 'text', default: '' }) avatar: string;
   @Column('text') password: string;
 
   @BeforeInsert()
@@ -29,7 +28,7 @@ export class UserEntity {
       name: this.name,
       role: this.role,
       bio: this.bio,
-      avatar: this.avatar,
+      avatar: `http://localhost:4000/user/avatar/${this.id}`,
       token: (withToken) ? this.token : undefined,
       expiresIn: (withToken) ? this.expiresIn : undefined
     };

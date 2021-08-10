@@ -30,7 +30,7 @@ export class UserResponseObject {
   name: string;
   role: string;
   bio: string;
-  avatar?: string;
+  avatar: string;
   token?: string;
   expiresIn?: number;
 }

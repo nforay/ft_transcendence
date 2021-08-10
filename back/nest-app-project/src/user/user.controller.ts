@@ -28,33 +28,16 @@ export class UserController {
     return this.userService.create(data);
   }
 
-  @Get(':id')
-  findOne(@Param('id', ParseUUIDPipe) id: string) {
-    return this.userService.findOne(id);
-  }
-
   @Get('username/:name')
   findByName(@Param('name') name: string) {
     return this.userService.findByName(name);
   }
-
-  @Put(':id')
-  @UseGuards(AuthGuard)
-  update(@Param('id', ParseUUIDPipe) id: string, @Body() data: Partial<UserDTO>) {
-    return this.userService.update(id, data);
-  }
-
-  @Delete(':id')
-  @UseGuards(AuthGuard)
-  remove(@Param('id', ParseUUIDPipe) id: string) {
-    return this.userService.remove(id);
-  }
-
+  
   @Post('login')
   login(@Body() data: Partial<UserDTO>) {
     return this.userService.login(data);
   }
-
+  
   @Post('avatar')
   @UseGuards(AuthGuard)
   @UseInterceptors(FileInterceptor('file', {
@@ -79,31 +62,56 @@ export class UserController {
   }))
   async changeAvatar(@Headers() headers, @UploadedFile() file) {
     if (!file)
-      throw new HttpException('File must be of type png/jpeg/jpg', HttpStatus.BAD_REQUEST);
+    throw new HttpException('File must be of type png/jpeg/jpg', HttpStatus.BAD_REQUEST);
     
     Logger.log('Bonjour !!!! ' + file.path, 'info');
-
+    
     const filetype = await FileType.fromFile(file.path);
     const allowedMimes = [ 'image/jpg', 'image/jpeg', 'image/png' ];
     const allowedExtensions = [ 'jpg', 'jpeg', 'png' ];
-
+    
     if (!allowedMimes.includes(filetype.mime) || !allowedExtensions.includes(filetype.ext.toLowerCase()))
     {
       fs.unlinkSync(file.path);
       throw new HttpException('File must be of type png/jpeg/jpg', HttpStatus.BAD_REQUEST);
     }
-
+    
     return this.userService.changeAvatar(file);
   }
-
+  
+  @Get('avatar')
+  getDefaultAvatar(@Res() response) {
+    return response.sendFile(path.join(process.cwd(), '../uploads/avatars', 'default.jpg'));
+  }
+  
   @Get('avatar/:id')
   getAvatar(@Param('id', ParseUUIDPipe) id: string, @Res() response) {
-    return response.sendFile(path.join(process.cwd(), '../uploads/avatars', id + '.jpg'));
+    const filePath = path.join(process.cwd(), '../uploads/avatars', id + '.jpg');
+    if (fs.existsSync(filePath))
+    return response.sendFile(filePath);
+    return response.sendFile(path.join(process.cwd(), '../uploads/avatars', 'default.jpg'));
   }
-
+  
   @Post('islogged')
   @UseGuards(AuthGuard)
   isLogged(@Headers() headers) {
     return this.userService.isLogged(headers.authorization);
+  }
+  
+  @Get(':id')
+  findOne(@Param('id', ParseUUIDPipe) id: string) {
+    return this.userService.findOne(id);
+  }
+  
+  @Delete(':id')
+  @UseGuards(AuthGuard)
+  remove(@Param('id', ParseUUIDPipe) id: string) {
+    return this.userService.remove(id);
+  }
+
+  @Put(':id')
+  @UseGuards(AuthGuard)
+  update(@Param('id', ParseUUIDPipe) id: string, @Body() data: Partial<UserDTO>) {
+    return this.userService.update(id, data);
   }
 }
