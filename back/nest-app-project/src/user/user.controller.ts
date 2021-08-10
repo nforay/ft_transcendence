@@ -1,11 +1,15 @@
-import { Get, Post, Put, Delete, Param, Controller, UseFilters } from '@nestjs/common';
+import { Get, Post, Put, Delete, Param, Controller, Headers, Logger, Query, UploadedFile, HttpStatus, HttpException } from '@nestjs/common';
 import { UserService } from './user.service';
 import { UserDTO } from './user.dto'
 import { Body } from '@nestjs/common';
 import { ParseUUIDPipe } from '@nestjs/common';
 import { UseGuards } from '@nestjs/common';
-import { AuthGuard } from 'src/shared/auth.guard';
-import { HttpErrorFilter } from 'src/shared/http-error.filter';
+import { AuthGuard } from '../shared/auth.guard';
+import { UseInterceptors } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
+import * as path from 'path'
+import * as jwt from 'jsonwebtoken';
 
 @Controller('user')
 export class UserController {
@@ -49,8 +53,31 @@ export class UserController {
     return this.userService.login(data);
   }
 
+  @Post('avatar')
+  @UseGuards(AuthGuard)
+  @UseInterceptors(FileInterceptor('file', {
+    storage: diskStorage({
+      destination: '../uploads/avatars',
+      filename: (req, file, cb) => {
+        try {
+          const token = req.headers.authorization.split(' ')[1];
+          const decoded = jwt.verify(token, process.env.JWT_SECRET);
+          const filename = decoded.id;
+          const extension = path.parse(file.originalname).ext;
+          cb(null, `${filename}${extension}`);
+        } catch (err) {
+          throw new HttpException('Invalid token', HttpStatus.UNAUTHORIZED);
+        }
+      }
+    })
+  }))
+  changeAvatar(@Headers() headers, @UploadedFile() file) {
+    return this.userService.changeAvatar(file);
+  }
+
   @Post('islogged')
-  isLogged(@Body() data: string) {
-    return this.userService.isLogged(data);
+  @UseGuards(AuthGuard)
+  isLogged(@Headers() headers) {
+    return this.userService.isLogged(headers.authorization);
   }
 }

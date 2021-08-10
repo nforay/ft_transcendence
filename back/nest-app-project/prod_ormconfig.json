@@ -1,0 +1,11 @@
+{
+  "type": "postgres",
+  "host": "database",
+  "port": 5432,
+  "username": "postgres",
+  "password": "password",
+  "database": "ft_transcendence",
+  "synchronize": true,
+  "logging": true,
+  "entities": [ "dist/**/**.entity{.ts,.js}" ]
+}

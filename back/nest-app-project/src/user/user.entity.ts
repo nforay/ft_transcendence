@@ -11,8 +11,9 @@ export class UserEntity {
 
   @Column({ type: 'text', unique: true }) name: string;
   @Column({ type: 'text', unique: true }) email: string;
-  @Column({ type: 'text', default: 'user'}) role: string;
-  @Column({ type: 'text', default: ''}) bio: string;
+  @Column({ type: 'text', default: 'user' }) role: string;
+  @Column({ type: 'text', default: '' }) bio: string;
+  @Column({ type: 'text', default: '' }) avatar: string;
   @Column('text') password: string;
 
   @BeforeInsert()

@@ -8,6 +8,8 @@ services:
     command: npm run start:dev
     # command: npm run start:prod
     container_name: back
+    volumes:
+      - ./back/nest-app-project/uploads:/home/uploads
     ports:
       - "3000:3000"
   database:
@@ -27,8 +29,8 @@ services:
       context: ./front
       dockerfile: Dockerfile_Dev
     #restart: always
-    command: vue ui --host 0.0.0.0 --port 8000 --headless # dev purpose
-    #command: npm run serve
+    #command: vue ui --host 0.0.0.0 --port 8000 --headless # dev purpose
+    command: npm run serve
     container_name: front
     ports:
       - "8080:8080" # use 80 on production build

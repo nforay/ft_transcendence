@@ -16,7 +16,7 @@
         </div>
       </td>
     </table>
-    <h1 v-if="checkStoreIsLogged()">You are logged in!</h1>
+    <h1 v-if="checkLoggedIn()">You are logged in!</h1>
     <h1 v-else>You are not logged in!</h1>
   </div>
 </template>
@@ -34,33 +34,11 @@ import store from '@/store'
   }
 })
 export default class Login extends Vue {
-  public async created () : Promise<void> {
-    if (document.cookie.indexOf('Token') <= -1) {
-      store.commit('setLogged', false)
-      return
-    }
-    const token = document.cookie.split('Token=')[1].split(';')[0]
-    const response = await fetch('http://localhost:4000/user/islogged', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        token: token
-      })
-    })
-
-    if (!response.ok) {
-      store.commit('setLogged', false)
-    } else {
-      store.commit('setLogged', true)
-    }
-  }
-
-  public checkStoreIsLogged () : boolean {
+  checkLoggedIn () : boolean {
     return store.state.isLogged
   }
 }
+
 </script>
 
 <style scoped>

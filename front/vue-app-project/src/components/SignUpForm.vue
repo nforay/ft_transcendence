@@ -8,19 +8,19 @@
     <div class="form">
       <div class="form-group">
         <label for="username">Username</label>
-        <input class="username" type="text" v-model="username" id="username" placeholder="Username">
+        <input class="username" type="text" v-model="username" id="signup-username" placeholder="Username">
       </div>
       <div class="form-group">
         <label for="email">Email</label>
-        <input class="email" type="text" v-model="email" id="username" placeholder="Email">
+        <input class="email" type="text" v-model="email" id="signup-email" placeholder="Email">
       </div>
       <div class="form-group">
         <label for="password">Password</label>
-        <input class="password" type="password" v-model="password" id="password" placeholder="Password">
+        <input class="password" type="password" v-model="password" id="signup-password" placeholder="Password">
       </div>
       <div class="form-group">
         <label for="password">Confirm Password</label>
-        <input class="confirm-password" type="password" v-model="confirmPassword" id="confirm-password" placeholder="Password">
+        <input class="confirm-password" type="password" v-model="confirmPassword" id="signup-confirm-password" placeholder="Password">
       </div>
       <button @click="signup">Sign Up</button>
     </div>
@@ -83,16 +83,15 @@ export default class SignUpForm extends Vue {
     })
 
     if (!response.ok) {
-      const data = await response.json()
-      document.cookie = 'Token=;expires=Thu, 01 Jan 1970 00:00:00 GMT'
-      store.commit('setLogged', false)
-      console.log(response.status + ' ' + response.statusText + ' : ' + data.message)
+      store.commit('logout')
       router.push('/login')
     } else {
       const data = await response.json()
       const expires = new Date(new Date().getTime() + data.expiresIn).toUTCString()
       document.cookie = 'Token=' + data.token + ';expires=' + expires
       store.commit('setLogged', true)
+      store.commit('setUsername', data.name)
+      store.commit('setUserId', data.id)
       router.push('/')
     }
   }

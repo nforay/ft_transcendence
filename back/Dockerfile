@@ -4,6 +4,7 @@ LABEL maintainer="Maxime Bourand <mbourand@student.42.fr>"
 
 WORKDIR /app
 COPY ./nest-app-project/* ./
+RUN mv prod_ormconfig.json ormconfig.json
 RUN npm install
 RUN npm run build
 

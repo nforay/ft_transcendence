@@ -4,6 +4,9 @@ import { Repository } from 'typeorm';
 import { UserEntity } from './user.entity'
 import { UserDTO, UserResponseObject } from './user.dto'
 import * as jwt from 'jsonwebtoken'
+import * as fs from 'fs'
+import * as pngToJpeg from 'png-to-jpeg'
+import * as path from 'path'
 
 @Injectable()
 export class UserService {
@@ -72,13 +75,37 @@ export class UserService {
     return user.toResponseUser();
   }
 
-  async isLogged(data: string) : Promise<boolean> {
+  async isLogged(authorization: string) : Promise<any> {
     try {
-      const decoded = jwt.verify(data, 'secret');
-      return true;
+      const token = authorization.split(' ')[1];
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      return {
+        id: decoded.id,
+        isLogged: true,
+        name: decoded.name
+      };
     }
     catch (err) {
-      return false;
+      return {
+        id: '',
+        isLogged: false,
+        name: ''
+      };
+    }
+  }
+
+  async changeAvatar(file: Express.Multer.File) : Promise<void> {
+    if (file.filename.endsWith('.jpg'))
+      return;
+    try {
+      let buffer = fs.readFileSync(file.path);
+      const output = await pngToJpeg({quality: 90})(buffer);
+      fs.writeFileSync(file.destination + '/' + path.parse(file.filename).name + '.jpg', output);
+      fs.unlinkSync(file.path);
+    }
+    catch (err) {
+      Logger.log(err, "ERROR");
+      throw new HttpException('Unexpected error trying to convert avatar to jpeg', HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 }

@@ -8,11 +8,11 @@
     <div class="form">
       <div class="form-group">
         <label for="username">Username</label>
-        <input class="username" type="text" v-model="username" id="username" placeholder="Username">
+        <input class="username" type="text" v-model="username" id="login-username" placeholder="Username">
       </div>
       <div class="form-group">
         <label for="password">Password</label>
-        <input class="password" type="password" v-model="password" id="password" placeholder="Password">
+        <input class="password" type="password" v-model="password" id="login-password" placeholder="Password">
       </div>
       <button @click="login">Log In</button>
     </div>
@@ -67,13 +67,14 @@ export default class LoginForm extends Vue {
       const data = await response.json()
       document.cookie = 'Token=;expires=Thu, 01 Jan 1970 00:00:00 GMT'
       store.commit('setLogged', false)
-      console.log(response.status + ' ' + response.statusText + ' : ' + data.message)
       this.errors.push(data.message)
     } else {
       const data = await response.json()
       const expires = new Date(new Date().getTime() + data.expiresIn).toUTCString()
       document.cookie = 'Token=' + data.token + ';expires=' + expires
       store.commit('setLogged', true)
+      store.commit('setUsername', data.name)
+      store.commit('setUserId', data.id)
       router.push('/')
     }
   }

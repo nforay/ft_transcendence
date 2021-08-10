@@ -1,7 +1,5 @@
-import { UseFilters } from "@nestjs/common";
 import { CanActivate, ExecutionContext, HttpException, HttpStatus, Injectable } from "@nestjs/common";
 import * as jwt from 'jsonwebtoken';
-import { HttpErrorFilter } from "./http-error.filter";
 
 @Injectable()
 export class AuthGuard implements CanActivate {
@@ -10,7 +8,6 @@ export class AuthGuard implements CanActivate {
     if (!request.headers.authorization)
       return false;
     const decode = await this.verifyJWT(request.headers.authorization);
-    console.log(decode);
     return true;
   }
 
