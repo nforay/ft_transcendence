@@ -1,8 +1,7 @@
-import { IsString, IsEmail, Length, IsNotEmpty } from 'class-validator'
-
+import { IsString, IsEmail, Length, IsNotEmpty, ValidateIf } from 'class-validator'
 
 export class UserDTO {
-
+  
   @IsString()
   @Length(3, 20)
   @IsNotEmpty()
@@ -21,7 +20,7 @@ export class UserDTO {
   role: string;
 
   @IsString()
-  @Length(0, 1000)
+  @Length(0, 400)
   bio: string;
 }
 

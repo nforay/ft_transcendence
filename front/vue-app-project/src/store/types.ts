@@ -3,4 +3,5 @@ export interface StoreType {
   username: string
   notifications: string[]
   userId: string
+  errors: string[]
 }

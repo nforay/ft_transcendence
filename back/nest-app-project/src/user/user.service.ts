@@ -40,10 +40,10 @@ export class UserService {
     return user.toResponseUser();
   }
 
-  async update(id: string, data: Partial<UserDTO>) : Promise<UserResponseObject> {
-    const user = await this.repository.findOne({ where: { id } });
-    if (!user)
-      throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+  async update(authorization: string, data: Partial<UserDTO>) : Promise<UserResponseObject> {
+    const { id, isLogged } = await this.isLogged(authorization);
+    if (!isLogged)
+      throw new HttpException('Invalid Token', HttpStatus.UNAUTHORIZED);
     await this.repository.update({ id }, data);
     const newUser = await this.repository.findOne({ where: { id } });
     return newUser.toResponseUser();
@@ -59,7 +59,6 @@ export class UserService {
 
   async login(data: Partial<UserDTO>) : Promise<UserResponseObject> {
     const { name, password } = data;
-    Logger.log(`Name: ${name}, Password: ${password}`, "DEBUG");
     const user = await this.repository.findOne({ where: { name } });
     if (!user)
       throw new HttpException('User not found', HttpStatus.NOT_FOUND);

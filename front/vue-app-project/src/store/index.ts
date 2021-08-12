@@ -9,7 +9,8 @@ const store : StoreOptions<StoreType> = {
     isLogged: false,
     username: '',
     notifications: [],
-    userId: ''
+    userId: '',
+    errors: []
   },
   mutations: {
     setLogged (state : StoreType, value : boolean) : void {

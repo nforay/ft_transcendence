@@ -1,4 +1,4 @@
-import { Get, Post, Put, Delete, Param, Controller, Headers, Logger, Query, UploadedFile, HttpStatus, HttpException, Res } from '@nestjs/common';
+import { Get, Post, Put, Delete, Param, Controller, Headers, Logger, Query, UploadedFile, HttpStatus, HttpException, Res, Header } from '@nestjs/common';
 import { UserService } from './user.service';
 import { UserDTO } from './user.dto'
 import { Body } from '@nestjs/common';
@@ -109,9 +109,10 @@ export class UserController {
     return this.userService.remove(id);
   }
 
-  @Put(':id')
+  @Put('update')
+  @Header('Content-Type', 'application/json')
   @UseGuards(AuthGuard)
-  update(@Param('id', ParseUUIDPipe) id: string, @Body() data: Partial<UserDTO>) {
-    return this.userService.update(id, data);
+  update(@Headers() headers, @Body() data: Partial<UserDTO>) {
+    return this.userService.update(headers.authorization, data);
   }
 }
