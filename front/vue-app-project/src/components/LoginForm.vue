@@ -65,13 +65,12 @@ export default class LoginForm extends Vue {
 
     if (!response.ok) {
       const data = await response.json()
-      document.cookie = 'Token=;expires=Thu, 01 Jan 1970 00:00:00 GMT'
+      store.commit('expireToken')
       store.commit('setLogged', false)
       this.errors.push(data.message)
     } else {
       const data = await response.json()
-      const expires = new Date(new Date().getTime() + data.expiresIn).toUTCString()
-      document.cookie = 'Token=' + data.token + ';expires=' + expires
+      store.commit('setToken', { token: data.token, expiresIn: data.expiresIn })
       store.commit('setLogged', true)
       store.commit('setUsername', data.name)
       store.commit('setUserId', data.id)

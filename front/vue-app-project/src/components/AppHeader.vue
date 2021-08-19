@@ -47,25 +47,16 @@ import Vue from 'vue'
 import Component from 'vue-class-component'
 import store from '@/store'
 import router from '@/router'
+import { mapGetters } from 'vuex'
 
-@Component
+@Component({
+  computed: mapGetters(['username', 'isLogged', 'notificationsCount', 'avatar'])
+})
 export default class AppHeader extends Vue {
   public logout () : void {
     store.commit('logout')
-    document.cookie = 'Token=; expires=Thu, 01 Jan 1970 00:00:00 GMT;'
+    store.commit('expireToken')
     router.push('/')
-  }
-
-  public get username () : string {
-    return store.state.username
-  }
-
-  public get isLogged () : boolean {
-    return store.state.isLogged
-  }
-
-  public get notificationsCount () : number {
-    return store.state.notifications.length
   }
 
   public redirectToSettings () : void {
@@ -74,14 +65,6 @@ export default class AppHeader extends Vue {
 
   public redirectToLogin () : void {
     router.push('/login')
-  }
-
-  public get avatar () : string {
-    if (store.state.userId !== null && store.state.userId !== '') {
-      return `http://localhost:4000/user/avatar/${store.state.userId}`
-    } else {
-      return 'http://localhost:4000/user/avatar'
-    }
   }
 }
 </script>

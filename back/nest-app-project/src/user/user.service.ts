@@ -46,7 +46,7 @@ export class UserService {
       throw new HttpException('Invalid Token', HttpStatus.UNAUTHORIZED);
     await this.repository.update({ id }, data);
     const newUser = await this.repository.findOne({ where: { id } });
-    return newUser.toResponseUser();
+    return newUser.toResponseUser(true);
   }
 
   async remove(id: string) : Promise<UserResponseObject> {

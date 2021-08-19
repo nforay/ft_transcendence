@@ -4,4 +4,5 @@ export interface StoreType {
   notifications: string[]
   userId: string
   errors: string[]
+  avatarUpdate: number
 }

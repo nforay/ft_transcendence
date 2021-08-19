@@ -10,7 +10,8 @@ const store : StoreOptions<StoreType> = {
     username: '',
     notifications: [],
     userId: '',
-    errors: []
+    errors: [],
+    avatarUpdate: 0
   },
   mutations: {
     setLogged (state : StoreType, value : boolean) : void {
@@ -30,6 +31,48 @@ const store : StoreOptions<StoreType> = {
       state.username = ''
       state.notifications = []
       state.userId = ''
+    },
+
+    setToken (state : StoreType, data : any) : void {
+      const expires = new Date(new Date().getTime() + data.expiresIn).toUTCString()
+      document.cookie = 'Token=' + data.token + ';expires=' + expires
+    },
+
+    expireToken (state : StoreType) : void {
+      document.cookie = 'Token=;expires=Thu, 01 Jan 1970 00:00:00 GMT'
+    },
+
+    updateAvatar (state : StoreType) : void {
+      state.avatarUpdate = new Date().getTime()
+    }
+  },
+  getters: {
+    username (state : StoreType) : string {
+      return state.username
+    },
+
+    notifications (state : StoreType) : string[] {
+      return state.notifications
+    },
+
+    isLogged (state : StoreType) : boolean {
+      return state.isLogged
+    },
+
+    userId (state : StoreType) : string {
+      return state.userId
+    },
+
+    errors (state : StoreType) : string[] {
+      return state.errors
+    },
+
+    avatar (state : StoreType) : string {
+      return 'http://localhost:4000/user/avatar/' + state.userId + '?' + state.avatarUpdate
+    },
+
+    avatarUpdate (state : StoreType) : number {
+      return state.avatarUpdate
     }
   }
 }

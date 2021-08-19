@@ -87,8 +87,7 @@ export default class SignUpForm extends Vue {
       router.push('/login')
     } else {
       const data = await response.json()
-      const expires = new Date(new Date().getTime() + data.expiresIn).toUTCString()
-      document.cookie = 'Token=' + data.token + ';expires=' + expires
+      store.commit('setToken', { token: data.token, expiresIn: data.expiresIn })
       store.commit('setLogged', true)
       store.commit('setUsername', data.name)
       store.commit('setUserId', data.id)

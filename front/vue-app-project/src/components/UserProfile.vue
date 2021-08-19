@@ -71,7 +71,10 @@ export default class UserProfile extends Vue {
       })
     })
     if (response.ok) {
-      router.go(0)
+      const data = await response.json()
+      store.commit('setToken', { token: data.token, expiresIn: data.expiresIn })
+      store.commit('setUsername', this.username)
+      console.log(store.getters.username)
     } else {
       store.state.errors.push(response.statusText)
     }
@@ -132,7 +135,9 @@ export default class UserProfile extends Vue {
     })
     if (response.ok) {
       const data = await response.json()
-      this.avatar = data.avatar
+      // To force an image update, since url is the same
+      this.avatar = data.avatar + '?' + new Date().getTime()
+      store.commit('updateAvatar')
       console.log(this.avatar)
     }
   }
@@ -143,6 +148,7 @@ export default class UserProfile extends Vue {
   div.user-profile-content {
     position: relative;
     width: 60%;
+    min-width: 700px;
     height: 270px;
     margin: 0 auto;
     border: 1px solid #ccc;
@@ -156,7 +162,7 @@ export default class UserProfile extends Vue {
   img.avatar {
     display: block;
     width: 250px;
-    height: auto;
+    height: 250px;
     margin: 10px 10px 10px 10px;
     border-radius: 30%;
     overflow: hidden;
