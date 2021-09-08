@@ -1,6 +1,7 @@
 import { HttpException, HttpStatus } from "@nestjs/common";
 import { MessageBody, SubscribeMessage, WebSocketGateway } from "@nestjs/websockets";
 import { CreateGameModelDto } from "./dto/create-game-model.dto";
+import { HitGameModelDto } from "./dto/hit-game-model.dto";
 import { JoinGameModelDto } from "./dto/join-game-model.dto";
 import { MoveGameModelDto } from "./dto/move-game-model.dto";
 import { Game } from "./game.model";
@@ -42,7 +43,7 @@ export class GameGateway {
   }
 
   @SubscribeMessage("hit")
-  hit(@MessageBody() data: MoveGameModelDto) {
+  hit(@MessageBody() data: HitGameModelDto) {
     const game = this.games.find(game => game.id === data.id);
     if (game) {
       game.hit(data.playerId);

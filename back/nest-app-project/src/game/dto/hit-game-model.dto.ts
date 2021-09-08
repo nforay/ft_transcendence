@@ -1,4 +1,4 @@
-export class HitGameModel {
+export class HitGameModelDto {
   id: string;
   playerId: string;
 }
