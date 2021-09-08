@@ -7,9 +7,10 @@ import { HttpErrorFilter } from './shared/http-error.filter';
 import { LoggingInterceptor } from './shared/logging.interceptor';
 import { QueryErrorFilter } from './shared/query-error.filter';
 import { UserModule } from './user/user.module';
+import { GameModule } from './game/game.module';
 
 @Module({
-  imports: [ TypeOrmModule.forRoot(), UserModule ],
+  imports: [ TypeOrmModule.forRoot(), UserModule, GameModule ],
   controllers: [AppController],
   providers: [AppService,
     {

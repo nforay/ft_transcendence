@@ -1,12 +1,12 @@
-import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import * as fs from 'fs';
+import * as jwt from 'jsonwebtoken';
+import * as path from 'path';
+import * as pngToJpeg from 'png-to-jpeg';
 import { Repository } from 'typeorm';
-import { UserEntity } from './user.entity'
-import { UserDTO, UserResponseObject } from './user.dto'
-import * as jwt from 'jsonwebtoken'
-import * as fs from 'fs'
-import * as pngToJpeg from 'png-to-jpeg'
-import * as path from 'path'
+import { UserDTO, UserResponseObject } from './user.dto';
+import { UserEntity } from './user.entity';
 
 @Injectable()
 export class UserService {

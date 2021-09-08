@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, BeforeInsert } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, BeforeInsert, OneToOne } from 'typeorm';
 import * as bcrypt from 'bcryptjs'
 import * as jwt from 'jsonwebtoken'
 import { UserResponseObject } from './user.dto';
@@ -39,7 +39,7 @@ export class UserEntity {
   }
 
   private get token() {
-    return (jwt.sign({id: this.id, name: this.name}, process.env.JWT_SECRET, {expiresIn: '1h'}));
+    return (jwt.sign({id: this.id, name: this.name, role: this.role }, process.env.JWT_SECRET, {expiresIn: '1h'}));
   }
 
   private get expiresIn() {
