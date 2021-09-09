@@ -1,15 +1,34 @@
-import { HttpException, HttpStatus } from "@nestjs/common";
-import { MessageBody, SubscribeMessage, WebSocketGateway } from "@nestjs/websockets";
+import { HttpException, HttpStatus, Logger } from "@nestjs/common";
+import { MessageBody, OnGatewayConnection, OnGatewayInit, SubscribeMessage, WebSocketGateway, WsResponse } from "@nestjs/websockets";
+import { Server } from "socket.io";
+import { Socket } from "socket.io";
 import { CreateGameModelDto } from "./dto/create-game-model.dto";
 import { HitGameModelDto } from "./dto/hit-game-model.dto";
 import { JoinGameModelDto } from "./dto/join-game-model.dto";
 import { MoveGameModelDto } from "./dto/move-game-model.dto";
 import { Game } from "./game.model";
 
-@WebSocketGateway(+process.env.WEBSOCKET_PORT)
-export class GameGateway {
+@WebSocketGateway(4001, {
+  cors: {
+    credentials: true,
+    methods: ["GET", "POST"],
+    transports: ['websocket', 'polling'],
+    origin: 'http://localhost:8080'
+  },
+  allowEIO3: true
+})
+export class GameGateway implements OnGatewayInit, OnGatewayConnection {
 
   games: Game[] = [];
+  logger: Logger = new Logger("GameGateway");
+
+  handleConnection(client: Socket, ...args: any[]) {
+    this.logger.log(`User connected !! ${client.id}`)
+  }
+
+  afterInit(server: Server) {
+    this.logger.log(`Game websocket server is listening on ws://localhost:${process.env.WEBSOCKET_PORT}`);
+  }
 
   @SubscribeMessage("create")
   create(@MessageBody() data: CreateGameModelDto) {
@@ -52,4 +71,9 @@ export class GameGateway {
     throw new HttpException("Game not found", HttpStatus.NOT_FOUND);
   }
 
+  @SubscribeMessage("echo")
+  echo(@MessageBody() data: any) : WsResponse {
+    this.logger.log(`Message from user : ${data}`);
+    return { event: "echo", data: data };
+  }
 }

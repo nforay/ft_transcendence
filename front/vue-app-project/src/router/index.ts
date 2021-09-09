@@ -31,6 +31,14 @@ const routes: Array<RouteConfig> = [
     meta: {
       requiresAuth: true
     }
+  },
+  {
+    path: '/play',
+    name: 'Play',
+    component: () => import('../views/Play.vue'),
+    meta: {
+      requiresAuth: true
+    }
   }
 ]
 
