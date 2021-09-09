@@ -62,7 +62,7 @@ export class UserController {
   }))
   async changeAvatar(@Headers() headers, @UploadedFile() file) {
     if (!file)
-    throw new HttpException('File must be of type png/jpeg/jpg', HttpStatus.BAD_REQUEST);
+      throw new HttpException('File must be of type png/jpeg/jpg', HttpStatus.BAD_REQUEST);
     
     Logger.log('Bonjour !!!! ' + file.path, 'info');
     

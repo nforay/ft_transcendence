@@ -8,9 +8,10 @@ import { LoggingInterceptor } from './shared/logging.interceptor';
 import { QueryErrorFilter } from './shared/query-error.filter';
 import { UserModule } from './user/user.module';
 import { GameModule } from './game/game.module';
+import { MatchmakingModule } from './matchmaking/matchmaking.module';
 
 @Module({
-  imports: [ TypeOrmModule.forRoot(), UserModule, GameModule ],
+  imports: [ TypeOrmModule.forRoot(), UserModule, GameModule, MatchmakingModule ],
   controllers: [AppController],
   providers: [AppService,
     {
