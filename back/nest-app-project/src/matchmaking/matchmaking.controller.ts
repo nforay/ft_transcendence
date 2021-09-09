@@ -2,10 +2,6 @@ import { Controller, Get, Headers, Post, UseGuards } from '@nestjs/common';
 import { AuthGuard } from 'src/shared/auth.guard';
 import { MatchmakingService } from './matchmaking.service';
 
-export class JoinResponseDto {
-  accepted: boolean; // False if user is already in a game or banned for example
-}
-
 @Controller('matchmaking')
 export class MatchmakingController {
 
@@ -13,19 +9,19 @@ export class MatchmakingController {
 
   @Post('join')
   @UseGuards(AuthGuard)
-  async join(@Headers() headers) : Promise<JoinResponseDto> {
+  async join(@Headers() headers) {
     return await this.matchMakingService.join(headers.authorization);
   }
 
   @Get('poll')
   @UseGuards(AuthGuard)
-  poll(@Headers() headers) {
-    return this.matchMakingService.poll(headers.authorization);
+  async poll(@Headers() headers) {
+    return await this.matchMakingService.poll(headers.authorization);
   }
 
   @Post('leave')
   @UseGuards(AuthGuard)
-  leave(@Headers() headers) {
-    return this.matchMakingService.leave(headers.authorization);
+  async leave(@Headers() headers) {
+    return await this.matchMakingService.leave(headers.authorization);
   }
 }
