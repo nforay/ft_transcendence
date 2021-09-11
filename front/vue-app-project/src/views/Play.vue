@@ -1,61 +1,95 @@
 <template>
   <div class="play">
-    <button @click="createRoom()">Send test message</button>
+    <button v-if="!this.queueJoined" @click="joinQueue()">Join queue</button>
+    <button v-else @click="leaveQueue()">Leave queue</button>
   </div>
 </template>
 
 <script lang="ts">
 import Vue from 'vue'
 import Component from 'vue-class-component'
-import store from '../store'
-import io from 'socket.io-client'
-
-export class WebSocketMessage {
-  type: string
-  data: any
-
-  constructor (type: string, data: any) {
-    this.type = type
-    this.data = data
-  }
-}
+import router from '../router'
 
 @Component
 export default class Play extends Vue {
-  socket: any
-  messages: Array<WebSocketMessage> = []
+  queueJoined = false;
 
-  created () : void {
-    this.socket = io('localhost:4001')
+  mounted () : void {
+    window.setInterval(() => {
+      this.checkQueue()
+    }, 1000)
   }
 
-  sendMessage (message: WebSocketMessage) : void {
-    if (!this.socket || !this.socket.connected) {
-      this.messages.push(message)
+  async checkQueue () : Promise<void> {
+    if (!this.queueJoined || document.cookie.indexOf('Token') === -1) {
+      return
+    }
+    const token = document.cookie.split('Token=')[1].split(';')[0]
+    const response = await fetch('http://localhost:4000/matchmaking/poll', {
+      method: 'GET',
+      headers: {
+        Authorization: 'Bearer ' + token
+      }
+    })
+    if (!response.ok) {
+      return
+    }
+    const data = await response.json()
+    if (data.found) {
+      console.log('Found Game !!!')
+      this.queueJoined = false
+      router.push(`/game?id=${data.gameId}`)
     } else {
-      this.socket.emit(message.type, JSON.stringify(message.data))
+      console.log('Didn\'t find anything...')
     }
   }
 
-  initConnection () : void {
-    this.socket = io.connect('localhost:4001')
-    this.socket.on('connection', () => {
-      this.messages.forEach(message => {
-        this.socket.send(JSON.stringify(message))
-      })
-      this.messages = []
+  async joinQueue () : Promise<void> {
+    if (document.cookie.indexOf('Token') === -1) {
+      alert('You must be logged in to join the queue')
+      return
+    }
+    const token = document.cookie.split('Token=')[1].split(';')[0]
+    const response = await fetch('http://localhost:4000/matchmaking/join', {
+      method: 'POST',
+      headers: {
+        Authorization: 'Bearer ' + token
+      }
     })
-    this.socket.on('message', (message: string) => {
-      const data = JSON.parse(message)
-      console.log('Message recieved: ' + data)
-    })
+    if (!response.ok) {
+      return
+    }
+    const data = await response.json()
+    if (data.accepted) {
+      console.log('Joined queue !')
+    } else {
+      console.log('Not accepted !')
+    }
+    this.queueJoined = data.accepted
   }
 
-  createRoom () : void {
-    if (!this.socket || !this.socket.connected) {
-      this.initConnection()
+  async leaveQueue () : Promise<void> {
+    if (document.cookie.indexOf('Token') === -1) {
+      alert('You must be logged in to leave the queue')
+      return
     }
-    this.sendMessage(new WebSocketMessage('echo', { message: store.state.userId }))
+    const token = document.cookie.split('Token=')[1].split(';')[0]
+    const response = await fetch('http://localhost:4000/matchmaking/leave', {
+      method: 'POST',
+      headers: {
+        Authorization: 'Bearer ' + token
+      }
+    })
+    if (!response.ok) {
+      return
+    }
+    const data = await response.json()
+    if (data.left) {
+      console.log('Left queue !')
+    } else {
+      console.log('Did not left !')
+    }
+    this.queueJoined = !data.left
   }
 }
 

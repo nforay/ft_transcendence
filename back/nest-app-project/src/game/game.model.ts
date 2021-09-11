@@ -1,7 +1,44 @@
 import * as uuid from 'uuid'
 
+export class GameManager {
+  public static instance: GameManager = new GameManager()
+  private games: Game[] = []
+
+  constructor() {
+    if (GameManager.instance) {
+      throw new Error('Error: Instantiation failed: Use GameManager.getInstance() instead of new.')
+    }
+    GameManager.instance = this
+  }
+
+  createGame(player1Id: string, player2Id: string): Game {
+    const game = new Game(player1Id, player2Id)
+    this.games.push(game)
+    return game
+  }
+
+  getGame(gameId: string): Game {
+    return this.games.find(game => game.id === gameId)
+  }
+
+  getGames(): Game[] {
+    return this.games
+  }
+
+  getGameByPlayerId(playerId: string): Game {
+    return this.games.find(game => game.player1Id === playerId || game.player2Id === playerId)
+  }
+}
+
+export enum GameState {
+  WAITING,
+  IN_GAME,
+  FINISHED,
+}
+
 export class Game {
   id: string = uuid.v4();
+  state: GameState = GameState.WAITING;
   player1Id: string;
   player2Id: string;
   player1Score: number = 0;

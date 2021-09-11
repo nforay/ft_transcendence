@@ -1,5 +1,5 @@
-import { Controller, Get, Headers, Post, UseGuards } from '@nestjs/common';
-import { AuthGuard } from 'src/shared/auth.guard';
+import { Controller, Get, Post } from '@nestjs/common';
+import { AuthUser } from 'src/shared/auth-user.decorator';
 import { MatchmakingService } from './matchmaking.service';
 
 @Controller('matchmaking')
@@ -8,20 +8,17 @@ export class MatchmakingController {
   constructor (private readonly matchMakingService: MatchmakingService) {}
 
   @Post('join')
-  @UseGuards(AuthGuard)
-  async join(@Headers() headers) {
-    return await this.matchMakingService.join(headers.authorization);
+  async join(@AuthUser() user) {
+    return await this.matchMakingService.join(user);
   }
 
   @Get('poll')
-  @UseGuards(AuthGuard)
-  async poll(@Headers() headers) {
-    return await this.matchMakingService.poll(headers.authorization);
+  async poll(@AuthUser() user) {
+    return await this.matchMakingService.poll(user);
   }
 
   @Post('leave')
-  @UseGuards(AuthGuard)
-  async leave(@Headers() headers) {
-    return await this.matchMakingService.leave(headers.authorization);
+  async leave(@AuthUser() user) {
+    return await this.matchMakingService.leave(user);
   }
 }
