@@ -27,15 +27,24 @@ export class Paddle {
     this.height = height
   }
 }
-@Component
+@Component({
+  props: {
+    gameId: {
+      type: String
+    },
+    gameJwt: {
+      type: String
+    }
+  }
+})
 export default class GameCanvas extends Vue {
   canvas: HTMLCanvasElement | undefined
   ctx: CanvasRenderingContext2D | undefined
 
   socketManager = new SocketManager('http://localhost:4001')
 
-  leftPaddle = new Paddle(0, 0, 10, 100)
-  rightPaddle = new Paddle(40, 0, 10, 100)
+  leftPaddle = new Paddle(0, 0, 0, 0)
+  rightPaddle = new Paddle(0, 0, 0, 0)
   backgroundColor = '#000'
   paddleColor = '#fff'
   ballColor = '#fff'
@@ -53,11 +62,13 @@ export default class GameCanvas extends Vue {
     const currentUpdate = new Date().getTime()
     const deltaTime = currentUpdate - this.lastUpdate / 1000
 
-    this.timeBeforeServerSync -= deltaTime;
+    this.timeBeforeServerSync -= deltaTime
     if (this.timeBeforeServerSync < 0) {
       // Send position data to server
       this.socketManager.sendMessage('move', {
-        
+        id: this.gameId,
+        gameJwt: this.gameJwt,
+        yPosition: this.leftPaddle.y
       })
       this.timeBeforeServerSync = this.serverSyncFrequency
     }
@@ -70,8 +81,12 @@ export default class GameCanvas extends Vue {
   }
 
   draw () : void {
+    this.canvas = document.getElementById('canvas') as HTMLCanvasElement
+    this.ctx = this.canvas.getContext('2d') as CanvasRenderingContext2D
     this.ctx.fillStyle = this.backgroundColor
     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height)
+
+    const scalingFactor = this.canvas.width / 2000
 
     this.ctx.fillStyle = 'grey'
     this.ctx.fillRect(0, 0, this.canvas.width, this.pixel) // top wall
@@ -79,14 +94,14 @@ export default class GameCanvas extends Vue {
     for (let i = this.pixel; i < this.canvas.height - this.pixel; i += this.pixel * 2) {
       this.ctx.fillRect(this.canvas.width / 2 - this.pixel / 2, i, this.pixel, this.pixel) // middle line
     }
-    this.ctx.fillStyle = 'white'
-    this.ctx.fillRect(this.leftPaddle.x, this.leftPaddle.y, this.leftPaddle.width, this.leftPaddle.height) // left paddle
-    this.ctx.fillRect(this.rightPaddle.x, this.rightPaddle.y, this.rightPaddle.width, this.rightPaddle.height) // right paddle
+
+    this.ctx.fillStyle = this.paddleColor
+    this.ctx.fillRect((this.leftPaddle.x - this.leftPaddle.width / 2) * scalingFactor, (this.leftPaddle.y - this.leftPaddle.height / 2) * scalingFactor, this.leftPaddle.width * scalingFactor, this.leftPaddle.height * scalingFactor) // left paddle
+    this.ctx.fillRect((this.rightPaddle.x - this.rightPaddle.width / 2) * scalingFactor, (this.rightPaddle.y - this.rightPaddle.height / 2) * scalingFactor, this.rightPaddle.width * scalingFactor, this.rightPaddle.height * scalingFactor) // right paddle
   }
 
   initCanvas () : void {
     this.canvas = document.getElementById('canvas') as HTMLCanvasElement
-    this.ctx = this.canvas.getContext('2d') as CanvasRenderingContext2D
 
     const reference = Math.min(window.innerWidth, window.innerHeight)
 
@@ -99,8 +114,50 @@ export default class GameCanvas extends Vue {
     window.requestAnimationFrame(this.gameLoop)
   }
 
+  retrievePositions () : void {
+    this.socketManager.on('init', (data) => {
+      const you = data.isPlayer1 ? data.game.player1 : data.game.player2
+      const opponent = data.isPlayer1 ? data.game.player2 : data.game.player1
+      this.leftPaddle.x = 100
+      this.leftPaddle.y = you.y
+      this.leftPaddle.width = you.width
+      this.leftPaddle.height = you.height
+
+      this.rightPaddle.x = 1900
+      this.rightPaddle.y = opponent.y
+      this.rightPaddle.width = opponent.width
+      this.rightPaddle.height = opponent.height
+
+      console.log(you)
+    })
+    this.socketManager.sendMessage('init', { gameJwt: this.gameJwt })
+  }
+
+  setupSocket () : void {
+    this.socketManager.on('broadcast', (data) => {
+      console.log('coucou')
+      console.log(data)
+      if (data.game.id !== this.gameId) {
+        return
+      }
+      const you = data.isPlayer1 ? data.game.player1 : data.game.player2
+      const opponent = data.isPlayer1 ? data.game.player2 : data.game.player1
+      this.leftPaddle.x = 100
+      this.leftPaddle.y = you.y
+      this.leftPaddle.width = you.width
+      this.leftPaddle.height = you.height
+
+      this.rightPaddle.x = 1900
+      this.rightPaddle.y = opponent.y
+      this.rightPaddle.width = opponent.width
+      this.rightPaddle.height = opponent.height
+    })
+  }
+
   mounted () : void {
     this.initCanvas()
+    this.retrievePositions()
+    this.setupSocket()
   }
 }
 </script>

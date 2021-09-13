@@ -1,6 +1,6 @@
 <template>
   <div class="game">
-    <GameCanvas :gameid="this.gameId"></GameCanvas>
+    <GameCanvas :gameId="this.gameId" :gameJwt="this.gameJwt"></GameCanvas>
   </div>
 </template>
 
@@ -17,6 +17,10 @@ import GameCanvas from '@/components/GameCanvas.vue'
 export default class Game extends Vue {
   get gameId () : any {
     return this.$route.query.id.toString()
+  }
+
+  get gameJwt () : any {
+    return this.$route.query.gameToken.toString()
   }
 }
 </script>

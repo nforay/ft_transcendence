@@ -9,9 +9,10 @@ import { QueryErrorFilter } from './shared/query-error.filter';
 import { UserModule } from './user/user.module';
 import { GameModule } from './game/game.module';
 import { MatchmakingModule } from './matchmaking/matchmaking.module';
+import { ScheduleModule } from '@nestjs/schedule'
 
 @Module({
-  imports: [ TypeOrmModule.forRoot(), UserModule, GameModule, MatchmakingModule ],
+  imports: [ TypeOrmModule.forRoot(), UserModule, GameModule, MatchmakingModule, ScheduleModule.forRoot() ],
   controllers: [AppController],
   providers: [AppService,
     {

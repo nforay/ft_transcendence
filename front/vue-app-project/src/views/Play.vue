@@ -36,11 +36,8 @@ export default class Play extends Vue {
     }
     const data = await response.json()
     if (data.found) {
-      console.log('Found Game !!!')
       this.queueJoined = false
-      router.push(`/game?id=${data.gameId}`)
-    } else {
-      console.log('Didn\'t find anything...')
+      router.push(`/game?id=${data.gameId}&gameToken=${data.gameJwt}`)
     }
   }
 

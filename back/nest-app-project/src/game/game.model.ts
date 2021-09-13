@@ -49,17 +49,22 @@ export enum GameState {
 }
 
 export class Player {
-  gameJWT: string;
   id: string
   score: number = 0
-  x: number = 0
-  y: number = 0
+  x: number
+  y: number = 1000
+  width: number = 75
+  height: number = 250
 
-  constructor(id: string) {
+  constructor(id: string, x: number) {
     this.id = id
+    this.x = x;
   }
 }
 
+
+// Assume 2000x2000 canvas
+// Speed in units/second
 export class Game {
   id: string = uuid.v4();
   cancelled = false;
@@ -68,35 +73,22 @@ export class Game {
   player1: Player;
   player2: Player;
 
-  ballX: number = 0;
-  ballY: number = 0;
+  ballX: number = 1000;
+  ballY: number = 1000;
   ballAngle: number = 0;
-  ballSpeed: number = 0;
-  paddleSpeed: number = 0;
+  ballSpeed: number = 450;
+  paddleSpeed: number = 550;
 
   constructor(player1Id: string, player2Id: string) {
-    this.player1 = new Player(player1Id)
-    this.player2 = new Player(player2Id)
+    this.player1 = new Player(player1Id, 100)
+    this.player2 = new Player(player2Id, 1900)
   }
 
-  setPlayerJwt(playerId: string, jwt: string) {
+  move(playerId: string, yPosition: number) : void {
     if (playerId === this.player1.id)
-      this.player1.gameJWT = jwt;
+      this.player1.y = yPosition;
     else if (playerId === this.player2.id)
-      this.player2.gameJWT = jwt;
-  }
-
-  move(playerId: string, direction: string, duration: number) : void {
-    let dir = 0;
-
-    if (direction === 'up')
-      dir = -this.paddleSpeed
-    else if (direction === 'down')
-      dir = this.paddleSpeed;
-    if (playerId === this.player1.id)
-      this.player1.y += dir;
-    else if (playerId === this.player2.id)
-      this.player2.y += dir;
+      this.player2.y = yPosition;
   }
 
   hit(playerId: string) : void {

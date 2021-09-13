@@ -64,13 +64,11 @@ export class MatchmakingService {
     if (pair.player1Polled && pair.player2Polled)
       this.paired.splice(this.paired.indexOf(pair), 1);
 
-    let game = GameManager.instance.getGameByPlayerId(user.id);
+    const game = GameManager.instance.getGameByPlayerId(user.id);
     if (!game)
       throw new HttpException('Fatal: Game not found while it should exist', HttpStatus.INTERNAL_SERVER_ERROR);
 
     const gameJwt = await jwt.sign({ gameId: game.id, playerId: user.id }, process.env.JWT_SECRET, {expiresIn: '1y'});
-    game.setPlayerJwt(user.id, gameJwt);
-
     return { found: true, opponent: pair.player1Id === user.id ? pair.player2Id : pair.player1Id, gameId: game.id, gameJwt };
   }
 
