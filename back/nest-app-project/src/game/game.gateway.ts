@@ -31,7 +31,7 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection {
   move(@MessageBody() data: MoveGameModelDto) {
     const game = GameManager.instance.getGame(data.id);
     if (game) {
-      game.move(data.playerId, data.yPosition);
+      game.move(data.playerId, data.direction, data.duration);
       return game;
     }
     throw new HttpException("Game not found", HttpStatus.NOT_FOUND);

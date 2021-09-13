@@ -72,6 +72,7 @@ export class Game {
   ballY: number = 0;
   ballAngle: number = 0;
   ballSpeed: number = 0;
+  paddleSpeed: number = 0;
 
   constructor(player1Id: string, player2Id: string) {
     this.player1 = new Player(player1Id)
@@ -85,11 +86,17 @@ export class Game {
       this.player2.gameJWT = jwt;
   }
 
-  move(playerId: string, position: number) : void {
+  move(playerId: string, direction: string, duration: number) : void {
+    let dir = 0;
+
+    if (direction === 'up')
+      dir = -this.paddleSpeed
+    else if (direction === 'down')
+      dir = this.paddleSpeed;
     if (playerId === this.player1.id)
-      this.player1.y = position;
+      this.player1.y += dir;
     else if (playerId === this.player2.id)
-      this.player2.y = position;
+      this.player2.y += dir;
   }
 
   hit(playerId: string) : void {

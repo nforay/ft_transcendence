@@ -1,5 +1,6 @@
 export class MoveGameModelDto {
   id: string;
   playerId: string;
-  yPosition: number;
+  direction: string;
+  duration: number;
 }
