@@ -39,6 +39,14 @@ const routes: Array<RouteConfig> = [
     meta: {
       requiresAuth: true
     }
+  },
+  {
+    path: '/game',
+    name: 'Game',
+    component: () => import('../views/Game.vue'),
+    meta: {
+      requiresAuth: true
+    }
   }
 ]
 
