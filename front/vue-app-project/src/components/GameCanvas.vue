@@ -42,10 +42,28 @@ export default class GameCanvas extends Vue {
   paddleHeight = 80
   pixel = 15
 
+  lastUpdate = new Date().getTime()
+
+  serverSyncFrequency = 1 / 24 // In seconds
+  timeBeforeServerSync = serverSyncFrequency
+
   gameLoop () : void {
     const dir = +this.leftPaddle.downPressed - (+this.leftPaddle.upPressed)
+
+    const currentUpdate = new Date().getTime()
+    const deltaTime = currentUpdate - this.lastUpdate / 1000
+
+    this.timeBeforeServerSync -= deltaTime;
+    if (this.timeBeforeServerSync < 0) {
+      // Send position data to server
+      
+      this.timeBeforeServerSync = this.serverSyncFrequency
+    }
+
     this.leftPaddle.y += dir * this.pixel
     this.draw()
+
+    this.lastUpdate = currentUpdate
     window.requestAnimationFrame(this.gameLoop)
   }
 

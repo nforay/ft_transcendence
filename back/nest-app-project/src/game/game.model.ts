@@ -51,17 +51,24 @@ export class Game {
   ballY: number = 0;
   ballAngle: number = 0;
   ballSpeed: number = 0;
+  paddleSpeed: number = 0;
 
   constructor(player1Id: string, player2Id: string) {
     this.player1Id = player1Id;
     this.player2Id = player2Id;
   }
 
-  move(playerId: string, position: number) : void {
+  move(playerId: string, direction: string, duration: number) : void {
+    let dir = 0;
+
+    if (direction === 'up')
+      dir = -this.paddleSpeed
+    else if (direction === 'down')
+      dir = this.paddleSpeed;
     if (playerId === this.player1Id)
-      this.player1Y = position;
+      this.player1Y += dir;
     else if (playerId === this.player2Id)
-      this.player2Y = position;
+      this.player2Y += dir;
   }
 
   hit(playerId: string) : void {
