@@ -22,7 +22,7 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
   logger: Logger = new Logger("GameGateway");
   clients: Array<Socket> = []
 
-  @Interval(50)
+  @Interval(33)
   sendGameData() : void {
     GameManager.instance.getGames().forEach(game => {
       this.clients.forEach(client => {

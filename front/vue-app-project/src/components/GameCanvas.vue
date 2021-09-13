@@ -12,6 +12,7 @@
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import { SocketManager } from '../utils/SocketManager'
+import store from '../store'
 
 export class Paddle {
   x: number
@@ -135,13 +136,11 @@ export default class GameCanvas extends Vue {
 
   setupSocket () : void {
     this.socketManager.on('broadcast', (data) => {
-      console.log('coucou')
-      console.log(data)
       if (data.game.id !== this.gameId) {
         return
       }
-      const you = data.isPlayer1 ? data.game.player1 : data.game.player2
-      const opponent = data.isPlayer1 ? data.game.player2 : data.game.player1
+      const you = store.state.userId === data.game.player1.id ? data.game.player1 : data.game.player2
+      const opponent = store.state.userId === data.game.player1.id ? data.game.player2 : data.game.player1
       this.leftPaddle.x = 100
       this.leftPaddle.y = you.y
       this.leftPaddle.width = you.width
