@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { GameManager } from 'src/game/game.model';
 import { UserEntity } from 'src/user/user.entity';
 import { Repository } from 'typeorm';
+import * as jwt from 'jsonwebtoken'
 
 export class PlayerPair {
   player1Id: string;
@@ -63,10 +64,14 @@ export class MatchmakingService {
     if (pair.player1Polled && pair.player2Polled)
       this.paired.splice(this.paired.indexOf(pair), 1);
 
-    const game = GameManager.instance.getGameByPlayerId(user.id);
+    let game = GameManager.instance.getGameByPlayerId(user.id);
     if (!game)
       throw new HttpException('Fatal: Game not found while it should exist', HttpStatus.INTERNAL_SERVER_ERROR);
-    return { found: true, opponent: pair.player1Id === user.id ? pair.player2Id : pair.player1Id, gameId: game.id };
+
+    const gameJwt = await jwt.sign({ gameId: game.id, playerId: user.id }, process.env.JWT_SECRET, {expiresIn: '1y'});
+    game.setPlayerJwt(user.id, gameJwt);
+
+    return { found: true, opponent: pair.player1Id === user.id ? pair.player2Id : pair.player1Id, gameId: game.id, gameJwt };
   }
 
   async leave(authUser) {
@@ -77,6 +82,13 @@ export class MatchmakingService {
       throw new HttpException('User not in queue', HttpStatus.BAD_REQUEST);
     }
     this.queue.splice(this.queue.indexOf(user.id), 1);
+
+    const pair = this.paired.find(pair => pair.hasId(user.id));
+    if (pair)
+      this.paired.splice(this.paired.indexOf(pair), 1);
+
+    GameManager.instance.cancelGameByPlayerId(user.id);
+
     return { left: true };
   }
 }
