@@ -1,4 +1,6 @@
+import { Socket } from 'socket.io'
 import * as uuid from 'uuid'
+import { GameGateway } from './game.gateway'
 
 export class GameManager {
   public static instance: GameManager = new GameManager()
@@ -12,6 +14,13 @@ export class GameManager {
   }
 
   createGame(player1Id: string, player2Id: string): Game {
+    let alreadyExistingGame = this.getGameByPlayerId(player1Id);
+    if (alreadyExistingGame)
+      GameManager.instance.removeGame(alreadyExistingGame.id);
+    alreadyExistingGame = this.getGameByPlayerId(player2Id);
+    if (alreadyExistingGame)
+      GameManager.instance.removeGame(alreadyExistingGame.id);
+
     const game = new Game(player1Id, player2Id)
     this.games.push(game)
     return game
@@ -55,13 +64,14 @@ export class Player {
   y: number = 1000
   width: number = 75
   height: number = 250
+  socketId: string = null
+  speed: number = 0
 
   constructor(id: string, x: number) {
     this.id = id
     this.x = x;
   }
 }
-
 
 // Assume 2000x2000 canvas
 // Speed in units/second
@@ -77,11 +87,25 @@ export class Game {
   ballY: number = 1000;
   ballAngle: number = 0;
   ballSpeed: number = 450;
-  paddleSpeed: number = 550;
 
   constructor(player1Id: string, player2Id: string) {
     this.player1 = new Player(player1Id, 100)
     this.player2 = new Player(player2Id, 1900)
+
+    setTimeout(() => {
+      if (!this.player1.socketId || !this.player2.socketId) {
+        if (this.player1.socketId) {
+          const socket = GameGateway.clients.find(client => client.id === this.player1.socketId)
+          socket?.emit('gameCancelled', {})
+          socket?.disconnect()
+        }
+        if (this.player2.socketId) {
+          const socket = GameGateway.clients.find(client => client.id === this.player2.socketId)
+          socket?.emit('gameCancelled', {})
+          socket?.disconnect()
+        }
+      }
+    }, 15000)
   }
 
   move(playerId: string, yPosition: number) : void {
@@ -102,6 +126,19 @@ export class Game {
     return Math.atan2(yPosition - this.ballY, xPosition - this.ballX);
   }
 
+  startIfBothConnected() {
+    if (this.player1.socketId && this.player2.socketId) {
+      GameGateway.clients.find(client => client.id === this.player1.socketId)?.emit('startSoon', { delay: 3 })
+      GameGateway.clients.find(client => client.id === this.player2.socketId)?.emit('startSoon', { delay: 3 })
+      setTimeout(() => { 
+        this.state = GameState.IN_GAME;
+        this.ballSpeed = 450;
+        this.player1.speed = 550;
+        this.player2.speed = 550;
+      }, 3000);
+    }
+  }
+
   update() : void {
     this.ballX += this.ballSpeed;
     this.ballY += this.ballSpeed * Math.sin(this.ballAngle);
@@ -111,18 +148,18 @@ export class Game {
       this.reset();
     }
 
-    if (this.ballX > 800) {
+    if (this.ballX > 2000) {
       this.player1.score++;
       this.reset();
     }
 
-    if (this.ballY < 0 || this.ballY > 600)
+    if (this.ballY < 0 || this.ballY > 2000)
       this.ballAngle = Math.PI - this.ballAngle;
   }
 
   reset() : void {
-    this.ballX = 400;
-    this.ballY = 300;
+    this.ballX = 1000;
+    this.ballY = 1000;
     this.ballAngle = 0;
     this.ballSpeed = 0;
   }

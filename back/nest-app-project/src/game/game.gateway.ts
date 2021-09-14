@@ -4,7 +4,7 @@ import { Server } from "socket.io";
 import { Socket } from "socket.io";
 import { HitGameModelDto } from "./dto/hit-game-model.dto";
 import { MoveGameModelDto } from "./dto/move-game-model.dto";
-import { GameManager } from "./game.model";
+import { GameManager, GameState } from "./game.model";
 import * as jwt from 'jsonwebtoken'
 import { Interval } from '@nestjs/schedule'
 
@@ -19,26 +19,38 @@ import { Interval } from '@nestjs/schedule'
 })
 export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
 
+  public static clients: Array<Socket> = []
   logger: Logger = new Logger("GameGateway");
-  clients: Array<Socket> = []
 
   @Interval(33)
   sendGameData() : void {
     GameManager.instance.getGames().forEach(game => {
-      this.clients.forEach(client => {
-        client.emit('broadcast', { game })
-      })
+      GameGateway.clients.find(client => client.id === game.player1.socketId)?.emit('broadcast', { game: game });
+      GameGateway.clients.find(client => client.id === game.player2.socketId)?.emit('broadcast', { game: game });
     })
   }
 
-  handleConnection(client: Socket, ...args: any[]) {
-    this.clients.push(client);
+  async handleConnection(client: Socket, ...args: any[]) {
+    GameGateway.clients.push(client);
+    try {
+      const decoded = await jwt.verify(client.handshake.query.gameJwt, process.env.JWT_SECRET);
+      let game = GameManager.instance.getGame(decoded.gameId)
+      if (!game)
+        return
+      if (game.player1.id === decoded.playerId)
+        game.player1.socketId = client.id;
+      else if (game.player2.id === decoded.playerId)
+        game.player2.socketId = client.id;
+      game.startIfBothConnected();
+    } catch (err) {
+      return
+    }
     this.logger.log(`User connected !! ${client.id}`)
   }
 
   handleDisconnect(client: Socket, ...args: any[]) {
-    this.clients.splice(this.clients.indexOf(client), 1);
-    this.logger.log(`User connected !! ${client.id}`)
+    GameGateway.clients.splice(GameGateway.clients.indexOf(client), 1);
+    this.logger.log(`User disconnected !! ${client.id}`)
   }
 
   afterInit(server: Server) {
@@ -49,7 +61,7 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
   async init(@MessageBody() data: { gameJwt: string }) : Promise<WsResponse> {
     try {
       const decoded = await jwt.verify(data.gameJwt, process.env.JWT_SECRET);
-      const game = GameManager.instance.getGame(decoded.gameId);
+      let game = GameManager.instance.getGame(decoded.gameId);
       if (!game)
         return null;
       return { event: 'init', data: { game, isPlayer1: (decoded.playerId == game.player1.id) } };
@@ -63,7 +75,7 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     try {
       const decoded = jwt.verify(data.gameJwt, process.env.JWT_SECRET);
       let game = GameManager.instance.getGame(decoded.gameId);
-      if (game) {
+      if (game && game.state === GameState.IN_GAME) {
         game.move(decoded.playerId, data.yPosition);
         return game
       }

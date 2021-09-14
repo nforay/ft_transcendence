@@ -13,6 +13,7 @@ import Vue from 'vue'
 import Component from 'vue-class-component'
 import { SocketManager } from '../utils/SocketManager'
 import store from '../store'
+import router from '../router'
 
 export class Paddle {
   x: number
@@ -21,6 +22,8 @@ export class Paddle {
   height: number
   upPressed = false
   downPressed = false
+  speed = 0
+
   constructor (x: number, y: number, width: number, height: number) {
     this.x = x
     this.y = y
@@ -42,14 +45,13 @@ export default class GameCanvas extends Vue {
   canvas: HTMLCanvasElement | undefined
   ctx: CanvasRenderingContext2D | undefined
 
-  socketManager = new SocketManager('http://localhost:4001')
+  socketManager = new SocketManager('http://localhost:4001/?gameJwt=' + this.gameJwt)
 
   leftPaddle = new Paddle(0, 0, 0, 0)
   rightPaddle = new Paddle(0, 0, 0, 0)
   backgroundColor = '#000'
   paddleColor = '#fff'
   ballColor = '#fff'
-  paddleHeight = 80
   pixel = 15
 
   lastUpdate = new Date().getTime()
@@ -61,20 +63,19 @@ export default class GameCanvas extends Vue {
     const dir = +this.leftPaddle.downPressed - (+this.leftPaddle.upPressed)
 
     const currentUpdate = new Date().getTime()
-    const deltaTime = currentUpdate - this.lastUpdate / 1000
+    const deltaTime = (currentUpdate - this.lastUpdate) / 1000
 
     this.timeBeforeServerSync -= deltaTime
     if (this.timeBeforeServerSync < 0) {
       // Send position data to server
       this.socketManager.sendMessage('move', {
-        id: this.gameId,
         gameJwt: this.gameJwt,
         yPosition: this.leftPaddle.y
       })
       this.timeBeforeServerSync = this.serverSyncFrequency
     }
 
-    this.leftPaddle.y += dir * this.pixel
+    this.leftPaddle.y += this.leftPaddle.speed * dir * deltaTime
     this.draw()
 
     this.lastUpdate = currentUpdate
@@ -82,8 +83,6 @@ export default class GameCanvas extends Vue {
   }
 
   draw () : void {
-    this.canvas = document.getElementById('canvas') as HTMLCanvasElement
-    this.ctx = this.canvas.getContext('2d') as CanvasRenderingContext2D
     this.ctx.fillStyle = this.backgroundColor
     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height)
 
@@ -103,6 +102,7 @@ export default class GameCanvas extends Vue {
 
   initCanvas () : void {
     this.canvas = document.getElementById('canvas') as HTMLCanvasElement
+    this.ctx = this.canvas.getContext('2d') as CanvasRenderingContext2D
 
     const reference = Math.min(window.innerWidth, window.innerHeight)
 
@@ -123,13 +123,13 @@ export default class GameCanvas extends Vue {
       this.leftPaddle.y = you.y
       this.leftPaddle.width = you.width
       this.leftPaddle.height = you.height
+      this.leftPaddle.speed = you.speed
 
       this.rightPaddle.x = 1900
       this.rightPaddle.y = opponent.y
       this.rightPaddle.width = opponent.width
       this.rightPaddle.height = opponent.height
-
-      console.log(you)
+      this.rightPaddle.speed = opponent.speed
     })
     this.socketManager.sendMessage('init', { gameJwt: this.gameJwt })
   }
@@ -142,14 +142,20 @@ export default class GameCanvas extends Vue {
       const you = store.state.userId === data.game.player1.id ? data.game.player1 : data.game.player2
       const opponent = store.state.userId === data.game.player1.id ? data.game.player2 : data.game.player1
       this.leftPaddle.x = 100
-      this.leftPaddle.y = you.y
+      // this.leftPaddle.y = you.y
       this.leftPaddle.width = you.width
       this.leftPaddle.height = you.height
+      this.leftPaddle.speed = opponent.speed
 
       this.rightPaddle.x = 1900
       this.rightPaddle.y = opponent.y
       this.rightPaddle.width = opponent.width
       this.rightPaddle.height = opponent.height
+      this.rightPaddle.speed = opponent.speed
+    })
+
+    this.socketManager.on('gameCancelled', () => {
+      router.push('/play')
     })
   }
 

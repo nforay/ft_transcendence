@@ -14,6 +14,10 @@ import router from '../router'
 export default class Play extends Vue {
   queueJoined = false;
 
+  created () : void {
+    document.addEventListener('beforeunload', this.leaveQueue)
+  }
+
   mounted () : void {
     window.setInterval(() => {
       this.checkQueue()
