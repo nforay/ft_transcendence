@@ -1,3 +1,4 @@
+import { Logger } from '@nestjs/common'
 import { Socket } from 'socket.io'
 import * as uuid from 'uuid'
 import { GameGateway } from './game.gateway'
@@ -85,8 +86,11 @@ export class Game {
 
   ballX: number = 1000;
   ballY: number = 1000;
+  ballRadius: number = 30
   ballAngle: number = 0;
-  ballSpeed: number = 450;
+  ballSpeed: number = 0;
+
+  lastUpdate: number = new Date().getTime();
 
   constructor(player1Id: string, player2Id: string) {
     this.player1 = new Player(player1Id, 100)
@@ -115,24 +119,16 @@ export class Game {
       this.player2.y = yPosition;
   }
 
-  hit(playerId: string) : void {
-    if (playerId === this.player1.id)
-      this.ballAngle = this.getHitAngle(this.player1.x, this.player1.y);
-    else if (playerId === this.player2.id)
-      this.ballAngle = this.getHitAngle(this.player2.x, this.player2.y);
-  }
-
-  getHitAngle(xPosition: number, yPosition: number) : number {
-    return Math.atan2(yPosition - this.ballY, xPosition - this.ballX);
-  }
-
   startIfBothConnected() {
     if (this.player1.socketId && this.player2.socketId) {
       GameGateway.clients.find(client => client.id === this.player1.socketId)?.emit('startSoon', { delay: 3 })
       GameGateway.clients.find(client => client.id === this.player2.socketId)?.emit('startSoon', { delay: 3 })
       setTimeout(() => { 
         this.state = GameState.IN_GAME;
-        this.ballSpeed = 450;
+        this.ballSpeed = 750;
+        let randomX = (Math.random() < 0.5 ? -1 : 1) * Math.random() * (0.8 - 0.4) + 0.4;
+        let randomY = Math.random() * (0.6 - 0.2) + 0.2;
+        this.ballAngle = Math.atan(randomY / randomX)
         this.player1.speed = 550;
         this.player2.speed = 550;
       }, 3000);
@@ -140,8 +136,15 @@ export class Game {
   }
 
   update() : void {
-    this.ballX += this.ballSpeed;
-    this.ballY += this.ballSpeed * Math.sin(this.ballAngle);
+    const time = new Date().getTime();
+    if (this.state !== GameState.IN_GAME)
+    {
+      this.lastUpdate = time
+      return
+    }
+    const delta = (time - this.lastUpdate) / 1000;
+    this.ballX += this.ballSpeed * Math.cos(this.ballAngle) * delta;
+    this.ballY += this.ballSpeed * Math.sin(this.ballAngle) * delta;
 
     if (this.ballX < 0) {
       this.player2.score++;
@@ -154,7 +157,31 @@ export class Game {
     }
 
     if (this.ballY < 0 || this.ballY > 2000)
+      this.ballAngle = -this.ballAngle;
+
+    if (this.collide(this.player1) || this.collide(this.player2))
       this.ballAngle = Math.PI - this.ballAngle;
+
+    this.lastUpdate = time
+  }
+
+  collide(player: Player) : boolean {
+    const distX = Math.abs(this.ballX - player.x);
+    const distY = Math.abs(this.ballY - player.y);
+
+    if (distX > (player.width / 2 + this.ballRadius))
+      return false;
+    if (distY > (player.height / 2 + this.ballRadius))
+      return false;
+    
+    if (distX <= (player.width / 2))
+      return true;
+    if (distY <= (player.height / 2))
+      return true;
+
+    const dx = distX - player.width / 2;
+    const dy = distY - player.height / 2;
+    return (dx * dx + dy * dy <= (this.ballRadius * this.ballRadius));
   }
 
   reset() : void {
@@ -162,5 +189,15 @@ export class Game {
     this.ballY = 1000;
     this.ballAngle = 0;
     this.ballSpeed = 0;
+    this.player1.speed = 0;
+    this.player2.speed = 0;
+    this.player1.y = 1000;
+    this.player2.y = 1000;
+    setTimeout(() => {
+      this.ballAngle = Math.random() * Math.PI * 2
+      this.ballSpeed = 750;
+      this.player1.speed = 550;
+      this.player2.speed = 550;
+    }, 3000)
   }
 }

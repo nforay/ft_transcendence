@@ -36,4 +36,8 @@ export class SocketManager {
       this.messages.push(new SocketMessage(event, data))
     }
   }
+
+  public disconnect () {
+    this.socket.disconnect()
+  }
 }

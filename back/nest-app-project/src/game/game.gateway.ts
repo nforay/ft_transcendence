@@ -25,8 +25,10 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
   @Interval(33)
   sendGameData() : void {
     GameManager.instance.getGames().forEach(game => {
-      GameGateway.clients.find(client => client.id === game.player1.socketId)?.emit('broadcast', { game: game });
-      GameGateway.clients.find(client => client.id === game.player2.socketId)?.emit('broadcast', { game: game });
+      game.update();
+      const time = new Date().getTime();
+      GameGateway.clients.find(client => client.id === game.player1.socketId)?.emit('broadcast', { game, time });
+      GameGateway.clients.find(client => client.id === game.player2.socketId)?.emit('broadcast', { game, time });
     })
   }
 
@@ -71,9 +73,9 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
   }
 
   @SubscribeMessage("move")
-  move(@MessageBody() data: MoveGameModelDto) {
+  async move(@MessageBody() data: MoveGameModelDto) {
     try {
-      const decoded = jwt.verify(data.gameJwt, process.env.JWT_SECRET);
+      const decoded = await jwt.verify(data.gameJwt, process.env.JWT_SECRET);
       let game = GameManager.instance.getGame(decoded.gameId);
       if (game && game.state === GameState.IN_GAME) {
         game.move(decoded.playerId, data.yPosition);
@@ -82,16 +84,6 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     } catch (err) {
       return null;
     }
-  }
-
-  @SubscribeMessage("hit")
-  hit(@MessageBody() data: HitGameModelDto) {
-    const game = GameManager.instance.getGame(data.id);
-    if (game) {
-      game.hit(data.playerId);
-      return game;
-    }
-    throw new HttpException("Game not found", HttpStatus.NOT_FOUND);
   }
 
   @SubscribeMessage("echo")

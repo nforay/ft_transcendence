@@ -31,6 +31,23 @@ export class Paddle {
     this.height = height
   }
 }
+
+export class Ball {
+  x: number
+  y: number
+  radius: number
+  speed: number
+  angle: number
+
+  constructor (x: number, y: number, radius: number, speed: number, angle: number) {
+    this.x = x
+    this.y = y
+    this.radius = radius
+    this.speed = speed
+    this.angle = angle
+  }
+}
+
 @Component({
   props: {
     gameId: {
@@ -53,11 +70,19 @@ export default class GameCanvas extends Vue {
   paddleColor = '#fff'
   ballColor = '#fff'
   pixel = 15
+  invertX = false
 
   lastUpdate = new Date().getTime()
 
+  acceptablePositionDesync = 50 // In a 2000x2000 canvas
   serverSyncFrequency = 1 / 24 // In seconds
   timeBeforeServerSync = this.serverSyncFrequency
+
+  ball = new Ball(0, 0, 0, 0, 0)
+
+  destroyed () {
+    this.socketManager.disconnect()
+  }
 
   gameLoop () : void {
     const dir = +this.leftPaddle.downPressed - (+this.leftPaddle.upPressed)
@@ -76,6 +101,10 @@ export default class GameCanvas extends Vue {
     }
 
     this.leftPaddle.y += this.leftPaddle.speed * dir * deltaTime
+
+    this.ball.x += this.ball.speed * Math.cos(this.ball.angle) * deltaTime
+    this.ball.y += this.ball.speed * Math.sin(this.ball.angle) * deltaTime
+
     this.draw()
 
     this.lastUpdate = currentUpdate
@@ -98,6 +127,11 @@ export default class GameCanvas extends Vue {
     this.ctx.fillStyle = this.paddleColor
     this.ctx.fillRect((this.leftPaddle.x - this.leftPaddle.width / 2) * scalingFactor, (this.leftPaddle.y - this.leftPaddle.height / 2) * scalingFactor, this.leftPaddle.width * scalingFactor, this.leftPaddle.height * scalingFactor) // left paddle
     this.ctx.fillRect((this.rightPaddle.x - this.rightPaddle.width / 2) * scalingFactor, (this.rightPaddle.y - this.rightPaddle.height / 2) * scalingFactor, this.rightPaddle.width * scalingFactor, this.rightPaddle.height * scalingFactor) // right paddle
+
+    this.ctx.fillStyle = this.ballColor
+    this.ctx.beginPath()
+    this.ctx.arc((this.invertX ? 2000 - this.ball.x : this.ball.x) * scalingFactor, this.ball.y * scalingFactor, this.ball.radius * scalingFactor, 0, 2 * Math.PI) // ball
+    this.ctx.fill()
   }
 
   initCanvas () : void {
@@ -117,6 +151,8 @@ export default class GameCanvas extends Vue {
 
   retrievePositions () : void {
     this.socketManager.on('init', (data) => {
+      this.invertX = !data.isPlayer1
+
       const you = data.isPlayer1 ? data.game.player1 : data.game.player2
       const opponent = data.isPlayer1 ? data.game.player2 : data.game.player1
       this.leftPaddle.x = 100
@@ -130,8 +166,22 @@ export default class GameCanvas extends Vue {
       this.rightPaddle.width = opponent.width
       this.rightPaddle.height = opponent.height
       this.rightPaddle.speed = opponent.speed
+
+      this.ball.x = data.game.ballX
+      this.ball.y = data.game.ballY
+      this.ball.radius = data.game.ballRadius
+      this.ball.speed = data.game.ballSpeed
+      this.ball.angle = data.game.ballAngle
     })
     this.socketManager.sendMessage('init', { gameJwt: this.gameJwt })
+  }
+
+  validatePosition (currentPosition: number, oldPosition: number, speed: number, oldPositionTime: number) : boolean {
+    const direction = Math.sign(currentPosition - oldPosition)
+    const time = new Date().getTime()
+    const deltaTime = (time - oldPositionTime) / 1000
+    const theoreticalPosition = oldPosition + speed * direction * deltaTime
+    return Math.abs(currentPosition - theoreticalPosition) < this.acceptablePositionDesync
   }
 
   setupSocket () : void {
@@ -142,16 +192,23 @@ export default class GameCanvas extends Vue {
       const you = store.state.userId === data.game.player1.id ? data.game.player1 : data.game.player2
       const opponent = store.state.userId === data.game.player1.id ? data.game.player2 : data.game.player1
       this.leftPaddle.x = 100
-      // this.leftPaddle.y = you.y
+      if (!this.validatePosition(this.leftPaddle.y, you.y, you.speed, data.time)) {
+        this.leftPaddle.y = you.y
+      }
       this.leftPaddle.width = you.width
       this.leftPaddle.height = you.height
-      this.leftPaddle.speed = opponent.speed
+      this.leftPaddle.speed = you.speed
 
       this.rightPaddle.x = 1900
       this.rightPaddle.y = opponent.y
       this.rightPaddle.width = opponent.width
       this.rightPaddle.height = opponent.height
       this.rightPaddle.speed = opponent.speed
+
+      this.ball.x = data.game.ballX
+      this.ball.y = data.game.ballY
+      this.ball.speed = data.game.ballSpeed
+      this.ball.angle = data.game.ballAngle
     })
 
     this.socketManager.on('gameCancelled', () => {
