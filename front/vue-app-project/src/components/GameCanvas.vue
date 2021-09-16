@@ -23,6 +23,7 @@ export class Paddle {
   upPressed = false
   downPressed = false
   speed = 0
+  score = 0
 
   constructor (x: number, y: number, width: number, height: number) {
     this.x = x
@@ -69,13 +70,13 @@ export default class GameCanvas extends Vue {
   backgroundColor = '#000'
   paddleColor = '#fff'
   ballColor = '#fff'
-  pixel = 15
+  pixel = 50
   invertX = false
 
   lastUpdate = new Date().getTime()
 
   acceptablePositionDesync = 50 // In a 2000x2000 canvas
-  serverSyncFrequency = 1 / 24 // In seconds
+  serverSyncFrequency = 1 / 30 // In seconds
   timeBeforeServerSync = this.serverSyncFrequency
 
   ball = new Ball(0, 0, 0, 0, 0)
@@ -101,6 +102,7 @@ export default class GameCanvas extends Vue {
     }
 
     this.leftPaddle.y += this.leftPaddle.speed * dir * deltaTime
+    this.leftPaddle.y = Math.min(Math.max(this.leftPaddle.y, this.leftPaddle.height / 2), 2000 - this.leftPaddle.height / 2)
 
     this.ball.x += this.ball.speed * Math.cos(this.ball.angle) * deltaTime
     this.ball.y += this.ball.speed * Math.sin(this.ball.angle) * deltaTime
@@ -118,10 +120,8 @@ export default class GameCanvas extends Vue {
     const scalingFactor = this.canvas.width / 2000
 
     this.ctx.fillStyle = 'grey'
-    this.ctx.fillRect(0, 0, this.canvas.width, this.pixel) // top wall
-    this.ctx.fillRect(0, this.canvas.height - this.pixel, this.canvas.width, this.canvas.height) // bottom wall
-    for (let i = this.pixel; i < this.canvas.height - this.pixel; i += this.pixel * 2) {
-      this.ctx.fillRect(this.canvas.width / 2 - this.pixel / 2, i, this.pixel, this.pixel) // middle line
+    for (let i = this.pixel * 0.5 * scalingFactor; i < this.canvas.height - this.pixel * scalingFactor; i += this.pixel * scalingFactor * 2) {
+      this.ctx.fillRect(this.canvas.width / 2 - this.pixel / 2 * scalingFactor, i, this.pixel * scalingFactor, this.pixel * scalingFactor) // middle line
     }
 
     this.ctx.fillStyle = this.paddleColor
@@ -132,6 +132,12 @@ export default class GameCanvas extends Vue {
     this.ctx.beginPath()
     this.ctx.arc((this.invertX ? 2000 - this.ball.x : this.ball.x) * scalingFactor, this.ball.y * scalingFactor, this.ball.radius * scalingFactor, 0, 2 * Math.PI) // ball
     this.ctx.fill()
+
+    this.ctx.font = '120px bit5x3'
+    this.ctx.textAlign = 'right'
+    this.ctx.fillText(this.leftPaddle.score.toString(), this.canvas.width / 2 - 30, 100)
+    this.ctx.textAlign = 'left'
+    this.ctx.fillText(this.rightPaddle.score.toString(), this.canvas.width / 2 + 30, 100)
   }
 
   initCanvas () : void {
@@ -160,12 +166,14 @@ export default class GameCanvas extends Vue {
       this.leftPaddle.width = you.width
       this.leftPaddle.height = you.height
       this.leftPaddle.speed = you.speed
+      this.leftPaddle.score = you.score
 
       this.rightPaddle.x = 1900
       this.rightPaddle.y = opponent.y
       this.rightPaddle.width = opponent.width
       this.rightPaddle.height = opponent.height
       this.rightPaddle.speed = opponent.speed
+      this.rightPaddle.score = opponent.score
 
       this.ball.x = data.game.ballX
       this.ball.y = data.game.ballY
@@ -198,12 +206,14 @@ export default class GameCanvas extends Vue {
       this.leftPaddle.width = you.width
       this.leftPaddle.height = you.height
       this.leftPaddle.speed = you.speed
+      this.leftPaddle.score = you.score
 
       this.rightPaddle.x = 1900
       this.rightPaddle.y = opponent.y
       this.rightPaddle.width = opponent.width
       this.rightPaddle.height = opponent.height
       this.rightPaddle.speed = opponent.speed
+      this.rightPaddle.score = opponent.score
 
       this.ball.x = data.game.ballX
       this.ball.y = data.game.ballY
@@ -225,4 +235,12 @@ export default class GameCanvas extends Vue {
 </script>
 
 <style lang="scss" scoped>
+@font-face {
+    font-family: 'Bit5x3';
+    src: url('../assets/subset-Bit5x3.woff2') format('woff2'),
+        url('../assets/subset-Bit5x3.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
 </style>

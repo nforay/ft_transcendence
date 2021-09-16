@@ -63,6 +63,7 @@ export class Player {
   score: number = 0
   x: number
   y: number = 1000
+  positionTime: number = new Date().getTime();
   width: number = 75
   height: number = 250
   socketId: string = null
@@ -114,9 +115,31 @@ export class Game {
 
   move(playerId: string, yPosition: number) : void {
     if (playerId === this.player1.id)
+    {
+      const time = new Date().getTime();
+      this.player1.positionTime = time;
+      const delta = (time - this.player1.positionTime) / 1000;
+      yPosition = Math.min(Math.max(yPosition, this.player1.height / 2), 2000 - this.player1.height / 2);
+      if (delta > 0.3)
+        return;
+      const dist = Math.abs(yPosition - this.player1.y);
+      if (dist > this.player1.speed * delta + 50)
+        return;
       this.player1.y = yPosition;
+    }
     else if (playerId === this.player2.id)
+    {
+      const time = new Date().getTime();
+      this.player2.positionTime = time;
+      const delta = (time - this.player2.positionTime) / 1000;
+      yPosition = Math.min(Math.max(yPosition, this.player2.height / 2), 2000 - this.player2.height / 2);
+      if (delta > 0.3)
+        return;
+      const dist = Math.abs(yPosition - this.player2.y);
+      if (dist > this.player2.speed * delta + 50)
+        return;
       this.player2.y = yPosition;
+    }
   }
 
   startIfBothConnected() {
@@ -126,11 +149,12 @@ export class Game {
       setTimeout(() => { 
         this.state = GameState.IN_GAME;
         this.ballSpeed = 750;
-        let randomX = (Math.random() < 0.5 ? -1 : 1) * Math.random() * (0.8 - 0.4) + 0.4;
-        let randomY = Math.random() * (0.6 - 0.2) + 0.2;
-        this.ballAngle = Math.atan(randomY / randomX)
+        this.ballAngle = (Math.random() < 0.5 ? Math.PI : 0) + (Math.random() * (4/3 * Math.PI - 2/3 * Math.PI) + 2/3 * Math.PI);
         this.player1.speed = 550;
         this.player2.speed = 550;
+        const time = new Date().getTime();
+        this.player1.positionTime = time;
+        this.player2.positionTime = time;
       }, 3000);
     }
   }
@@ -143,7 +167,8 @@ export class Game {
       return
     }
     const delta = (time - this.lastUpdate) / 1000;
-    this.ballX += this.ballSpeed * Math.cos(this.ballAngle) * delta;
+    const xDir = Math.cos(this.ballAngle);
+    this.ballX += this.ballSpeed * xDir * delta;
     this.ballY += this.ballSpeed * Math.sin(this.ballAngle) * delta;
 
     if (this.ballX < 0) {
@@ -159,7 +184,7 @@ export class Game {
     if (this.ballY < 0 || this.ballY > 2000)
       this.ballAngle = -this.ballAngle;
 
-    if (this.collide(this.player1) || this.collide(this.player2))
+    if ((xDir < 0 && this.collide(this.player1)) || (xDir > 0 && this.collide(this.player2)))
       this.ballAngle = Math.PI - this.ballAngle;
 
     this.lastUpdate = time
@@ -198,6 +223,9 @@ export class Game {
       this.ballSpeed = 750;
       this.player1.speed = 550;
       this.player2.speed = 550;
+      const time = new Date().getTime();
+      this.player1.positionTime = time;
+      this.player2.positionTime = time;
     }, 3000)
   }
 }
