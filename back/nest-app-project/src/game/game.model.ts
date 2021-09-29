@@ -1,10 +1,15 @@
 import { Logger } from '@nestjs/common'
 import { Socket } from 'socket.io'
+import { UserEntity } from 'src/user/user.entity'
+import { Repository } from 'typeorm'
 import * as uuid from 'uuid'
+import { CreateGameDto } from './dto/create-game.dto'
+import { GameEntity } from './entities/game.entity'
 import { GameGateway } from './game.gateway'
 
 export class GameManager {
   public static instance: GameManager = new GameManager()
+  public gameRepository: Repository<GameEntity>
   private games: Game[] = []
 
   constructor() {
@@ -173,11 +178,19 @@ export class Game {
 
     if (this.ballX < 0) {
       this.player2.score++;
+      if (this.player2.score >= 7) {
+        this.end();
+        return;
+      }
       this.reset();
     }
 
     if (this.ballX > 2000) {
       this.player1.score++;
+      if (this.player1.score >= 7) {
+        this.end();
+        return;
+      }
       this.reset();
     }
 
@@ -188,6 +201,26 @@ export class Game {
       this.ballAngle = Math.PI - this.ballAngle;
 
     this.lastUpdate = time
+  }
+
+  async end() : Promise<void> {
+    this.state = GameState.FINISHED;
+    GameManager.instance.removeGame(this.id);
+
+    const winner = { winner: this.player1.score > this.player2.score ? this.player1.id : this.player2.id };
+    GameGateway.clients.find(client => client.id === this.player1.socketId)?.emit('gameFinished', winner);
+    GameGateway.clients.find(client => client.id === this.player2.socketId)?.emit('gameFinished', winner);
+
+    const createGameDto = new CreateGameDto();
+    createGameDto.player1Id = this.player1.id;
+    createGameDto.player2Id = this.player2.id;
+    createGameDto.player1Score = this.player1.score;
+    createGameDto.player2Score = this.player2.score;
+    createGameDto.player1Won = this.player1.score >= this.player2.score;
+    const game = await GameManager.instance.gameRepository.create(createGameDto);
+    if (!game)
+      return;
+    await GameManager.instance.gameRepository.save(game);
   }
 
   collide(player: Player) : boolean {
@@ -219,7 +252,7 @@ export class Game {
     this.player1.y = 1000;
     this.player2.y = 1000;
     setTimeout(() => {
-      this.ballAngle = Math.random() * Math.PI * 2
+      this.ballAngle = (Math.random() < 0.5 ? Math.PI : 0) + (Math.random() * (4/3 * Math.PI - 2/3 * Math.PI) + 2/3 * Math.PI);
       this.ballSpeed = 750;
       this.player1.speed = 550;
       this.player2.speed = 550;

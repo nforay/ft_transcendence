@@ -4,6 +4,7 @@ import { GameController } from './game.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { GameEntity } from './entities/game.entity';
 import { GameGateway } from './game.gateway';
+import { UserEntity } from 'src/user/user.entity';
 
 @Module({
   imports: [ TypeOrmModule.forFeature([GameEntity]) ],

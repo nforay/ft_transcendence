@@ -73,6 +73,9 @@ export default class GameCanvas extends Vue {
   pixel = 50
   invertX = false
 
+  finished = false
+  won = true
+
   lastUpdate = new Date().getTime()
 
   acceptablePositionDesync = 50 // In a 2000x2000 canvas
@@ -81,7 +84,7 @@ export default class GameCanvas extends Vue {
 
   ball = new Ball(0, 0, 0, 0, 0)
 
-  destroyed () {
+  destroyed () : void {
     this.socketManager.disconnect()
   }
 
@@ -138,6 +141,12 @@ export default class GameCanvas extends Vue {
     this.ctx.fillText(this.leftPaddle.score.toString(), this.canvas.width / 2 - 30, 100)
     this.ctx.textAlign = 'left'
     this.ctx.fillText(this.rightPaddle.score.toString(), this.canvas.width / 2 + 30, 100)
+
+    if (this.finished) {
+      this.ctx.font = '72px Arial'
+      this.ctx.textAlign = 'center'
+      this.ctx.fillText(this.won ? 'You won!' : 'You lost!', this.canvas.width / 2, this.canvas.height / 2)
+    }
   }
 
   initCanvas () : void {
@@ -192,6 +201,10 @@ export default class GameCanvas extends Vue {
     return Math.abs(currentPosition - theoreticalPosition) < this.acceptablePositionDesync
   }
 
+  finish () : void {
+    this.finished = true
+  }
+
   setupSocket () : void {
     this.socketManager.on('broadcast', (data) => {
       if (data.game.id !== this.gameId) {
@@ -223,6 +236,12 @@ export default class GameCanvas extends Vue {
 
     this.socketManager.on('gameCancelled', () => {
       router.push('/play')
+    })
+
+    this.socketManager.on('gameFinished', (data) => {
+      this.won = (data.winner === store.state.userId)
+      this.finished = true
+      this.finish()
     })
   }
 
