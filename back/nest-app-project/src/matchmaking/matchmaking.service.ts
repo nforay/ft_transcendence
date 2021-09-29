@@ -1,7 +1,7 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { GameManager } from 'src/game/game.model';
-import { UserEntity } from 'src/user/user.entity';
+import { GameManager } from '../game/game.model';
+import { UserEntity } from '../user/user.entity';
 import { Repository } from 'typeorm';
 import * as jwt from 'jsonwebtoken'
 

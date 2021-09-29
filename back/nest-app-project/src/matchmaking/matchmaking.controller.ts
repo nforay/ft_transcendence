@@ -1,5 +1,5 @@
 import { Controller, Get, Post } from '@nestjs/common';
-import { AuthUser } from 'src/shared/auth-user.decorator';
+import { AuthUser } from '../shared/auth-user.decorator';
 import { MatchmakingService } from './matchmaking.service';
 
 @Controller('matchmaking')

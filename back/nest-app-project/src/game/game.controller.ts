@@ -2,7 +2,7 @@ import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@n
 import { GameService } from './game.service';
 import { CreateGameDto } from './dto/create-game.dto';
 import { UpdateGameDto } from './dto/update-game.dto';
-import { AdminGuard } from 'src/shared/admin.guard';
+import { AdminGuard } from '../shared/admin.guard';
 
 @Controller('game')
 export class GameController {
