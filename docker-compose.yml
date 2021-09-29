@@ -5,13 +5,13 @@ services:
       context: ./back
       dockerfile: Dockerfile
     #restart: always
-    command: npm run start:dev
+    command: npm run start:prod
     # command: npm run start:prod
     container_name: back
     volumes:
       - ./back/uploads:/uploads
     ports:
-      - "3000:3000"
+      - "4000:4000"
   database:
     image: postgres:latest
     # restart: always
