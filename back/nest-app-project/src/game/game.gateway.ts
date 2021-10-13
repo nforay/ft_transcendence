@@ -51,6 +51,9 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
   }
 
   handleDisconnect(client: Socket, ...args: any[]) {
+    const game = GameManager.instance.getGameBySocketId(client.id);
+    if (game)
+      game.disconnect(client.id);
     GameGateway.clients.splice(GameGateway.clients.indexOf(client), 1);
     this.logger.log(`User disconnected !! ${client.id}`)
   }

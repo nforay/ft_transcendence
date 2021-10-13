@@ -44,6 +44,10 @@ export class GameManager {
     return this.games.find(game => game.player1.id === playerId || game.player2.id === playerId)
   }
 
+  getGameBySocketId(socketId: string): Game {
+    return this.games.find(game => game.player1.socketId === socketId || game.player2.socketId === socketId)
+  }
+
   cancelGameByPlayerId(playerId: string): void {
     const game = this.getGameByPlayerId(playerId)
     if (game)
@@ -203,11 +207,11 @@ export class Game {
     this.lastUpdate = time
   }
 
-  async end() : Promise<void> {
+  async end(winnerId? : string) : Promise<void> {
     this.state = GameState.FINISHED;
     GameManager.instance.removeGame(this.id);
 
-    const winner = { winner: this.player1.score > this.player2.score ? this.player1.id : this.player2.id };
+    const winner = { winner: (winnerId ? winnerId : (this.player1.score > this.player2.score ? this.player1.id : this.player2.id)) };
     GameGateway.clients.find(client => client.id === this.player1.socketId)?.emit('gameFinished', winner);
     GameGateway.clients.find(client => client.id === this.player2.socketId)?.emit('gameFinished', winner);
 
@@ -260,5 +264,10 @@ export class Game {
       this.player1.positionTime = time;
       this.player2.positionTime = time;
     }, 3000)
+  }
+
+  disconnect(socketId : string) : void {
+	const winner = this.player1.socketId === socketId ? this.player2 : this.player1;
+	this.end(winner.id);
   }
 }
