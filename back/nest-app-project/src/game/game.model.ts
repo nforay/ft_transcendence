@@ -73,7 +73,7 @@ export class Player {
   x: number
   y: number = 1000
   positionTime: number = new Date().getTime();
-  width: number = 75
+  width: number = 30
   height: number = 250
   socketId: string = null
   speed: number = 0
@@ -95,16 +95,24 @@ export class Game {
   player2: Player;
 
   ballX: number = 1000;
-  ballY: number = 1000;
-  ballRadius: number = 30
+  ballY: number = Math.random() * (1750 - 250) + 250;
+  ballRadius: number = 22
   ballAngle: number = 0;
   ballSpeed: number = 0;
+  speedBoost: number = 0;
+  collideLastFrame: boolean = false;
+
+  ballLastX: number = 0;
+  ballLastY: number = 0;
 
   lastUpdate: number = new Date().getTime();
 
   constructor(player1Id: string, player2Id: string) {
     this.player1 = new Player(player1Id, 100)
     this.player2 = new Player(player2Id, 1900)
+
+    this.ballLastX = this.ballX;
+    this.ballLastY = this.ballY;
 
     setTimeout(() => {
       if (!this.player1.socketId || !this.player2.socketId) {
@@ -157,10 +165,14 @@ export class Game {
       GameGateway.clients.find(client => client.id === this.player2.socketId)?.emit('startSoon', { delay: 3 })
       setTimeout(() => { 
         this.state = GameState.IN_GAME;
-        this.ballSpeed = 750;
-        this.ballAngle = (Math.random() < 0.5 ? Math.PI : 0) + (Math.random() * (4/3 * Math.PI - 2/3 * Math.PI) + 2/3 * Math.PI);
-        this.player1.speed = 550;
-        this.player2.speed = 550;
+        const dir = Math.random() < 0.5;
+        if (dir)
+          this.ballAngle = Math.PI - (Math.random() * (4*Math.PI/3 - 2*Math.PI/3) + 2*Math.PI/3);
+        else
+          this.ballAngle = (Math.random() * (4*Math.PI/3 - 2*Math.PI/3) + 2*Math.PI/3);
+        this.ballSpeed = 1000;
+        this.player1.speed = 1200;
+        this.player2.speed = 1200;
         const time = new Date().getTime();
         this.player1.positionTime = time;
         this.player2.positionTime = time;
@@ -177,8 +189,8 @@ export class Game {
     }
     const delta = (time - this.lastUpdate) / 1000;
     const xDir = Math.cos(this.ballAngle);
-    this.ballX += this.ballSpeed * xDir * delta;
-    this.ballY += this.ballSpeed * Math.sin(this.ballAngle) * delta;
+    this.ballX += (this.ballSpeed + this.speedBoost) * xDir * delta;
+    this.ballY += (this.ballSpeed + this.speedBoost) * Math.sin(this.ballAngle) * delta;
 
     if (this.ballX < 0) {
       this.player2.score++;
@@ -201,10 +213,22 @@ export class Game {
     if (this.ballY < 0 || this.ballY > 2000)
       this.ballAngle = -this.ballAngle;
 
-    if ((xDir < 0 && this.collide(this.player1)) || (xDir > 0 && this.collide(this.player2)))
-      this.ballAngle = Math.PI - this.ballAngle;
+    const collide1 = this.collide(this.player1, xDir), collide2 = this.collide(this.player2, xDir);
+    if ((xDir < 0 && collide1) || (xDir > 0 && collide2)) {
+        const player = (xDir < 0 ? this.player1 : this.player2);
+        const relativeIntersectY = player.y - this.ballY;
+        const normalizedRelativeIntersectionY = (relativeIntersectY/(player.height/2));
+        const bounceAngle = normalizedRelativeIntersectionY * (Math.PI/180 * 75);
+        this.speedBoost = Math.abs(this.ballSpeed * (normalizedRelativeIntersectionY * 0.5));
 
+        this.ballAngle = Math.atan2(this.ballSpeed*-Math.sin(bounceAngle), this.ballSpeed*Math.cos(bounceAngle));
+        if (xDir > 0)
+          this.ballAngle = Math.PI - this.ballAngle;
+    }
+    
     this.lastUpdate = time
+    this.ballLastX = this.ballX;
+    this.ballLastY = this.ballY;
   }
 
   async end(winnerId? : string) : Promise<void> {
@@ -227,39 +251,43 @@ export class Game {
     await GameManager.instance.gameRepository.save(game);
   }
 
-  collide(player: Player) : boolean {
-    const distX = Math.abs(this.ballX - player.x);
-    const distY = Math.abs(this.ballY - player.y);
-
-    if (distX > (player.width / 2 + this.ballRadius))
-      return false;
-    if (distY > (player.height / 2 + this.ballRadius))
-      return false;
+  collide(player: Player, xDir: number) : boolean {
+    const a = { x: this.ballX, y: this.ballY };
+    const b = { x: this.ballLastX, y: this.ballLastY };
+    const c = { x: (xDir < 0 ? player.x + player.width / 2 + this.ballRadius : player.x - player.width / 2 - this.ballRadius), y: player.y - player.height / 2};
+    const d = { x: (xDir < 0 ? player.x + player.width / 2 + this.ballRadius : player.x - player.width / 2 - this.ballRadius), y: player.y + player.height / 2};
+    const denominator = ((b.x - a.x) * (d.y - c.y)) - ((b.y - a.y) * (d.x - c.x));
+    const numerator1 = ((a.y - c.y) * (d.x - c.x)) - ((a.x - c.x) * (d.y - c.y));
+    const numerator2 = ((a.y - c.y) * (b.x - a.x)) - ((a.x - c.x) * (b.y - a.y));
     
-    if (distX <= (player.width / 2))
-      return true;
-    if (distY <= (player.height / 2))
-      return true;
-
-    const dx = distX - player.width / 2;
-    const dy = distY - player.height / 2;
-    return (dx * dx + dy * dy <= (this.ballRadius * this.ballRadius));
+    if (denominator == 0)
+      return numerator1 == 0 && numerator2 == 0;
+        
+    const r = numerator1 / denominator;
+    const s = numerator2 / denominator;
+    
+    return (r >= 0 && r <= 1) && (s >= 0 && s <= 1);
   }
 
   reset() : void {
     this.ballX = 1000;
-    this.ballY = 1000;
+    this.ballY = Math.random() * (1750 - 250) + 250;
     this.ballAngle = 0;
     this.ballSpeed = 0;
     this.player1.speed = 0;
     this.player2.speed = 0;
     this.player1.y = 1000;
     this.player2.y = 1000;
+    this.speedBoost = 0;
     setTimeout(() => {
-      this.ballAngle = (Math.random() < 0.5 ? Math.PI : 0) + (Math.random() * (4/3 * Math.PI - 2/3 * Math.PI) + 2/3 * Math.PI);
-      this.ballSpeed = 750;
-      this.player1.speed = 550;
-      this.player2.speed = 550;
+      const dir = Math.random() < 0.5;
+      if (dir)
+        this.ballAngle = Math.PI - (Math.random() * (4*Math.PI/3 - 2*Math.PI/3) + 2*Math.PI/3);
+      else
+        this.ballAngle = (Math.random() * (4*Math.PI/3 - 2*Math.PI/3) + 2*Math.PI/3);
+      this.ballSpeed = 1000;
+      this.player1.speed = 1200;
+      this.player2.speed = 1200;
       const time = new Date().getTime();
       this.player1.positionTime = time;
       this.player2.positionTime = time;
@@ -267,7 +295,7 @@ export class Game {
   }
 
   disconnect(socketId : string) : void {
-	const winner = this.player1.socketId === socketId ? this.player2 : this.player1;
-	this.end(winner.id);
+    const winner = this.player1.socketId === socketId ? this.player2 : this.player1;
+    this.end(winner.id);
   }
 }

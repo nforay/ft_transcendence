@@ -1,8 +1,7 @@
-import { HttpException, HttpStatus, Logger } from "@nestjs/common";
+import { Logger } from "@nestjs/common";
 import { MessageBody, OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit, SubscribeMessage, WebSocketGateway, WsResponse } from "@nestjs/websockets";
 import { Server } from "socket.io";
 import { Socket } from "socket.io";
-import { HitGameModelDto } from "./dto/hit-game-model.dto";
 import { MoveGameModelDto } from "./dto/move-game-model.dto";
 import { GameManager, GameState } from "./game.model";
 import * as jwt from 'jsonwebtoken'
@@ -22,7 +21,7 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
   public static clients: Array<Socket> = []
   logger: Logger = new Logger("GameGateway");
 
-  @Interval(33)
+  @Interval(20)
   sendGameData() : void {
     GameManager.instance.getGames().forEach(game => {
       game.update();
