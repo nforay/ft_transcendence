@@ -124,7 +124,7 @@ export default class GameCanvas extends Vue {
 
     this.ctx.fillStyle = 'grey'
     for (let i = this.pixel * 0.5 * scalingFactor; i < this.canvas.height - this.pixel * scalingFactor; i += this.pixel * scalingFactor * 2) {
-      this.ctx.fillRect(this.canvas.width / 2 - this.pixel / 2 * scalingFactor, i, this.pixel * scalingFactor, this.pixel * scalingFactor) // middle line
+      this.ctx.fillRect(this.canvas.width / 2 - this.pixel / 4 * scalingFactor, i, this.pixel / 2 * scalingFactor, this.pixel * scalingFactor) // middle line
     }
 
     this.ctx.fillStyle = this.paddleColor

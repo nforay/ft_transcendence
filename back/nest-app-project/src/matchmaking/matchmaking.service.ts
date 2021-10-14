@@ -65,8 +65,11 @@ export class MatchmakingService {
       this.paired.splice(this.paired.indexOf(pair), 1);
 
     const game = GameManager.instance.getGameByPlayerId(user.id);
-    if (!game)
-      throw new HttpException('Fatal: Game not found while it should exist', HttpStatus.INTERNAL_SERVER_ERROR);
+    if (!game) {
+      this.leave(authUser);
+      this.join(authUser);
+      return { found: false };
+    }
 
     const gameJwt = await jwt.sign({ gameId: game.id, playerId: user.id }, process.env.JWT_SECRET, {expiresIn: '1y'});
     return { found: true, opponent: pair.player1Id === user.id ? pair.player2Id : pair.player1Id, gameId: game.id, gameJwt };
@@ -77,15 +80,13 @@ export class MatchmakingService {
     if (!user)
       throw new HttpException('User not found', HttpStatus.NOT_FOUND);
     if (!this.queue.includes(user.id)) {
-      throw new HttpException('User not in queue', HttpStatus.BAD_REQUEST);
+      return { left: true };
     }
     this.queue.splice(this.queue.indexOf(user.id), 1);
 
     const pair = this.paired.find(pair => pair.hasId(user.id));
     if (pair)
       this.paired.splice(this.paired.indexOf(pair), 1);
-
-    GameManager.instance.cancelGameByPlayerId(user.id);
 
     return { left: true };
   }

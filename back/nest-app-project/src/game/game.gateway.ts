@@ -21,7 +21,7 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
   public static clients: Array<Socket> = []
   logger: Logger = new Logger("GameGateway");
 
-  @Interval(20)
+  @Interval(33)
   sendGameData() : void {
     GameManager.instance.getGames().forEach(game => {
       game.update();
@@ -52,7 +52,12 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
   handleDisconnect(client: Socket, ...args: any[]) {
     const game = GameManager.instance.getGameBySocketId(client.id);
     if (game)
-      game.disconnect(client.id);
+    {
+      if (game.state === GameState.IN_GAME)
+        game.cancel(client.id);
+      else
+        game.disconnect(client.id);
+    }
     GameGateway.clients.splice(GameGateway.clients.indexOf(client), 1);
     this.logger.log(`User disconnected !! ${client.id}`)
   }

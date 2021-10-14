@@ -48,12 +48,6 @@ export class GameManager {
     return this.games.find(game => game.player1.socketId === socketId || game.player2.socketId === socketId)
   }
 
-  cancelGameByPlayerId(playerId: string): void {
-    const game = this.getGameByPlayerId(playerId)
-    if (game)
-      game.cancelled = true
-  }
-
   removeGame(gameId: string) {
     const game = this.getGame(gameId)
     if (game)
@@ -88,7 +82,6 @@ export class Player {
 // Speed in units/second
 export class Game {
   id: string = uuid.v4();
-  cancelled = false;
   state = GameState.WAITING;
 
   player1: Player;
@@ -297,5 +290,10 @@ export class Game {
   disconnect(socketId : string) : void {
     const winner = this.player1.socketId === socketId ? this.player2 : this.player1;
     this.end(winner.id);
+  }
+
+  cancel(socketId : string) : void {
+	this.state = GameState.FINISHED;
+    GameManager.instance.removeGame(this.id);
   }
 }
