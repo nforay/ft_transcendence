@@ -10,11 +10,12 @@ export class UserEntity {
   @CreateDateColumn() created: Date;
 
   @Column({ type: 'text', unique: true }) name: string;
-  @Column({ type: 'text', unique: true }) email: string;
   @Column({ type: 'text', default: 'user' }) role: string;
   @Column({ type: 'text', default: '' }) bio: string;
   @Column({ type: 'boolean', default: false}) banned: boolean;
   @Column('text') password: string;
+  @Column({ type: 'boolean', default: false}) has2FA: boolean;
+  @Column({ type: 'text', default: ''}) twoFASecret: string;
 
   @BeforeInsert()
   private async hashPassword() {

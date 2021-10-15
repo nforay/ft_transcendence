@@ -11,10 +11,6 @@
         <input class="username" type="text" v-model="username" id="signup-username" placeholder="Username">
       </div>
       <div class="form-group">
-        <label for="email">Email</label>
-        <input class="email" type="text" v-model="email" id="signup-email" placeholder="Email">
-      </div>
-      <div class="form-group">
         <label for="password">Password</label>
         <input class="password" type="password" v-model="password" id="signup-password" placeholder="Password">
       </div>
@@ -37,7 +33,6 @@ import router from '@/router'
 @Component
 export default class SignUpForm extends Vue {
   public username = ''
-  public email = ''
   public password = ''
   public confirmPassword = ''
 
@@ -48,10 +43,6 @@ export default class SignUpForm extends Vue {
 
     if (this.username.length === 0) {
       this.errors.push('Username cannot be empty')
-    }
-
-    if (this.email.length === 0) {
-      this.errors.push('Email cannot be empty')
     }
 
     if (this.password.length === 0) {
@@ -77,7 +68,6 @@ export default class SignUpForm extends Vue {
       },
       body: JSON.stringify({
         name: this.username,
-        email: this.email,
         password: this.password
       })
     })

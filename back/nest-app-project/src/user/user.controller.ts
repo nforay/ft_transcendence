@@ -1,6 +1,6 @@
 import { Get, Post, Put, Delete, Param, Controller, Headers, Logger, Query, UploadedFile, HttpStatus, HttpException, Res, Header } from '@nestjs/common';
 import { UserService } from './user.service';
-import { UserDTO } from './user.dto'
+import { SecretCodeDTO, UserDTO } from './user.dto'
 import { Body } from '@nestjs/common';
 import { ParseUUIDPipe } from '@nestjs/common';
 import { UseGuards } from '@nestjs/common';
@@ -12,6 +12,7 @@ import * as path from 'path'
 import * as jwt from 'jsonwebtoken';
 import * as FileType from 'file-type'
 import * as fs from 'fs';
+import { AuthUser } from 'src/shared/auth-user.decorator';
 
 @Controller('user')
 export class UserController {
@@ -32,7 +33,22 @@ export class UserController {
   findByName(@Param('name') name: string) {
     return this.userService.findByName(name);
   }
+
+  @Get('qr2fa')
+  generateQrCode(@AuthUser() user) {
+    return this.userService.generateQrCode(user);
+  }
   
+  @Get('has2fa')
+  has2fa(@AuthUser() user) {
+    return this.userService.has2fa(user);
+  }
+
+  @Post('send2facode')
+  send2FACode(@Body() data: SecretCodeDTO) {
+    return this.userService.send2FACode(data);
+  }
+
   @Post('login')
   login(@Body() data: Partial<UserDTO>) {
     return this.userService.login(data);

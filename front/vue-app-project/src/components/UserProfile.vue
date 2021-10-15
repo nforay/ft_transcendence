@@ -74,7 +74,6 @@ export default class UserProfile extends Vue {
       const data = await response.json()
       store.commit('setToken', { token: data.token, expiresIn: data.expiresIn })
       store.commit('setUsername', this.username)
-      console.log(store.getters.username)
     } else {
       store.state.errors.push(response.statusText)
     }
@@ -138,7 +137,6 @@ export default class UserProfile extends Vue {
       // To force an image update, since url is the same
       this.avatar = data.avatar + '?' + new Date().getTime()
       store.commit('updateAvatar')
-      console.log(this.avatar)
     }
   }
 }

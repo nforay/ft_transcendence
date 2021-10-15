@@ -1,4 +1,4 @@
-import { IsString, IsEmail, Length, IsNotEmpty, ValidateIf } from 'class-validator'
+import { IsString, Length, IsNotEmpty, ValidateIf, IsUUID, IsNumberString } from 'class-validator'
 
 export class UserDTO {
   
@@ -6,10 +6,6 @@ export class UserDTO {
   @Length(3, 20)
   @IsNotEmpty()
   name: string;
-
-  @IsEmail()
-  @IsNotEmpty()
-  email: string;
 
   @IsString()
   @IsNotEmpty()
@@ -22,6 +18,18 @@ export class UserDTO {
   @IsString()
   @Length(0, 400)
   bio: string;
+}
+
+export class SecretCodeDTO {
+  @IsString()
+  @IsNotEmpty()
+  @IsUUID()
+  userId: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @IsNumberString()
+  code: string;
 }
 
 export class UserResponseObject {

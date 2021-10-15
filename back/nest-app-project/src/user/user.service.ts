@@ -1,16 +1,21 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as fs from 'fs';
 import * as jwt from 'jsonwebtoken';
 import * as path from 'path';
 import * as pngToJpeg from 'png-to-jpeg';
+import * as qrcode from 'qrcode';
+import * as speakeasy from 'speakeasy';
 import { Repository } from 'typeorm';
-import { UserDTO, UserResponseObject } from './user.dto';
+import { SecretCodeDTO, UserDTO, UserResponseObject } from './user.dto';
 import { UserEntity } from './user.entity';
+import { UserManager } from './user.model';
 
 @Injectable()
 export class UserService {
-  constructor(@InjectRepository(UserEntity) private repository: Repository<UserEntity>) {}
+  constructor(@InjectRepository(UserEntity) private repository: Repository<UserEntity>) {
+    UserManager.instance.userRepository = this.repository;
+  }
 
   async findAll() : Promise<UserResponseObject[]> {
     const users = await this.repository.find();
@@ -18,15 +23,11 @@ export class UserService {
   }
 
   async create(data: UserDTO) : Promise<UserResponseObject> {
-    const { name, email } = data;
+    const { name } = data;
 
-    let user = await this.repository.findOne({ where: { name } });
+    const user = await this.repository.findOne({ where: { name } });
     if (user)
       throw new HttpException('User already exists', HttpStatus.CONFLICT);
-    user = await this.repository.findOne({ where: { email } });
-    if (user)
-      throw new HttpException('User already exists', HttpStatus.CONFLICT);
-
 
     const newUser = this.repository.create(data);
     await this.repository.save(newUser);
@@ -118,5 +119,44 @@ export class UserService {
       fs.unlinkSync(file.path);
       throw new HttpException('Unexpected error trying to convert avatar to jpeg', HttpStatus.INTERNAL_SERVER_ERROR);
     }
+  }
+
+  public async has2fa(user: Partial<UserResponseObject>) : Promise<any> {
+    const id = user.id;
+    const db_user = await this.repository.findOne({ where: { id } })
+    if (!db_user)
+      throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+    return { enabled: db_user.has2FA };
+  }
+
+  public async generateQrCode(user: Partial<UserResponseObject>) : Promise<string> {
+    const id = user.id;
+    const db_user = await this.repository.findOne({ where: { id } })
+    if (!db_user)
+      throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+    
+    const secret = speakeasy.generateSecret();
+    const url = speakeasy.otpauthURL({
+      secret: secret.base32,
+      label: db_user.name,
+      issuer: 'ft_transcendence'
+    })
+    const qr_code = qrcode.toDataURL(url);
+
+    UserManager.instance.addSecret(db_user.id, secret.base32)
+    
+    return qr_code
+  }
+
+  async send2FACode(data: SecretCodeDTO) : Promise<any> {
+    const user = await this.repository.findOne({ where: { id: data.userId }})
+    if (!user)
+      throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+    const validSecret = UserManager.instance.validateSecret(user.id, data.code)
+    if (!validSecret)
+      throw new HttpException('Invalid Code', HttpStatus.UNAUTHORIZED);
+
+    await UserManager.instance.saveSecret(user.id)
+    return { valid: true }
   }
 }

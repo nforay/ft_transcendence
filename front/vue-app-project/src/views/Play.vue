@@ -61,11 +61,6 @@ export default class Play extends Vue {
       return
     }
     const data = await response.json()
-    if (data.accepted) {
-      console.log('Joined queue !')
-    } else {
-      console.log('Not accepted !')
-    }
     this.queueJoined = data.accepted
   }
 
@@ -85,11 +80,6 @@ export default class Play extends Vue {
       return
     }
     const data = await response.json()
-    if (data.left) {
-      console.log('Left queue !')
-    } else {
-      console.log('Did not left !')
-    }
     this.queueJoined = !data.left
   }
 }

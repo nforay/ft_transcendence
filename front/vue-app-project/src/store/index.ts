@@ -4,7 +4,7 @@ import { StoreType } from './types'
 
 Vue.use(Vuex)
 
-const store : StoreOptions<StoreType> = {
+export const store : StoreOptions<StoreType> = {
   state: {
     isLogged: false,
     username: '',
@@ -38,7 +38,7 @@ const store : StoreOptions<StoreType> = {
       document.cookie = 'Token=' + data.token + ';expires=' + expires
     },
 
-    expireToken (state : StoreType) : void {
+    expireToken () : void {
       document.cookie = 'Token=;expires=Thu, 01 Jan 1970 00:00:00 GMT'
     },
 
@@ -74,6 +74,22 @@ const store : StoreOptions<StoreType> = {
     avatarUpdate (state : StoreType) : number {
       return state.avatarUpdate
     }
+  }
+}
+
+export const globalFunctions = {
+  getToken () : string {
+    if (document.cookie.indexOf('Token=') === -1) {
+      return 'error'
+    }
+
+    const splitted = document.cookie.split('Token=')
+    if (!splitted || splitted.length <= 1) {
+      return 'error'
+    }
+
+    const token = splitted[1]
+    return token
   }
 }
 
