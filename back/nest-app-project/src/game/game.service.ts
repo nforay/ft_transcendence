@@ -5,11 +5,14 @@ import { CreateGameDto } from './dto/create-game.dto';
 import { ResponseGame } from './dto/response-game.dto';
 import { UpdateGameDto } from './dto/update-game.dto';
 import { GameEntity } from './entities/game.entity';
+import { GameManager } from './game.model';
 
 @Injectable()
 export class GameService {
 
-  constructor(@InjectRepository(GameEntity) private readonly gameRepository: Repository<GameEntity>) {}
+  constructor(@InjectRepository(GameEntity) private readonly gameRepository: Repository<GameEntity>) {
+    GameManager.instance.gameRepository = this.gameRepository;
+  }
 
   async create(createGameDto: CreateGameDto) : Promise<ResponseGame> {
     const game = this.gameRepository.create(createGameDto);

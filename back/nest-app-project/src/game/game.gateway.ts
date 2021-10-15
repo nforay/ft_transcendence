@@ -1,8 +1,7 @@
-import { HttpException, HttpStatus, Logger } from "@nestjs/common";
+import { Logger } from "@nestjs/common";
 import { MessageBody, OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit, SubscribeMessage, WebSocketGateway, WsResponse } from "@nestjs/websockets";
 import { Server } from "socket.io";
 import { Socket } from "socket.io";
-import { HitGameModelDto } from "./dto/hit-game-model.dto";
 import { MoveGameModelDto } from "./dto/move-game-model.dto";
 import { GameManager, GameState } from "./game.model";
 import * as jwt from 'jsonwebtoken'
@@ -51,6 +50,14 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
   }
 
   handleDisconnect(client: Socket, ...args: any[]) {
+    const game = GameManager.instance.getGameBySocketId(client.id);
+    if (game)
+    {
+      if (game.state === GameState.IN_GAME)
+        game.cancel(client.id);
+      else
+        game.disconnect(client.id);
+    }
     GameGateway.clients.splice(GameGateway.clients.indexOf(client), 1);
     this.logger.log(`User disconnected !! ${client.id}`)
   }
