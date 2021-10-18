@@ -4,7 +4,7 @@
     <hr/>
 
     <button v-show="!twoFAIsEnabled" @click="reditectTo2FA">Enable Two Factor Authentication</button>
-    <button v-show="twoFAIsEnabled">Disable Two Factor Authentication</button>
+    <button v-show="twoFAIsEnabled" @click="reditectToPassPage">Disable Two Factor Authentication</button>
   </div>
 </template>
 
@@ -54,6 +54,10 @@ export default class Settings extends Vue {
 
   public reditectTo2FA () : void {
     router.push('/enable2fa')
+  }
+
+  public reditectToPassPage () : void {
+    router.push('/disable2fapass')
   }
 }
 

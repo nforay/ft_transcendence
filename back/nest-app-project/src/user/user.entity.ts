@@ -24,7 +24,7 @@ export class UserEntity {
     this.password = await bcrypt.hash(this.password, 10);
   }
 
-  toResponseUser(withToken: boolean = false) : UserResponseObject {
+  toResponseUser(withToken: boolean = false, with2FA: boolean = false) : UserResponseObject {
     return {
       id: this.id,
       name: this.name,
@@ -32,6 +32,7 @@ export class UserEntity {
       bio: this.bio,
       avatar: `http://localhost:4000/user/avatar/${this.id}`,
       token: (withToken) ? this.token : undefined,
+      has2FA: (with2FA) ? this.has2FA : undefined,
       expiresIn: (withToken) ? this.expiresIn : undefined
     };
   }

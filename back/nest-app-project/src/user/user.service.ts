@@ -7,9 +7,9 @@ import * as pngToJpeg from 'png-to-jpeg';
 import * as qrcode from 'qrcode';
 import * as speakeasy from 'speakeasy';
 import { Repository } from 'typeorm';
-import { SecretCodeDTO, UserDTO, UserResponseObject } from './user.dto';
+import { SecretCodeDTO, UserDTO, UserPassDTO, UserResponseObject } from './user.dto';
 import { UserEntity } from './user.entity';
-import { UserManager } from './user.model';
+import { TwoFAUser, UserManager } from './user.model';
 
 @Injectable()
 export class UserService {
@@ -60,11 +60,17 @@ export class UserService {
 
   async login(data: Partial<UserDTO>) : Promise<UserResponseObject> {
     const { name, password } = data;
+    if (!name ||!password)
+      throw new HttpException('Missing data', HttpStatus.BAD_REQUEST);
     const user = await this.repository.findOne({ where: { name } });
     if (!user)
       throw new HttpException('User not found', HttpStatus.NOT_FOUND);
     if (!(await user.checkPassword(password)))
       throw new HttpException('Invalid password', HttpStatus.UNAUTHORIZED);
+    if (user.has2FA) {
+      UserManager.instance.twoFAlist.push(new TwoFAUser(user.id));
+      return user.toResponseUser(false, true);
+    }
     return user.toResponseUser(true);
   }
 
@@ -158,5 +164,42 @@ export class UserService {
 
     await UserManager.instance.saveSecret(user.id)
     return { valid: true }
+  }
+
+  async validate2FA(data: SecretCodeDTO) : Promise<UserResponseObject> {
+    const user = await this.repository.findOne({ where: { id: data.userId }})
+    if (!user)
+      throw new HttpException('User not found', HttpStatus.NOT_FOUND)
+    const validSecret = UserManager.instance.validateSecretToLog(user, data.code)
+    if (!validSecret)
+      throw new HttpException('Code is invalid or expired', HttpStatus.UNAUTHORIZED)
+
+    UserManager.instance.remove2FAUserToLog(user.id);
+
+    return user.toResponseUser(true)
+  }
+
+  async disable2FA(data: SecretCodeDTO) : Promise<any> {
+    const user = await this.repository.findOne({ where: { id: data.userId }})
+    if (!user)
+      throw new HttpException('User not found', HttpStatus.NOT_FOUND)
+    const validSecret = UserManager.instance.validateSecretToDisable(user, data.code)
+    if (!validSecret)
+      throw new HttpException('Code is invalid or expired', HttpStatus.UNAUTHORIZED)
+
+    UserManager.instance.remove2FAUserToDisable(user.id);
+    this.repository.update({ id: user.id }, { has2FA: false, twoFASecret: '' });
+    return { disabled: true }
+  }
+
+  async disable2FAPass(data: UserPassDTO) : Promise<any> {
+    const user = await this.repository.findOne({ where: { id: data.id } });
+    if (!user)
+      throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+    if (!(await user.checkPassword(data.password)))
+      throw new HttpException('Invalid password', HttpStatus.UNAUTHORIZED);
+
+    UserManager.instance.disableTwoFAlist.push(new TwoFAUser(user.id));
+    return { success: true }
   }
 }

@@ -1,15 +1,35 @@
 import { Repository } from "typeorm"
 import { UserEntity } from "./user.entity"
 import * as speakeasy from "speakeasy"
-import { Logger } from "@nestjs/common";
+import { Interval } from "@nestjs/schedule";
 
 export class SecretPair {
   userId: string;
   secret: string;
+  date: number
 
   constructor(userId: string, secret: string) {
     this.userId = userId
     this.secret = secret
+    this.date = new Date().getTime();
+  }
+
+  expired() : boolean {
+    return new Date().getTime() - this.date > 1000 * 60 * 2
+  }
+}
+
+export class TwoFAUser {
+  userId: string;
+  date: number;
+
+  constructor(userId: string) {
+    this.userId = userId
+    this.date = new Date().getTime();
+  }
+
+  expired() : boolean {
+    return new Date().getTime() - this.date > 1000 * 60 * 2
   }
 }
 
@@ -17,6 +37,15 @@ export class UserManager {
   public static instance: UserManager = new UserManager()
   public userRepository: Repository<UserEntity>
   public twoFASercrets: SecretPair[] = []
+  public twoFAlist: TwoFAUser[] = []
+  public disableTwoFAlist: TwoFAUser[] = []
+
+  @Interval(2000)
+  cleanExpired2FA() {
+    this.twoFAlist = this.twoFAlist.filter(elem => !elem.expired())
+    this.twoFASercrets = this.twoFASercrets.filter(elem => !elem.expired())
+    this.disableTwoFAlist = this.disableTwoFAlist.filter(elem => !elem.expired())
+  }
 
   constructor() {
     if (UserManager.instance) {
@@ -50,19 +79,55 @@ export class UserManager {
   }
 
   validateSecret(userId: string, code: string) : boolean {
-    const pair = this.twoFASercrets.find(elem => elem.userId == userId)
+    const pair = this.twoFASercrets.find(elem => elem.userId == userId && !elem.expired())
     if (!pair)
       return false;
-
-    Logger.log(pair.secret);
 
     const valid = speakeasy.totp.verify({
       secret: pair.secret,
       token: code,
     })
 
-    Logger.log("Valid : " + valid);
+    return valid
+  }
+
+  validateSecretToLog(user: UserEntity, code: string) : boolean {
+    const pair = this.twoFAlist.find(elem => elem.userId == user.id && !elem.expired())
+    if (!pair)
+      return false;
+
+    const valid = speakeasy.totp.verify({
+      secret: user.twoFASecret,
+      token: code,
+    })
 
     return valid
+  }
+
+  validateSecretToDisable(user: UserEntity, code: string) : boolean {
+    const pair = this.disableTwoFAlist.find(elem => elem.userId == user.id && !elem.expired())
+    if (!pair)
+      return false;
+
+    const valid = speakeasy.totp.verify({
+      secret: user.twoFASecret,
+      token: code,
+    })
+
+    return valid
+  }
+
+  remove2FAUserToLog(userId: string) : void {
+    const user = this.twoFAlist.find(elem => elem.userId == userId)
+    if (!user)
+      return;
+    this.twoFAlist.splice(this.twoFAlist.indexOf(user), 1)
+  }
+
+  remove2FAUserToDisable(userId: string) : void {
+    const user = this.disableTwoFAlist.find(elem => elem.userId == userId)
+    if (!user)
+      return;
+    this.disableTwoFAlist.splice(this.disableTwoFAlist.indexOf(user), 1)
   }
 }

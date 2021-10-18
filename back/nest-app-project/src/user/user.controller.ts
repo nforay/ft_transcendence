@@ -1,6 +1,6 @@
 import { Get, Post, Put, Delete, Param, Controller, Headers, Logger, Query, UploadedFile, HttpStatus, HttpException, Res, Header } from '@nestjs/common';
 import { UserService } from './user.service';
-import { SecretCodeDTO, UserDTO } from './user.dto'
+import { SecretCodeDTO, UserDTO, UserPassDTO } from './user.dto'
 import { Body } from '@nestjs/common';
 import { ParseUUIDPipe } from '@nestjs/common';
 import { UseGuards } from '@nestjs/common';
@@ -27,6 +27,21 @@ export class UserController {
   @Post()
   create(@Body() data: UserDTO) {
     return this.userService.create(data);
+  }
+
+  @Post('validate2fa')
+  validate2FA(@Body() data: SecretCodeDTO) {
+    return this.userService.validate2FA(data);
+  }
+
+  @Post('disable2fa')
+  disable2FA(@Body() data: SecretCodeDTO) {
+    return this.userService.disable2FA(data);
+  }
+
+  @Post('disable2fapass')
+  disable2FAPass(@Body() data: UserPassDTO) {
+    return this.userService.disable2FAPass(data);
   }
 
   @Get('username/:name')

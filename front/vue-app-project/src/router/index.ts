@@ -55,6 +55,30 @@ const routes: Array<RouteConfig> = [
     meta: {
       requiresAuth: true
     }
+  },
+  {
+    path: '/validate2fa',
+    name: 'Validate2FA',
+    component: () => import('../views/Validate2FA.vue'),
+    meta: {
+      requiresAuth: true
+    }
+  },
+  {
+    path: '/disable2fapass',
+    name: 'Disable2FAPass',
+    component: () => import('../views/Disable2FAPass.vue'),
+    meta: {
+      requiresAuth: true
+    }
+  },
+  {
+    path: '/disable2fa',
+    name: 'Disable2FA',
+    component: () => import('../views/Disable2FA.vue'),
+    meta: {
+      requiresAuth: true
+    }
   }
 ]
 

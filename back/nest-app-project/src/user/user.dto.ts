@@ -1,5 +1,17 @@
 import { IsString, Length, IsNotEmpty, ValidateIf, IsUUID, IsNumberString } from 'class-validator'
 
+export class UserPassDTO {
+  @IsString()
+  @IsNotEmpty()
+  @IsUUID()
+  id: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @Length(8, 32)
+  password: string;
+}
+
 export class UserDTO {
   
   @IsString()
@@ -38,6 +50,7 @@ export class UserResponseObject {
   role: string;
   bio: string;
   avatar: string;
+  has2FA?: boolean;
   token?: string;
   expiresIn?: number;
 }

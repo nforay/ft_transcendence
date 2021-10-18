@@ -62,17 +62,17 @@ export default class Enable2FA extends Vue {
     if (!response.ok) {
       this.twoFACode = ''
       this.errors.length = 0
-      this.errors.push('Invalid Code')
+      this.errors.push(response.statusText)
       return
     }
-    router.push('/settings')
+    router.push('/')
   }
 }
 </script>
 
 <style lang="scss" scoped>
   .error-text {
-    text-align: left;
+    text-align: center;
     color: red;
   }
 </style>
