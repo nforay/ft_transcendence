@@ -12,7 +12,7 @@ import { Interval } from '@nestjs/schedule'
     credentials: true,
     methods: ["GET", "POST"],
     transports: ['websocket', 'polling'],
-	origin: 'http://localhost'
+	origin: 'http://localhost:8080'
   },
   allowEIO3: true
 })
