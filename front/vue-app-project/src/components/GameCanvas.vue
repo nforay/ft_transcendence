@@ -37,15 +37,17 @@ export class Ball {
   x: number
   y: number
   radius: number
-  speed: number
-  angle: number
+  speedX: number
+  speedY: number
+  engage: boolean
 
-  constructor (x: number, y: number, radius: number, speed: number, angle: number) {
+  constructor (x: number, y: number, radius: number, speedX: number, speedY: number, engage: boolean) {
     this.x = x
     this.y = y
     this.radius = radius
-    this.speed = speed
-    this.angle = angle
+    this.speedX = speedX
+    this.speedY = speedY
+    this.engage = engage
   }
 }
 
@@ -78,9 +80,11 @@ export default class GameCanvas extends Vue {
 
   lastUpdate = new Date().getTime()
 
-  acceptablePositionDesync = 50 // In a 2000x2000 canvas
-  serverSyncFrequency = 1 / 30 // In seconds
+  acceptablePositionDesync = 200 // In a 2000x2000 canvas
+  serverSyncFrequency = 1 / 20 // In seconds
   timeBeforeServerSync = this.serverSyncFrequency
+  packetId = 0
+  updateId = -1
 
   ball = new Ball(0, 0, 0, 0, 0)
 
@@ -99,16 +103,18 @@ export default class GameCanvas extends Vue {
       // Send position data to server
       this.socketManager.sendMessage('move', {
         gameJwt: this.gameJwt,
-        yPosition: this.leftPaddle.y
+        yPosition: this.leftPaddle.y,
+        packetId: this.packetId
       })
       this.timeBeforeServerSync = this.serverSyncFrequency
+      this.packetId++
     }
 
     this.leftPaddle.y += this.leftPaddle.speed * dir * deltaTime
     this.leftPaddle.y = Math.min(Math.max(this.leftPaddle.y, this.leftPaddle.height / 2), 2000 - this.leftPaddle.height / 2)
 
-    this.ball.x += this.ball.speed * Math.cos(this.ball.angle) * deltaTime
-    this.ball.y += this.ball.speed * Math.sin(this.ball.angle) * deltaTime
+    this.ball.x += this.ball.speedX * deltaTime * (this.ball.engage ? 0.5 : 1)
+    this.ball.y += this.ball.speedY * deltaTime * (this.ball.engage ? 0.5 : 1)
 
     this.draw()
 
@@ -187,16 +193,16 @@ export default class GameCanvas extends Vue {
       this.ball.x = data.game.ballX
       this.ball.y = data.game.ballY
       this.ball.radius = data.game.ballRadius
-      this.ball.speed = data.game.ballSpeed
-      this.ball.angle = data.game.ballAngle
+      this.ball.speedX = data.game.ballXSpeed
+      this.ball.speedY = data.game.ballYSpeed
+      this.ball.engage = data.game.engage
     })
     this.socketManager.sendMessage('init', { gameJwt: this.gameJwt })
   }
 
-  validatePosition (currentPosition: number, oldPosition: number, speed: number, oldPositionTime: number) : boolean {
+  validatePosition (currentPosition: number, oldPosition: number, speed: number) : boolean {
     const direction = Math.sign(currentPosition - oldPosition)
-    const time = new Date().getTime()
-    const deltaTime = (time - oldPositionTime) / 1000
+    const deltaTime = 50 / 1000
     const theoreticalPosition = oldPosition + speed * direction * deltaTime
     return Math.abs(currentPosition - theoreticalPosition) < this.acceptablePositionDesync
   }
@@ -207,13 +213,14 @@ export default class GameCanvas extends Vue {
 
   setupSocket () : void {
     this.socketManager.on('broadcast', (data) => {
-      if (data.game.id !== this.gameId) {
+      if (data.game.id !== this.gameId || data.game.updateId <= this.updateId) {
         return
       }
+      this.updateId = data.game.updateId
       const you = store.state.userId === data.game.player1.id ? data.game.player1 : data.game.player2
       const opponent = store.state.userId === data.game.player1.id ? data.game.player2 : data.game.player1
       this.leftPaddle.x = 100
-      if (!this.validatePosition(this.leftPaddle.y, you.y, you.speed, data.time)) {
+      if (!this.validatePosition(this.leftPaddle.y, you.y, you.speed)) {
         this.leftPaddle.y = you.y
       }
       this.leftPaddle.width = you.width
@@ -230,8 +237,9 @@ export default class GameCanvas extends Vue {
 
       this.ball.x = data.game.ballX
       this.ball.y = data.game.ballY
-      this.ball.speed = data.game.ballSpeed
-      this.ball.angle = data.game.ballAngle
+      this.ball.speedX = data.game.ballXSpeed
+      this.ball.speedY = data.game.ballYSpeed
+      this.ball.engage = data.game.engage
     })
 
     this.socketManager.on('gameCancelled', () => {

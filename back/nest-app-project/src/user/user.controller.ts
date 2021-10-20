@@ -12,7 +12,7 @@ import * as path from 'path'
 import * as jwt from 'jsonwebtoken';
 import * as FileType from 'file-type'
 import * as fs from 'fs';
-import { AuthUser } from 'src/shared/auth-user.decorator';
+import { AuthUser } from '../shared/auth-user.decorator';
 
 @Controller('user')
 export class UserController {

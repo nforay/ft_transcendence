@@ -12,7 +12,7 @@ import { Interval } from '@nestjs/schedule'
     credentials: true,
     methods: ["GET", "POST"],
     transports: ['websocket', 'polling'],
-    origin: 'http://localhost:8080'
+	origin: 'http://localhost'
   },
   allowEIO3: true
 })
@@ -21,13 +21,15 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
   public static clients: Array<Socket> = []
   logger: Logger = new Logger("GameGateway");
 
-  @Interval(33)
+  @Interval(12)
   sendGameData() : void {
     GameManager.instance.getGames().forEach(game => {
       game.update();
       const time = new Date().getTime();
-      GameGateway.clients.find(client => client.id === game.player1.socketId)?.emit('broadcast', { game, time });
-      GameGateway.clients.find(client => client.id === game.player2.socketId)?.emit('broadcast', { game, time });
+      if (game.updateId % 2 === 0) {
+        GameGateway.clients.find(client => client.id === game.player1.socketId)?.emit('broadcast', { game, time });
+        GameGateway.clients.find(client => client.id === game.player2.socketId)?.emit('broadcast', { game, time });
+      }
     })
   }
 
@@ -85,7 +87,7 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       const decoded = await jwt.verify(data.gameJwt, process.env.JWT_SECRET);
       let game = GameManager.instance.getGame(decoded.gameId);
       if (game && game.state === GameState.IN_GAME) {
-        game.move(decoded.playerId, data.yPosition);
+        game.move(decoded.playerId, data.yPosition, data.packetId);
         return game
       }
     } catch (err) {

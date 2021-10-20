@@ -1,6 +1,6 @@
 import { Logger } from '@nestjs/common'
 import { Socket } from 'socket.io'
-import { UserEntity } from 'src/user/user.entity'
+import { UserEntity } from '../user/user.entity'
 import { Repository } from 'typeorm'
 import * as uuid from 'uuid'
 import { CreateGameDto } from './dto/create-game.dto'
@@ -67,6 +67,7 @@ export class Player {
   x: number
   y: number = 1000
   positionTime: number = new Date().getTime();
+  lastPacketId = -1;
   width: number = 30
   height: number = 250
   socketId: string = null
@@ -90,15 +91,18 @@ export class Game {
   ballX: number = 1000;
   ballY: number = Math.random() * (1750 - 250) + 250;
   ballRadius: number = 22
-  ballAngle: number = 0;
-  ballSpeed: number = 0;
-  speedBoost: number = 0;
+  ballXSpeed: number = 0;
+  ballYSpeed: number = 0;
   collideLastFrame: boolean = false;
+  speedBoost = 0;
 
   ballLastX: number = 0;
   ballLastY: number = 0;
 
+  engage = true
+
   lastUpdate: number = new Date().getTime();
+  updateId = 0;
 
   constructor(player1Id: string, player2Id: string) {
     this.player1 = new Player(player1Id, 100)
@@ -123,9 +127,12 @@ export class Game {
     }, 15000)
   }
 
-  move(playerId: string, yPosition: number) : void {
+  move(playerId: string, yPosition: number, packetId: number) : void {
     if (playerId === this.player1.id)
     {
+      if (packetId <= this.player1.lastPacketId)
+        return;
+      this.player1.lastPacketId = packetId;
       const time = new Date().getTime();
       this.player1.positionTime = time;
       const delta = (time - this.player1.positionTime) / 1000;
@@ -133,12 +140,15 @@ export class Game {
       if (delta > 0.3)
         return;
       const dist = Math.abs(yPosition - this.player1.y);
-      if (dist > this.player1.speed * delta + 50)
+      if (dist > this.player1.speed * delta + 200)
         return;
       this.player1.y = yPosition;
     }
     else if (playerId === this.player2.id)
     {
+      if (packetId <= this.player2.lastPacketId)
+        return;
+      this.player2.lastPacketId = packetId;
       const time = new Date().getTime();
       this.player2.positionTime = time;
       const delta = (time - this.player2.positionTime) / 1000;
@@ -146,7 +156,7 @@ export class Game {
       if (delta > 0.3)
         return;
       const dist = Math.abs(yPosition - this.player2.y);
-      if (dist > this.player2.speed * delta + 50)
+      if (dist > this.player2.speed * delta + 200)
         return;
       this.player2.y = yPosition;
     }
@@ -158,12 +168,8 @@ export class Game {
       GameGateway.clients.find(client => client.id === this.player2.socketId)?.emit('startSoon', { delay: 3 })
       setTimeout(() => { 
         this.state = GameState.IN_GAME;
-        const dir = Math.random() < 0.5;
-        if (dir)
-          this.ballAngle = Math.PI - (Math.random() * (4*Math.PI/3 - 2*Math.PI/3) + 2*Math.PI/3);
-        else
-          this.ballAngle = (Math.random() * (4*Math.PI/3 - 2*Math.PI/3) + 2*Math.PI/3);
-        this.ballSpeed = 1000;
+        this.ballXSpeed = (Math.random() < 0.5 ? -1 : 1) * 1000;
+        this.ballYSpeed = Math.random() * (700 - (-700)) + -700;
         this.player1.speed = 1200;
         this.player2.speed = 1200;
         const time = new Date().getTime();
@@ -174,6 +180,7 @@ export class Game {
   }
 
   update() : void {
+    this.updateId++;
     const time = new Date().getTime();
     if (this.state !== GameState.IN_GAME)
     {
@@ -181,45 +188,50 @@ export class Game {
       return
     }
     const delta = (time - this.lastUpdate) / 1000;
-    const xDir = Math.cos(this.ballAngle);
-    this.ballX += (this.ballSpeed + this.speedBoost) * xDir * delta;
-    this.ballY += (this.ballSpeed + this.speedBoost) * Math.sin(this.ballAngle) * delta;
+    const xDir = (this.ballXSpeed > 0 ? 1 : -1);
+    const yDir = (this.ballYSpeed > 0 ? 1 : -1);
+    this.ballX += (this.ballXSpeed + (xDir < 0 ? -this.speedBoost : this.speedBoost)) * delta * (this.engage ? 0.5 : 1);
+    this.ballY += this.ballYSpeed * delta;
 
     if (this.ballX < 0) {
       this.player2.score++;
-      if (this.player2.score >= 7) {
+      if (this.player2.score >= 7)
         this.end();
-        return;
-      }
-      this.reset();
+      else
+        this.reset();
+      this.lastUpdate = time;
+      return;
     }
 
     if (this.ballX > 2000) {
       this.player1.score++;
-      if (this.player1.score >= 7) {
+      if (this.player1.score >= 7)
         this.end();
-        return;
-      }
-      this.reset();
+      else
+        this.reset();
+      this.lastUpdate = time;
+      return;
     }
 
-    if (this.ballY < 0 || this.ballY > 2000)
-      this.ballAngle = -this.ballAngle;
+    if (this.ballY < 0 || this.ballY > 2000) {
+      this.ballYSpeed *= -1;
+      this.ballY = (this.ballY < 0 ? 0 : 2000);
+    }
 
     const collide1 = this.collide(this.player1, xDir), collide2 = this.collide(this.player2, xDir);
     if ((xDir < 0 && collide1) || (xDir > 0 && collide2)) {
+        this.engage = false
         const player = (xDir < 0 ? this.player1 : this.player2);
         const relativeIntersectY = player.y - this.ballY;
         const normalizedRelativeIntersectionY = (relativeIntersectY/(player.height/2));
-        const bounceAngle = normalizedRelativeIntersectionY * (Math.PI/180 * 75);
-        this.speedBoost = Math.abs(this.ballSpeed * (normalizedRelativeIntersectionY * 0.5));
-
-        this.ballAngle = Math.atan2(this.ballSpeed*-Math.sin(bounceAngle), this.ballSpeed*Math.cos(bounceAngle));
-        if (xDir > 0)
-          this.ballAngle = Math.PI - this.ballAngle;
+        const bounceX = normalizedRelativeIntersectionY * (500);
+        const bounceY = normalizedRelativeIntersectionY * (-1500);
+        this.speedBoost = Math.abs(bounceX);
+        this.ballYSpeed = bounceY;
+        this.ballXSpeed *= -1;
     }
     
-    this.lastUpdate = time
+    this.lastUpdate = time;
     this.ballLastX = this.ballX;
     this.ballLastY = this.ballY;
   }
@@ -245,40 +257,57 @@ export class Game {
   }
 
   collide(player: Player, xDir: number) : boolean {
-    const a = { x: this.ballX, y: this.ballY };
-    const b = { x: this.ballLastX, y: this.ballLastY };
-    const c = { x: (xDir < 0 ? player.x + player.width / 2 + this.ballRadius : player.x - player.width / 2 - this.ballRadius), y: player.y - player.height / 2};
-    const d = { x: (xDir < 0 ? player.x + player.width / 2 + this.ballRadius : player.x - player.width / 2 - this.ballRadius), y: player.y + player.height / 2};
+    /*const a = { x: this.ballX, y: this.ballY };
+    const b = { x: this.ballLastX, y: this.ballLastY };*/
+    const c = { x: this.ballX, y: this.ballY - this.ballRadius };
+    const d = { x: this.ballLastX, y: this.ballLastY - this.ballRadius };
+    const e = { x: this.ballX, y: this.ballY + this.ballRadius};
+    const f = { x: this.ballLastX, y: this.ballLastY + this.ballRadius};
+    const rect = {
+      left: (xDir < 0 ? player.x : player.x - player.width / 2 - this.ballRadius),
+      right: (xDir < 0 ? player.x + player.width / 2 + this.ballRadius : player.x),
+      bottom: player.y + player.height / 2,
+      top: player.y - player.height / 2
+    };
+    return this.lineLineCollide(c, d, { x: rect.left, y: rect.top }, { x: rect.right, y: rect.top })
+        || this.lineLineCollide(c, d, { x: rect.left, y: rect.bottom }, { x: rect.right, y: rect.bottom })
+        || this.lineLineCollide(c, d, { x: rect.left, y: rect.top }, { x: rect.left, y: rect.bottom })
+        || this.lineLineCollide(c, d, { x: rect.right, y: rect.top }, { x: rect.right, y: rect.bottom })
+        || this.lineLineCollide(e, f, { x: rect.left, y: rect.top }, { x: rect.right, y: rect.top })
+        || this.lineLineCollide(e, f, { x: rect.left, y: rect.bottom }, { x: rect.right, y: rect.bottom })
+        || this.lineLineCollide(e, f, { x: rect.left, y: rect.top }, { x: rect.left, y: rect.bottom })
+        || this.lineLineCollide(e, f, { x: rect.right, y: rect.top }, { x: rect.right, y: rect.bottom })
+  }
+
+  lineLineCollide(a, b, c, d) {
     const denominator = ((b.x - a.x) * (d.y - c.y)) - ((b.y - a.y) * (d.x - c.x));
     const numerator1 = ((a.y - c.y) * (d.x - c.x)) - ((a.x - c.x) * (d.y - c.y));
     const numerator2 = ((a.y - c.y) * (b.x - a.x)) - ((a.x - c.x) * (b.y - a.y));
     
     if (denominator == 0)
       return numerator1 == 0 && numerator2 == 0;
-        
+    
     const r = numerator1 / denominator;
     const s = numerator2 / denominator;
-    
-    return (r >= 0 && r <= 1) && (s >= 0 && s <= 1);
+    return ((r >= 0 && r <= 1) && (s >= 0 && s <= 1));
   }
 
   reset() : void {
     this.ballX = 1000;
     this.ballY = Math.random() * (1750 - 250) + 250;
-    this.ballAngle = 0;
-    this.ballSpeed = 0;
+    this.ballLastX = this.ballX
+    this.ballLastY = this.ballY
+    this.ballXSpeed = 0;
+    this.ballYSpeed = 0;
     this.player1.speed = 0;
     this.player2.speed = 0;
     this.player1.y = 1000;
     this.player2.y = 1000;
     this.speedBoost = 0;
+    this.engage = true;
     setTimeout(() => {
-      const dir = Math.random() < 0.5;
-      if (dir)
-        this.ballAngle = Math.PI - (Math.random() * (4*Math.PI/3 - 2*Math.PI/3) + 2*Math.PI/3);
-      else
-        this.ballAngle = (Math.random() * (4*Math.PI/3 - 2*Math.PI/3) + 2*Math.PI/3);
-      this.ballSpeed = 1000;
+      this.ballXSpeed = (Math.random() < 0.5 ? -1 : 1) * 1000;
+      this.ballYSpeed = Math.random() * (700 - (-700)) + -700;
       this.player1.speed = 1200;
       this.player2.speed = 1200;
       const time = new Date().getTime();
