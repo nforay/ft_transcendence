@@ -7,9 +7,10 @@ import { HttpErrorFilter } from './shared/http-error.filter';
 import { LoggingInterceptor } from './shared/logging.interceptor';
 import { QueryErrorFilter } from './shared/query-error.filter';
 import { UserModule } from './user/user.module';
+import { ChatModule } from './chat/chat.module';
 
 @Module({
-  imports: [ TypeOrmModule.forRoot(), UserModule ],
+  imports: [ TypeOrmModule.forRoot(), UserModule, ChatModule ],
   controllers: [AppController],
   providers: [AppService,
     {

@@ -2,6 +2,7 @@ import Vue from 'vue'
 import VueRouter, { RouteConfig } from 'vue-router'
 import Home from '../views/Home.vue'
 import store from '@/store'
+import ChatBox from '../components/Chat.vue'
 
 Vue.use(VueRouter)
 
@@ -31,6 +32,11 @@ const routes: Array<RouteConfig> = [
     meta: {
       requiresAuth: true
     }
+  },
+  {
+    path: '/chat',
+    name: 'Chat',
+    component: ChatBox
   }
 ]
 
