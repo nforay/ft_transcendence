@@ -7,7 +7,15 @@ import { ChatMessage } from './chat.dto';
 import { MessageBody, SubscribeMessage, WebSocketGateway, WebSocketServer, OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit, ConnectedSocket } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io'
 
-@WebSocketGateway()
+@WebSocketGateway(8082, {
+	cors: {
+	  credentials: true,
+	  methods: ["GET", "POST"],
+	  transports: ['websocket', 'polling'],
+	  origin: 'http://localhost:8080'
+	},
+	allowEIO3: true
+  })
 export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit {
 
     @WebSocketServer()

@@ -12,6 +12,8 @@ services:
       - ./back/uploads:/uploads
     ports:
       - "3000:3000"
+      - "8081:8081"
+      - "8082:8082"
   database:
     image: postgres:latest
     # restart: always

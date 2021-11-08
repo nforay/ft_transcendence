@@ -22,7 +22,7 @@ export default {
       identification: false,
       chatMsg: new ChatMessage(),
       messages: [],
-      socket: io.connect('ws://localhost:8080')
+      socket: io.connect('ws://localhost:8082')
     }
   },
   created: function () {

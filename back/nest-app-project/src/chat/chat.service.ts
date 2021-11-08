@@ -108,6 +108,7 @@ export class ChatService {
 			//TODO /y (<user>) accepter le dernier challenge ou le challenge d'un utilisateur
 			//! Bugs:
 			//! Quitter et rejoindre un channel fait perdre le status de ban ou mute
+			//! Si le owner join un autre chan son chan n'est pas supprimé
 			case "/ping":
 				msg.name = "";
 				msg.msg = "pong";
@@ -593,7 +594,7 @@ export class ChatService {
 					let c = this.getChan(this.clients.get(client).chan);
 					if (c != null) {
 						if (this.chans[c].users.has(client) == true) {
-							if (this.chans[c].users.get(client)[0] == -1) {
+							if (this.chans[c].users.get(client)[0] == -1) { //! AAAAAAAAAAAAAAAAAAAAAAA
 								msg.name == "";
 								msg.msg == "You are banned";
 								client.emit('recv_message', msg);
