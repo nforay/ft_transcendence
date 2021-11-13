@@ -1,5 +1,5 @@
 <template>
-  <div class="chat">
+  <div class="chat" id="chatboxdiv" @wheel="stopAutoScroll">
     <ul v-for="message in messages" :key="message.id">
       <span v-html="message.message.name"></span>{{ message.message.msg }}
     </ul>
@@ -26,6 +26,7 @@ export default {
     }
   },
   created: function () {
+    this.autoScrollDiv()
     this.socket.on('connect', () => {
       console.log('Connected to socket')
     })
@@ -35,12 +36,13 @@ export default {
         data.name = '<a href=\'#/\'>' + data.name + '</a>: ' //! Attention il ne faut pas de username avec du HTML sinon grosse faille
       }
       this.messages.push({
-        id: this.messages.length === 20 ? this.messages[0].id : this.messages.length,
+        id: this.messages.length === 150 ? this.messages[0].id : this.messages.length,
         message: data
       })
-      if (this.messages.length === 21) {
+      if (this.messages.length === 151) {
         this.messages.shift()
       }
+      this.autoScrollDiv()
     })
   },
   methods: {
@@ -57,6 +59,17 @@ export default {
         this.identification = true
         this.socket.emit('identification', this.chatMsg.name)
       }
+    },
+    autoScrollDiv: function () {
+      if (this.autoScrollInterval === null) {
+        this.autoScrollInterval = setInterval(() => {
+          document.getElementById('chatboxdiv').scrollTop = document.getElementById('chatboxdiv').scrollHeight
+        }, 50)
+      }
+    },
+    stopAutoScroll: function () {
+      clearInterval(this.autoScrollInterval)
+      this.autoScrollInterval = null
     }
   }
 }
@@ -67,8 +80,12 @@ export default {
 // #2D0033 surligné violet
 
 .chat {
+  overflow:scroll;
   overflow-wrap: break-word;
-  text-align: center;
+  width: 400px;
+  height: 400px;
+//   border: thin #000 solid;
+  text-align: left;
   background-color: rgb(34, 34, 34);
   color: #ffffff;
 
