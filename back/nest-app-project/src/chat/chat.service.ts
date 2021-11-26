@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ChatMessage } from './chat.dto';
 import { Socket } from 'socket.io';
+import { ChanService } from './chan.service';
 
 class chatChannel {
 	name: string;
@@ -25,6 +26,7 @@ class clientIdentifier {
 @Injectable()
 export class ChatService {
 	private clients: Map<Socket, clientIdentifier> = new Map<Socket, clientIdentifier>();
+
 	private chans: chatChannel[] = [{
 		"name": "general",
 		"owner": null,
