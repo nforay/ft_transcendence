@@ -11,13 +11,13 @@ export class ChanEntity {
 	@Column({ type: 'text' })
 	owner: string;
 
-	@Column({ default: [] })
-	admins: Array<string>;
+	@Column("text", { default: [] })
+	admins: string[];
 
-	@Column({ default: [] })
-	users: Array<string>;
+	@Column("text", { default: [] })
+	users: string[];
 
-	@Column({ default: new Map<string, [number, number]>() })
+	@Column("text", { default: new Map<string, [number, number]>() })
 	bans: Map<string, [number, number]>;
 	// String is the name, number is the ban
 	// status, 0 is not banned, -1 is banned

@@ -87,12 +87,14 @@ export class ChatService {
 				let banstate = await this.chanService.checkban(c, uname);
 				switch (banstate) {
 					case "-1":
+						console.log("User is banned");
 						msg.name == "";
 						msg.msg == "You are banned";
 						client.emit('recv_message', msg);
 						return;
 
 					case "0":
+						console.log("Sending message from user " + uname + " to channel " + c);
 						let cusers = await this.chanService.getUsers(c);
 						for (let index = 0; index < cusers.length; index++) {
 							if (this.users.get(cusers[index]).blocked.indexOf(uname) == -1)
@@ -101,6 +103,7 @@ export class ChatService {
 						return;
 
 					default:
+						console.log("User is muted");
 						msg.name = "";
 						msg.msg = "You are muted for " + banstate + " seconds";
 						client.emit('recv_message', msg);
