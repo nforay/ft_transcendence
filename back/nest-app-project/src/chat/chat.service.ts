@@ -4,20 +4,6 @@ import { Socket } from 'socket.io';
 import { ChanService } from './chan.service';
 import { readlink } from 'fs';
 
-class chatChannel {
-	name: string;
-	owner: Socket;
-	admins: Socket[];
-	users: Map<Socket, [number, number]>;
-	// Socket is the user, number is the ban
-	// status, 0 is not banned, -1 is banned
-	// and any other number is the timestamp
-	// of the mute, the second number is the
-	// duration
-	type: string;
-	passwd: string;
-}
-
 class clientIdentifier {
 	sock: Socket;
 	chan: string;
