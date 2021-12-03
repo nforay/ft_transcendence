@@ -21,22 +21,22 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect, On
 	}
 
 	@SubscribeMessage('send_message')
-	recvMessage(@MessageBody() msg: ChatMessage, @ConnectedSocket() client: Socket) {
+	async recvMessage(@MessageBody() msg: ChatMessage, @ConnectedSocket() client: Socket) {
 		console.log('Message received ' + msg.name + " " + msg.msg);
-		this.chatService.execute(msg, client)
+		await this.chatService.execute(msg, client)
 	}
 
 	@SubscribeMessage('identification')
-	idClient(@MessageBody() name: string, @ConnectedSocket() client: Socket) {
-		this.chatService.addClient(name, client);
+	async idClient(@MessageBody() name: string, @ConnectedSocket() client: Socket) {
+		await this.chatService.addClient(name, client);
 	}
 
 	handleConnection(client: Socket, ...args: any[]) {
 		console.log('User connected');
 	}
 
-	handleDisconnect(client: Socket) {
-		this.chatService.rmClient(client);
+	async handleDisconnect(client: Socket) {
+		await this.chatService.rmClient(client);
 		console.log('User disconnected');
 	}
 
