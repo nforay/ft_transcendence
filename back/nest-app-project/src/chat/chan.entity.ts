@@ -17,8 +17,17 @@ export class ChanEntity {
 	@Column("text", { default: [] })
 	users: string[];
 
-	@Column("text", { default: new Map<string, [number, number]>() })
-	bans: Map<string, [number, number]>;
+	// @Column("text", { default: new Map<string, [number, number]>() })
+	// bans: Map<string, [number, number]>;
+
+	@Column("text", { default: [] })
+	bansID: string[];
+
+	@Column("text", { default: [] })
+	bansST: number[];
+
+	@Column("text", { default: [] })
+	bansTS: number[];
 	// String is the name, number is the ban
 	// status, 0 is not banned, -1 is banned
 	// and any other number is the timestamp
@@ -31,11 +40,16 @@ export class ChanEntity {
 	@Column({ type: 'text', default: null })
 	passwd: string;
 
-	addUser(uname: string, pwd: string = ""): boolean {
+	addUser(uname: string, pwd: string = null): boolean {
 		if (pwd != this.passwd)
 			return false;
-		if (this.users.indexOf(uname) != -1)
+		if (this.users.indexOf(uname) == -1) {
 			this.users.push(uname);
+			console.log("ADDED USER TO CHANNEL " + this.name + " DATABASE");
+		}
+		else {
+			console.log("USER ALREADY EXISTS IN CHANNEL " + this.name + " DATABASE");
+		}
 		return true;
 	}
 
@@ -43,32 +57,44 @@ export class ChanEntity {
 		let i = this.users.indexOf(uname);
 		if (i != -1)
 			this.users.splice(i);
-		if (this.bans.has(uname)) {
-			if (this.bans.get(uname)[0] == 0)
-				this.bans.delete(uname);
-			else if (this.bans.get(uname)[0] > 0) {
+		let id = this.bansID.indexOf(uname);
+		if (id != -1) {
+			if (this.bansST[id] == 0) {
+				this.bansID.splice(id);
+				this.bansST.splice(id);
+				this.bansTS.splice(id);
+			}
+			else if (this.bansST[id] > 0) {
 				let now = new Date();
-				if (now.getTime() >= (this.bans.get(uname)[0] + this.bans.get(uname)[1]))
-					this.bans.delete(uname);
+				if (now.getTime() >= (this.bansST[id] + this.bansTS[id])) {
+					this.bansID.splice(id);
+					this.bansST.splice(id);
+					this.bansTS.splice(id);
+				}
 			}
 		}
 	}
 
 	checkban(uname: string): number {
-		if (this.bans.has(uname)) {
-			if (this.bans.get(uname)[0] == 0) {
-				this.bans.delete(uname);
+		let id = this.bansID.indexOf(uname);
+		if (id != -1) {
+			if (this.bansST[id] == 0) {
+				this.bansID.splice(id);
+				this.bansST.splice(id);
+				this.bansTS.splice(id);
 				return 0;
 			}
-			else if (this.bans.get(uname)[0] > 0) {
+			else if (this.bansST[id] > 0) {
 				let now = new Date();
-				if (now.getTime() >= (this.bans.get(uname)[0] + this.bans.get(uname)[1])) {
-					this.bans.delete(uname);
+				if (now.getTime() >= (this.bansST[id] + this.bansTS[id])) {
+					this.bansID.splice(id);
+					this.bansST.splice(id);
+					this.bansTS.splice(id);
 					return 0;
 				}
 				else {
 					let now = new Date();
-					return (this.bans.get(uname)[0] + this.bans.get(uname)[1]) - now.getTime();
+					return (this.bansST[id] + this.bansTS[id]) - now.getTime();
 				}
 			}
 			else
@@ -78,16 +104,25 @@ export class ChanEntity {
 	}
 
 	banUser(uname: string, duration: number = 0) {
-		if (duration == 0)
-			this.bans.set(uname, [-1, 0]);
+		if (duration == 0) {
+			this.bansID.push(uname);
+			this.bansST.push(-1);
+			this.bansTS.push(0);
+		}
 		else {
 			let now = new Date();
-			this.bans.set(uname, [now.getTime(), duration]);
+			this.bansID.push(uname);
+			this.bansST.push(now.getTime());
+			this.bansTS.push(duration);
 		}
 	}
 
 	unbanUser(uname: string) {
-		if (this.bans.has(uname))
-			this.bans.delete(uname);
+		let id = this.bansID.indexOf(uname);
+		if (id != -1) {
+			this.bansID.splice(id);
+			this.bansST.splice(id);
+			this.bansTS.splice(id);
+		}
 	}
 }

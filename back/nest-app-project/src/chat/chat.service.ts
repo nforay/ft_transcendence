@@ -95,9 +95,18 @@ export class ChatService {
 
 					case "0":
 						console.log("Sending message from user " + uname + " to channel " + c);
-						let cusers = await this.chanService.getUsers(c);
+						let cusers: string[];
+						await this.chanService.getUsers(c).then((resolve) => {
+							cusers = resolve;
+							console.log("TOUT VA BIEN");
+						}).catch(() => {
+							console.log("AAAAAAAAAAAAAAAAAAAAA");
+						});
 						for (let index = 0; index < cusers.length; index++) {
-							if (this.users.get(cusers[index]).blocked.indexOf(uname) == -1)
+							console.log(cusers[index]);
+						}
+						for (let index = 0; index < cusers.length; index++) {
+							if (this.users.has(cusers[index]) && this.users.get(cusers[index]).blocked.indexOf(uname) == -1)
 								this.users.get(cusers[index]).sock.emit('recv_message', msg);
 						}
 						return;
@@ -118,7 +127,11 @@ export class ChatService {
 			chan: "general",
 			blocked: []
 		});
-		await this.chanService.join("general", uname);
+		await this.chanService.join("general", uname).then((resolve) => {
+			console.log(resolve);
+		}).catch((reason) => {
+			console.log(reason);
+		});
 		console.log("Added client " + uname);
 	}
 
