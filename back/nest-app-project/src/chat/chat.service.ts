@@ -101,12 +101,15 @@ export class ChatService {
 				}
 				else {
 					await this.chanService.getPublicChannels().then((resolve) => {
-						msg.msg = resolve;
+						for (let index = 0; index < resolve.length; index++) {
+							msg.msg = resolve[index];
+							client.emit('recv_message', msg);
+						}
 					}).catch((reject) => {
-						console.log("/chans CATCH BLOCK, REJECT MESSAGE: " + reject);
+						console.log("/chans CATCH BLOCK, REJECT MESSAGE: " + reject[0]);
+						client.emit('recv_message', msg);
 					});
 				}
-				client.emit('recv_message', msg);
 				return;
 
 			case "/users":
@@ -226,15 +229,16 @@ export class ChatService {
 							for (let index = 0; index < cusers.length; index++) {
 								if (this.users.has(cusers[index]) && this.users.get(cusers[index]).blocked.indexOf(uname) == -1) {
 									this.users.get(cusers[index]).chan = "general";
-									this.users.get(cusers[index]).sock.emit('recv_message', msg);
+									if (cusers[index] != uname)
+										this.users.get(cusers[index]).sock.emit('recv_message', msg);
 								}
 							}
 						});
 					}).catch((reject) => {
 						msg.msg = reject;
-						client.emit('recv_message', msg);
 					});
 				}
+				client.emit('recv_message', msg);
 				return;
 
 			case "/join":

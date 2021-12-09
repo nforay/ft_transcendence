@@ -35,15 +35,14 @@ export class ChanService {
 		});
 	}
 
-	async getPublicChannels(): Promise<string> {
+	async getPublicChannels(): Promise<string[]> {
 		let chans = await this.chanRepo.find({ where: { type: "public" } });
 		if (!chans || chans.length == 0)
-			return Promise.resolve("There is no channels");
-		let ret: string;
+			return Promise.resolve(["There is no channels"]);
+		let ret: string[] = new Array<string>();
 		for (let key = 0; key < chans.length; key++) {
-			ret = ret + chans[key].name + ' ';
+			ret.push(chans[key].name);
 		}
-		ret = ret.trimEnd();
 		return Promise.resolve(ret);
 	}
 
@@ -122,6 +121,7 @@ export class ChanService {
 			return Promise.reject("Can't find channel");
 		if (chan.settype(uname, "public") == false)
 			return Promise.reject("You are not the owner of this channel");
+		await this.chanRepo.save(chan);
 		return Promise.resolve("Channel " + cname + " set to public");
 	}
 
@@ -131,6 +131,7 @@ export class ChanService {
 			return Promise.reject("Can't find channel");
 		if (chan.settype(uname, "private") == false)
 			return Promise.reject("You are not the owner of this channel");
+		await this.chanRepo.save(chan);
 		return Promise.resolve("Channel " + cname + " set to private");
 	}
 
