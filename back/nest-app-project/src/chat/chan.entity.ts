@@ -11,22 +11,22 @@ export class ChanEntity {
 	@Column({ type: 'text' })
 	owner: string;
 
-	@Column("text", { default: [] })
+	@Column("text", { default: [], array: true })
 	admins: string[];
 
-	@Column("text", { default: [] })
+	@Column("text", { default: [], array: true })
 	users: string[];
 
 	// @Column("text", { default: new Map<string, [number, number]>() })
 	// bans: Map<string, [number, number]>;
 
-	@Column("text", { default: [] })
+	@Column("text", { default: [], array: true })
 	bansID: string[];
 
-	@Column("text", { default: [] })
+	@Column("text", { default: [], array: true })
 	bansST: number[];
 
-	@Column("text", { default: [] })
+	@Column("text", { default: [], array: true })
 	bansTS: number[];
 	// String is the name, number is the ban
 	// status, 0 is not banned, -1 is banned
@@ -46,6 +46,7 @@ export class ChanEntity {
 		if (this.users.indexOf(uname) == -1) {
 			this.users.push(uname);
 			console.log("ADDED USER TO CHANNEL " + this.name + " DATABASE");
+			console.log(this.users);
 		}
 		else {
 			console.log("USER ALREADY EXISTS IN CHANNEL " + this.name + " DATABASE");
@@ -56,22 +57,58 @@ export class ChanEntity {
 	rmUser(uname: string) {
 		let i = this.users.indexOf(uname);
 		if (i != -1)
-			this.users.splice(i);
+			this.users.splice(i, 1);
 		let id = this.bansID.indexOf(uname);
 		if (id != -1) {
 			if (this.bansST[id] == 0) {
-				this.bansID.splice(id);
-				this.bansST.splice(id);
-				this.bansTS.splice(id);
+				this.bansID.splice(id, 1);
+				this.bansST.splice(id, 1);
+				this.bansTS.splice(id, 1);
 			}
 			else if (this.bansST[id] > 0) {
 				let now = new Date();
 				if (now.getTime() >= (this.bansST[id] + this.bansTS[id])) {
-					this.bansID.splice(id);
-					this.bansST.splice(id);
-					this.bansTS.splice(id);
+					this.bansID.splice(id, 1);
+					this.bansST.splice(id, 1);
+					this.bansTS.splice(id, 1);
 				}
 			}
+		}
+	}
+
+	settype(uname: string, newtype: string): boolean {
+		if (uname != this.owner)
+			return false;
+		this.type = newtype;
+		return true;
+	}
+
+	checkowner(uname: string): boolean {
+		if (uname == this.owner)
+			return true;
+		return false;
+	}
+
+	checkadmin(uname: string): boolean {
+		if (this.checkowner(uname) == true || this.admins.indexOf(uname) != -1) {
+			return true;
+		}
+		return false;
+	}
+
+	op(uname: string, newop: string = null): string {
+		if (newop == null)
+			return this.admins.toString();
+		if (uname != this.owner)
+			return "You are not the owner of this channel";
+		let a = this.admins.indexOf(newop);
+		if (a == -1) {
+			this.admins.push(newop);
+			return "User " + newop + " is now an operator";
+		}
+		else {
+			this.admins.splice(a, 1);
+			return "User " + newop + " is not an operator anymore";
 		}
 	}
 
@@ -79,17 +116,17 @@ export class ChanEntity {
 		let id = this.bansID.indexOf(uname);
 		if (id != -1) {
 			if (this.bansST[id] == 0) {
-				this.bansID.splice(id);
-				this.bansST.splice(id);
-				this.bansTS.splice(id);
+				this.bansID.splice(id, 1);
+				this.bansST.splice(id, 1);
+				this.bansTS.splice(id, 1);
 				return 0;
 			}
 			else if (this.bansST[id] > 0) {
 				let now = new Date();
 				if (now.getTime() >= (this.bansST[id] + this.bansTS[id])) {
-					this.bansID.splice(id);
-					this.bansST.splice(id);
-					this.bansTS.splice(id);
+					this.bansID.splice(id, 1);
+					this.bansST.splice(id, 1);
+					this.bansTS.splice(id, 1);
 					return 0;
 				}
 				else {
@@ -120,9 +157,9 @@ export class ChanEntity {
 	unbanUser(uname: string) {
 		let id = this.bansID.indexOf(uname);
 		if (id != -1) {
-			this.bansID.splice(id);
-			this.bansST.splice(id);
-			this.bansTS.splice(id);
+			this.bansID.splice(id, 1);
+			this.bansST.splice(id, 1);
+			this.bansTS.splice(id, 1);
 		}
 	}
 }

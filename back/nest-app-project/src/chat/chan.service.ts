@@ -5,83 +5,160 @@ import { Repository } from 'typeorm';
 
 @Injectable()
 export class ChanService {
+	public promIni: Promise<boolean>;
+
 	constructor(@InjectRepository(ChanEntity) private chanRepo: Repository<ChanEntity>) {
-		this.cchan("general", "");
+		this.promIni = new Promise<boolean>((resolve) => {
+			this.chanRepo.findOne({ where: { name: "general" } }).then((chan) => {
+				if (chan) {
+					resolve(true);
+					return;
+				}
+				const newchan = this.chanRepo.create({
+					name: "general",
+					owner: "",
+					type: "public"
+				});
+				this.chanRepo.save(newchan).finally(() => {
+					resolve(true);
+				});
+			}).catch(() => {
+				const newchan = this.chanRepo.create({
+					name: "general",
+					owner: "",
+					type: "public"
+				});
+				this.chanRepo.save(newchan).finally(() => {
+					resolve(true);
+				});
+			});
+		});
 	}
 
-	async getUsers(name: string): Promise<string[]> {
-		let chan = await this.chanRepo.findOne({ where: { name } });
-		console.log("CHAN ENTITY");
-		console.log(chan.name);
+	async getPublicChannels(): Promise<string> {
+		let chans = await this.chanRepo.find({ where: { type: "public" } });
+		if (!chans || chans.length == 0)
+			return Promise.resolve("There is no channels");
+		let ret: string;
+		for (let key = 0; key < chans.length; key++) {
+			ret = ret + chans[key].name + ' ';
+		}
+		ret = ret.trimEnd();
+		return Promise.resolve(ret);
+	}
+
+	async getUsers(cname: string): Promise<string[]> {
+		let chan = await this.chanRepo.findOne({ where: { name: cname } });
 		if (!chan)
 			return Promise.reject(["Can't find channel"]);
+		console.log("users in chan " + cname + " are " + chan.users + ".");
 		return Promise.resolve(chan.users);
 	}
 
-	async leave(name: string, uname: string): Promise<string> {
-		let chan = await this.chanRepo.findOne({ where: { name } });
+	async op(cname: string, uname: string, newop: string = null): Promise<string> {
+		let chan = await this.chanRepo.findOne({ where: { name: cname } });
+		if (!chan)
+			return Promise.reject("Can't find channel");
+		let ret = chan.op(uname, newop);
+		await this.chanRepo.save(chan);
+		return Promise.resolve(ret);
+	}
+
+	async checkadmin(cname: string, uname: string): Promise<boolean> {
+		let chan = await this.chanRepo.findOne({ where: { name: cname } });
+		if (!chan)
+			return Promise.reject(false);
+		return Promise.resolve(chan.checkadmin(uname));
+	}
+
+	async leave(cname: string, uname: string): Promise<string> {
+		let chan = await this.chanRepo.findOne({ where: { name: cname } });
 		if (!chan)
 			return Promise.reject("Can't find channel");
 		chan.rmUser(uname);
-		return Promise.resolve("Left channel " + name);
+		await this.chanRepo.save(chan);
+		return Promise.resolve("Left channel " + cname);
 	}
 
-	async join(name: string, uname: string, pwd: string = null): Promise<string> {
-		let chan = await this.chanRepo.findOne({ where: { name } });
+	async join(cname: string, uname: string, pwd: string = null): Promise<string> {
+		let chan = await this.chanRepo.findOne({ where: { name: cname } });
 		if (!chan)
 			return Promise.reject("Can't find channel");
 		if (chan.addUser(uname, pwd) == false)
 			return Promise.reject("Wrong password");
-		return Promise.resolve("Moved to channel " + name);
+		await this.chanRepo.save(chan);
+		return Promise.resolve("Moved to channel " + cname);
 	}
 
-	async cchan(name: string, owner: string): Promise<string> {
-		let chan = await this.chanRepo.findOne({ where: { name } });
+	async cchan(cname: string, newowner: string): Promise<string> {
+		let chan = await this.chanRepo.findOne({ where: { name: cname } });
 		if (chan)
 			return Promise.reject("Chan already exists");
 
 		const newchan = this.chanRepo.create({
-			name: name,
-			owner: owner
+			name: cname,
+			owner: newowner
 		});
 		await this.chanRepo.save(newchan);
-		return Promise.resolve("Channel " + name + " has been created");
+		return Promise.resolve("Channel " + cname + " has been created");
 	}
 
-	async dchan(name: string): Promise<string> {
-		const chan = await this.chanRepo.findOne({ where: { name } });
+	async dchan(cname: string, uname: string): Promise<string> {
+		const chan = await this.chanRepo.findOne({ where: { name: cname } });
 		if (!chan)
 			return Promise.reject("Can't find channel");
+		if (chan.checkowner(uname) == false)
+			return Promise.reject("You are not the owner of this channel");
 		for (let index = 0; index < chan.users.length; index++) {
-			this.join(chan.users[index], "general");
+			this.join("general", chan.users[index]);
 		}
 		await this.chanRepo.delete(chan);
-		return Promise.resolve("Channel " + name + " has been deleted");
+		return Promise.resolve("Channel " + cname + " has been deleted");
 	}
 
-	async checkban(name: string, uname: string): Promise<string> {
-		let chan = await this.chanRepo.findOne({ where: { name } });
+	async setpublic(cname: string, uname: string) {
+		const chan = await this.chanRepo.findOne({ where: { name: cname } });
+		if (!chan)
+			return Promise.reject("Can't find channel");
+		if (chan.settype(uname, "public") == false)
+			return Promise.reject("You are not the owner of this channel");
+		return Promise.resolve("Channel " + cname + " set to public");
+	}
+
+	async setprivate(cname: string, uname: string) {
+		const chan = await this.chanRepo.findOne({ where: { name: cname } });
+		if (!chan)
+			return Promise.reject("Can't find channel");
+		if (chan.settype(uname, "private") == false)
+			return Promise.reject("You are not the owner of this channel");
+		return Promise.resolve("Channel " + cname + " set to private");
+	}
+
+	async checkban(cname: string, uname: string): Promise<string> {
+		let chan = await this.chanRepo.findOne({ where: { name: cname } });
 		if (!chan)
 			return Promise.reject("Can't find channel");
 		return Promise.resolve(chan.checkban(uname) + "");
 	}
 
-	async ban(name: string, uname: string, duration: number = 0): Promise<string> {
-		let chan = await this.chanRepo.findOne({ where: { name } });
+	async ban(cname: string, uname: string, duration: number = 0): Promise<string> {
+		let chan = await this.chanRepo.findOne({ where: { name: cname } });
 		if (!chan)
 			return Promise.reject("Can't find channel");
 		chan.banUser(uname, duration * 1000);
+		await this.chanRepo.save(chan);
 		if (duration == 0)
-			return Promise.resolve("Banned user " + uname + " from channel " + name);
+			return Promise.resolve("Banned user " + uname + " from channel " + cname);
 		else
-			return Promise.resolve("Muted user " + uname + " from channel " + name + " for " + duration + " seconds");
+			return Promise.resolve("Muted user " + uname + " from channel " + cname + " for " + duration + " seconds");
 	}
 
-	async unban(name: string, uname: string): Promise<string> {
-		let chan = await this.chanRepo.findOne({ where: { name } });
+	async unban(cname: string, uname: string): Promise<string> {
+		let chan = await this.chanRepo.findOne({ where: { name: cname } });
 		if (!chan)
 			return Promise.reject("Can't find channel");
 		chan.unbanUser(uname);
-		return Promise.resolve("Unbanned user " + uname + " from channel " + name);
+		await this.chanRepo.save(chan);
+		return Promise.resolve("Unbanned user " + uname + " from channel " + cname);
 	}
 }

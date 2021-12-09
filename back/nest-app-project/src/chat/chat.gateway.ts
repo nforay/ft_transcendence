@@ -23,12 +23,16 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect, On
 	@SubscribeMessage('send_message')
 	async recvMessage(@MessageBody() msg: ChatMessage, @ConnectedSocket() client: Socket) {
 		console.log('Message received ' + msg.name + " " + msg.msg);
-		await this.chatService.execute(msg, client)
+		await this.chatService.execute(msg, client).catch(() => (
+			console.log("this.chatService.execute() uncatched rejected promise")
+		));
 	}
 
 	@SubscribeMessage('identification')
 	async idClient(@MessageBody() name: string, @ConnectedSocket() client: Socket) {
-		await this.chatService.addClient(name, client);
+		await this.chatService.addClient(name, client).catch(() => (
+			console.log("this.chatService.addClient() uncatched rejected promise")
+		));
 	}
 
 	handleConnection(client: Socket, ...args: any[]) {
@@ -36,11 +40,14 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect, On
 	}
 
 	async handleDisconnect(client: Socket) {
-		await this.chatService.rmClient(client);
+		await this.chatService.rmClient(client).catch(() => (
+			console.log("this.chatService.rmClient() uncatched rejected promise")
+		));
 		console.log('User disconnected');
 	}
 
-	afterInit(server: Server) {
+	async afterInit(server: Server) {
+		await this.chatService.init();
 		console.log('Socket is live')
 	}
 }
