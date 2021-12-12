@@ -67,7 +67,9 @@ export class ChanService {
 		let chan = await this.chanRepo.findOne({ where: { name: cname } });
 		if (!chan)
 			return Promise.reject(false);
-		return Promise.resolve(chan.checkadmin(uname));
+		let ret = chan.checkadmin(uname);
+		console.log("cname = " + cname + " uname = " + uname + " ret = " + ret);
+		return Promise.resolve(ret);
 	}
 
 	async leave(cname: string, uname: string): Promise<string> {
@@ -139,7 +141,10 @@ export class ChanService {
 		let chan = await this.chanRepo.findOne({ where: { name: cname } });
 		if (!chan)
 			return Promise.reject("Can't find channel");
-		return Promise.resolve(chan.checkban(uname) + "");
+		let dur = chan.checkban(uname);
+		if (dur > 0)
+			dur /= 1000;
+		return Promise.resolve(dur.toString());
 	}
 
 	async ban(cname: string, uname: string, duration: number = 0): Promise<string> {

@@ -67,7 +67,7 @@ export class ChanEntity {
 			}
 			else if (this.bansST[id] > 0) {
 				let now = new Date();
-				if (now.getTime() >= (this.bansST[id] + this.bansTS[id])) {
+				if (+now.getTime() >= (+this.bansST[id] + +this.bansTS[id])) {
 					this.bansID.splice(id, 1);
 					this.bansST.splice(id, 1);
 					this.bansTS.splice(id, 1);
@@ -90,10 +90,7 @@ export class ChanEntity {
 	}
 
 	checkadmin(uname: string): boolean {
-		if (this.checkowner(uname) == true || this.admins.indexOf(uname) != -1) {
-			return true;
-		}
-		return false;
+		return this.checkowner(uname) || this.admins.indexOf(uname) != -1
 	}
 
 	op(uname: string, newop: string = null): string {
@@ -123,15 +120,14 @@ export class ChanEntity {
 			}
 			else if (this.bansST[id] > 0) {
 				let now = new Date();
-				if (now.getTime() >= (this.bansST[id] + this.bansTS[id])) {
+				if (+now.getTime() >= (+this.bansST[id] + +this.bansTS[id])) {
 					this.bansID.splice(id, 1);
 					this.bansST.splice(id, 1);
 					this.bansTS.splice(id, 1);
 					return 0;
 				}
 				else {
-					let now = new Date();
-					return (this.bansST[id] + this.bansTS[id]) - now.getTime();
+					return (+this.bansST[id] + +this.bansTS[id]) - +now.getTime();
 				}
 			}
 			else
@@ -148,6 +144,7 @@ export class ChanEntity {
 		}
 		else {
 			let now = new Date();
+			console.log("uname = " + uname + " now.getTime() = " + now.getTime() + " duration = " + duration)
 			this.bansID.push(uname);
 			this.bansST.push(now.getTime());
 			this.bansTS.push(duration);

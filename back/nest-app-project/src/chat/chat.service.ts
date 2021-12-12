@@ -189,8 +189,18 @@ export class ChatService {
 					msg.msg = "User " + Arr[1] + " doesn't exist or isn't connected";
 					return;
 				}
-				msg.msg = "pm: " + msg.msg;
-				this.users.get(Arr[1]).sock.emit('recv_message', msg);
+				if (this.users.get(Arr[1]).blocked.indexOf(uname) != -1) {
+					msg.name = "";
+					msg.msg = "You are blocked";
+				}
+				else {
+					msg.msg = "pm: ";
+					for (let index = 2; index < Arr.length; index++) {
+						msg.msg += Arr[index] + " ";
+					}
+					msg.msg = msg.msg.trimEnd();
+					this.users.get(Arr[1]).sock.emit('recv_message', msg);
+				}
 				client.emit('recv_message', msg);
 				return;
 
@@ -273,7 +283,7 @@ export class ChatService {
 					msg.msg = "Wrong number of arguments";
 				}
 				else {
-					await this.chanService.checkadmin(this.users.get(uname).chan, Arr[1]).then(async (resolve) => {
+					await this.chanService.checkadmin(this.users.get(uname).chan, uname).then(async (resolve) => {
 						if (resolve == true) {
 							if (this.users.has(Arr[1]) == false) {
 								msg.msg = "can't find user " + Arr[1];
@@ -281,6 +291,7 @@ export class ChatService {
 							else {
 								await this.chanService.leave(this.users.get(Arr[1]).chan, Arr[1]);
 								await this.chanService.join("general", Arr[1]);
+								this.users.get(Arr[1]).chan = "general";
 								msg.msg = "You've been kicked";
 								this.users.get(Arr[1]).sock.emit('recv_message', msg);
 								msg.msg = "kicked user " + Arr[1];
@@ -329,9 +340,14 @@ export class ChatService {
 							msg.msg = "You are not operator of this channel";
 						}
 						else {
-							await this.chanService.ban(this.users.get(uname).chan, Arr[1], parseInt(Arr[2])).then((resolveban) => {
-								msg.msg = resolveban;
-							});
+							let dur = parseInt(Arr[2], 10);
+							console.log("Banning user " + Arr[1] + " for " + dur + " seconds");
+							if (dur != NaN && dur > 0)
+								await this.chanService.ban(this.users.get(uname).chan, Arr[1], dur).then((resolveban) => {
+									msg.msg = resolveban;
+								});
+							else
+								msg.msg = "Wrong duration";
 						}
 					}).catch(() => {
 						msg.msg = "Can't find channel";
@@ -378,18 +394,17 @@ export class ChatService {
 				let banstate = await this.chanService.checkban(c, uname);
 				switch (banstate) {
 					case "-1":
-						console.log("User is banned");
-						msg.name == "";
-						msg.msg == "You are banned";
+						console.log("User is banned pd");
+						msg.name = "";
+						msg.msg = "You are banned";
 						client.emit('recv_message', msg);
 						return;
 
 					case "0":
-						console.log("Sending message from user " + uname + " to channel " + c);
 						let cusers: string[];
 						await this.chanService.getUsers(c).then((resolve) => {
 							cusers = resolve;
-							console.log("TOUT VA BIEN");
+							console.log("Sending message from user " + uname + " to channel " + c);
 						}).catch(() => {
 							console.log("AAAAAAAAAAAAAAAAAAAAA");
 						});
