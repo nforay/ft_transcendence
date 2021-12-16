@@ -1,6 +1,7 @@
 <template>
   <div id="app">
     <app-header />
+    <Chat v-if="this.isLogged" />
     <div id="nav">
       <router-link to="/">Home</router-link> |
       <router-link to="/play">Play</router-link> |
@@ -14,11 +15,15 @@
 
 <script lang="ts">
 import AppHeader from '@/components/AppHeader.vue'
+import Chat from './components/Chat.vue'
+import { mapGetters } from 'vuex'
 
 export default {
   components: {
-    AppHeader
-  }
+    AppHeader,
+    Chat
+  },
+  computed: { ...mapGetters(['isLogged']) }
 }
 </script>
 

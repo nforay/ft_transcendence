@@ -1,170 +1,176 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ChanEntity } from './chan.entity';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+
+export class ChanManager
+{
+  public static instance: ChanManager = new ChanManager()
+  public chans: Array<ChanEntity> = []
+
+  findByName(name: string) {
+    return this.chans.find(chan => chan.name === name)
+  }
+
+  create(name: string, owner: string, args?: any) {
+    if (this.findByName(name) !== undefined)
+      throw "Channel Already Exists"
+    const chan = new ChanEntity(name, owner, args)
+    this.chans.push(chan)
+    return chan
+  }
+
+	delete(name : string) {
+    const chan = this.findByName(name)
+		if (chan === undefined)
+      throw "Channel doesn't exists"
+		if (chan.name == "general")
+			throw "You cannot delete this channel"
+		this.chans.splice(this.chans.indexOf(chan), 1)
+	}
+
+	getPublicChannels() {
+    return this.chans.filter(chan => chan.type === "public")
+  }
+}
 
 @Injectable()
 export class ChanService {
-	public promIni: Promise<boolean>;
 
-	constructor(@InjectRepository(ChanEntity) private chanRepo: Repository<ChanEntity>) {
-		this.promIni = new Promise<boolean>((resolve) => {
-			this.chanRepo.findOne({ where: { name: "general" } }).then((chan) => {
-				if (chan) {
-					resolve(true);
-					return;
-				}
-				const newchan = this.chanRepo.create({
-					name: "general",
-					owner: "",
-					type: "public"
-				});
-				this.chanRepo.save(newchan).finally(() => {
-					resolve(true);
-				});
-			}).catch(() => {
-				const newchan = this.chanRepo.create({
-					name: "general",
-					owner: "",
-					type: "public"
-				});
-				this.chanRepo.save(newchan).finally(() => {
-					resolve(true);
-				});
-			});
-		});
+	constructor(private chanRepo: ChanEntity) {
+    const chan = ChanManager.instance.findByName("general");
+    if (chan)
+      return;
+
+    try {
+    	ChanManager.instance.create("general", "", { type: "public" });
+    } catch (e) {
+      Logger.log(e);
+    }
 	}
 
-	async getPublicChannels(): Promise<string[]> {
-		let chans = await this.chanRepo.find({ where: { type: "public" } });
+	getPublicChannels(): string[] {
+		const chans = ChanManager.instance.getPublicChannels();
 		if (!chans || chans.length == 0)
-			return Promise.resolve(["There is no channels"]);
+			throw "There is no public channels";
 		let ret: string[] = new Array<string>();
 		for (let key = 0; key < chans.length; key++) {
 			ret.push(chans[key].name);
 		}
-		return Promise.resolve(ret);
+		return ret;
 	}
 
-	async getUsers(cname: string): Promise<string[]> {
-		let chan = await this.chanRepo.findOne({ where: { name: cname } });
+	getUsers(cname: string): string[] {
+		const chan = ChanManager.instance.findByName(cname);
 		if (!chan)
-			return Promise.reject(["Can't find channel"]);
-		console.log("users in chan " + cname + " are " + chan.users + ".");
-		return Promise.resolve(chan.users);
+			throw "Can't find channel";
+		return chan.users;
 	}
 
 	async op(cname: string, uname: string, newop: string = null): Promise<string> {
-		let chan = await this.chanRepo.findOne({ where: { name: cname } });
+		const chan = ChanManager.instance.findByName(cname);
 		if (!chan)
-			return Promise.reject("Can't find channel");
-		let ret = chan.op(uname, newop);
-		await this.chanRepo.save(chan);
-		return Promise.resolve(ret);
+			throw "Can't find channel"
+		let ret = await chan.op(uname, newop);
+		return ret;
 	}
 
 	async checkadmin(cname: string, uname: string): Promise<boolean> {
-		let chan = await this.chanRepo.findOne({ where: { name: cname } });
+		const chan = ChanManager.instance.findByName(cname);
 		if (!chan)
-			return Promise.reject(false);
-		let ret = chan.checkadmin(uname);
-		console.log("cname = " + cname + " uname = " + uname + " ret = " + ret);
-		return Promise.resolve(ret);
+			throw false
+		let ret = await chan.checkadmin(uname);
+		return ret;
 	}
 
-	async leave(cname: string, uname: string): Promise<string> {
-		let chan = await this.chanRepo.findOne({ where: { name: cname } });
+	leave(cname: string, uname: string): string {
+		const chan = ChanManager.instance.findByName(cname);
 		if (!chan)
-			return Promise.reject("Can't find channel");
+			throw "Can't find channel";
 		chan.rmUser(uname);
-		await this.chanRepo.save(chan);
-		return Promise.resolve("Left channel " + cname);
+    if (chan.users.length == 0)
+    {
+      try { ChanManager.instance.delete(cname); }
+      catch (err) {}
+      return "Left channel " + cname;
+    }
+    chan.owner = chan.users[0]
+		return "Left channel " + cname;
 	}
 
-	async join(cname: string, uname: string, pwd: string = null): Promise<string> {
-		let chan = await this.chanRepo.findOne({ where: { name: cname } });
+	join(cname: string, uname: string, pwd: string = null): string {
+		const chan = ChanManager.instance.findByName(cname);
 		if (!chan)
-			return Promise.reject("Can't find channel");
+			throw "Can't find channel";
 		if (chan.addUser(uname, pwd) == false)
-			return Promise.reject("Wrong password");
-		await this.chanRepo.save(chan);
-		return Promise.resolve("Moved to channel " + cname);
+			throw "Wrong password";
+		return "Moved to channel " + cname;
 	}
 
-	async cchan(cname: string, newowner: string): Promise<string> {
-		let chan = await this.chanRepo.findOne({ where: { name: cname } });
+	cchan(cname: string, newowner: string, pass: string): string {
+		const chan = ChanManager.instance.findByName(cname);
 		if (chan)
-			return Promise.reject("Chan already exists");
+			throw "Channel already exists"
 
-		const newchan = this.chanRepo.create({
-			name: cname,
-			owner: newowner
-		});
-		await this.chanRepo.save(newchan);
-		return Promise.resolve("Channel " + cname + " has been created");
+		ChanManager.instance.create(cname, newowner, { passwd: pass });
+		return "Channel " + cname + " has been created";
 	}
 
-	async dchan(cname: string, uname: string): Promise<string> {
-		const chan = await this.chanRepo.findOne({ where: { name: cname } });
+	dchan(cname: string, uname: string): string {
+		const chan = ChanManager.instance.findByName(cname);
 		if (!chan)
-			return Promise.reject("Can't find channel");
+			throw "Can't find channel";
 		if (chan.checkowner(uname) == false)
-			return Promise.reject("You are not the owner of this channel");
+			throw "You are not the owner of this channel";
 		for (let index = 0; index < chan.users.length; index++) {
 			this.join("general", chan.users[index]);
 		}
-		await this.chanRepo.delete(chan);
-		return Promise.resolve("Channel " + cname + " has been deleted");
+		ChanManager.instance.delete(cname);
+		return "Channel " + cname + " has been deleted";
 	}
 
-	async setpublic(cname: string, uname: string) {
-		const chan = await this.chanRepo.findOne({ where: { name: cname } });
+	setpublic(cname: string, uname: string) {
+    const chan = ChanManager.instance.findByName(cname);
 		if (!chan)
-			return Promise.reject("Can't find channel");
+			throw "Can't find channel";
 		if (chan.settype(uname, "public") == false)
-			return Promise.reject("You are not the owner of this channel");
-		await this.chanRepo.save(chan);
-		return Promise.resolve("Channel " + cname + " set to public");
+			throw "You are not the owner of this channel";
+		return "Channel " + cname + " set to public";
 	}
 
-	async setprivate(cname: string, uname: string) {
-		const chan = await this.chanRepo.findOne({ where: { name: cname } });
+	setprivate(cname: string, uname: string) {
+		const chan = ChanManager.instance.findByName(cname);
 		if (!chan)
-			return Promise.reject("Can't find channel");
+			throw "Can't find channel";
 		if (chan.settype(uname, "private") == false)
-			return Promise.reject("You are not the owner of this channel");
-		await this.chanRepo.save(chan);
-		return Promise.resolve("Channel " + cname + " set to private");
+			throw "You are not the owner of this channel"
+		return "Channel " + cname + " set to private";
 	}
 
-	async checkban(cname: string, uname: string): Promise<string> {
-		let chan = await this.chanRepo.findOne({ where: { name: cname } });
+	checkban(cname: string, uname: string): string {
+		const chan = ChanManager.instance.findByName(cname);
 		if (!chan)
-			return Promise.reject("Can't find channel");
+			throw "Can't find channel"
 		let dur = chan.checkban(uname);
 		if (dur > 0)
 			dur /= 1000;
-		return Promise.resolve(dur.toString());
+		return dur.toString();
 	}
 
-	async ban(cname: string, uname: string, duration: number = 0): Promise<string> {
-		let chan = await this.chanRepo.findOne({ where: { name: cname } });
+	ban(cname: string, uname: string, duration: number = 0): string {
+		const chan = ChanManager.instance.findByName(cname);
 		if (!chan)
-			return Promise.reject("Can't find channel");
+			 throw "Can't find channel";
 		chan.banUser(uname, duration * 1000);
-		await this.chanRepo.save(chan);
 		if (duration == 0)
-			return Promise.resolve("Banned user " + uname + " from channel " + cname);
+			return "Banned user " + uname + " from channel " + cname;
 		else
-			return Promise.resolve("Muted user " + uname + " from channel " + cname + " for " + duration + " seconds");
+			return "Muted user " + uname + " from channel " + cname + " for " + duration + " seconds";
 	}
 
-	async unban(cname: string, uname: string): Promise<string> {
-		let chan = await this.chanRepo.findOne({ where: { name: cname } });
+	unban(cname: string, uname: string): string {
+		const chan = ChanManager.instance.findByName(cname);
 		if (!chan)
-			return Promise.reject("Can't find channel");
+			throw "Can't find channel"
 		chan.unbanUser(uname);
-		await this.chanRepo.save(chan);
-		return Promise.resolve("Unbanned user " + uname + " from channel " + cname);
+		return "Unbanned user " + uname + " from channel " + cname;
 	}
 }

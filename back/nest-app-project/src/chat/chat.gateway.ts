@@ -2,6 +2,9 @@ import { ChatService } from './chat.service';
 import { ChatMessage } from './chat.dto';
 import { MessageBody, SubscribeMessage, WebSocketGateway, WebSocketServer, OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit, ConnectedSocket } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
+import { Logger } from '@nestjs/common';
+import * as jwt from 'jsonwebtoken'
+import { UserManager } from 'src/user/user.model';
 
 @WebSocketGateway(8082, {
 	cors: {
@@ -22,32 +25,53 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect, On
 
 	@SubscribeMessage('send_message')
 	async recvMessage(@MessageBody() msg: ChatMessage, @ConnectedSocket() client: Socket) {
-		console.log('Message received ' + msg.name + " " + msg.msg);
-		await this.chatService.execute(msg, client).catch(() => (
-			console.log("this.chatService.execute() uncatched rejected promise")
-		));
+    try {
+      const decoded = await jwt.verify(msg.token, process.env.JWT_SECRET);
+      const user = await UserManager.instance.userRepository.findOne({ id: decoded.id });
+      if (!user)
+      {
+        client.disconnect(true);
+        return;
+      }
+      await this.chatService.execute(user.name, msg.msg, client).catch(() => {
+      });
+    }
+    catch (err) {
+      client.disconnect(true);
+      return;
+    }
 	}
 
-	@SubscribeMessage('identification')
-	async idClient(@MessageBody() name: string, @ConnectedSocket() client: Socket) {
-		await this.chatService.addClient(name, client).catch(() => (
-			console.log("this.chatService.addClient() uncatched rejected promise")
-		));
+	@SubscribeMessage('init')
+	async idClient(@MessageBody() token: string, @ConnectedSocket() client: Socket) {
+    try {
+      const decoded = await jwt.verify(token, process.env.JWT_SECRET);
+      const user = await UserManager.instance.userRepository.findOne({ id: decoded.id });
+      if (!user)
+      {
+        client.disconnect(true);
+        return;
+      }
+      this.chatService.addClient(user.id, client)
+    } catch (err) {
+      client.disconnect(true);
+    }
 	}
 
 	handleConnection(client: Socket, ...args: any[]) {
-		console.log('User connected');
+		Logger.log('User connected', "Chat");
 	}
 
 	async handleDisconnect(client: Socket) {
-		await this.chatService.rmClient(client).catch(() => (
-			console.log("this.chatService.rmClient() uncatched rejected promise")
-		));
-		console.log('User disconnected');
-	}
+		try {
+      this.chatService.rmClient(client)
+      Logger.log('User disconnected', "Chat");
+    } catch (err) {
+			Logger.log("this.chatService.rmClient() uncatched rejected promise")
+    }
+  }
 
 	async afterInit(server: Server) {
-		await this.chatService.init();
-		console.log('Socket is live')
+		Logger.log('Socket is alive', "Chat")
 	}
 }

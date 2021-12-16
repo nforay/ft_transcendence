@@ -24,7 +24,7 @@ services:
       POSTGRES_DB: ft_transcendence
       POSTGRES_PASSWORD: password
     volumes:
-      - ./dbdata:/var/lib/postgresql/data
+      - dbdata:/var/lib/postgresql/data
     container_name: database
     ports:
       - "5432:5432"
@@ -39,3 +39,6 @@ services:
     ports:
       - "8080:8080" # use 80 on production build
       - "8000:8000" # dev prupose
+volumes:
+  dbdata:
+    driver: local
