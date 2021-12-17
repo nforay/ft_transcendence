@@ -52,7 +52,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect, On
         client.disconnect(true);
         return;
       }
-      this.chatService.addClient(user.id, client)
+      await this.chatService.addClient(user.id, client)
     } catch (err) {
       client.disconnect(true);
     }

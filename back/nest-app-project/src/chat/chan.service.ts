@@ -1,6 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { ChanEntity } from './chan.entity';
+import { Interval } from '@nestjs/schedule';
+import { UserManager } from 'src/user/user.model';
+import { BanData, ChanEntity } from './chan.entity';
+import { ChatService } from './chat.service';
 
+@Injectable()
 export class ChanManager
 {
   public static instance: ChanManager = new ChanManager()
@@ -30,12 +34,28 @@ export class ChanManager
 	getPublicChannels() {
     return this.chans.filter(chan => chan.type === "public")
   }
+
+  @Interval(1000 * 60 * 5)
+  pruneExpiredSanctions() {
+    for (let chan of ChanManager.instance.chans)
+    {
+      for (let ban of chan.bans.values()) {
+        if (ban.expired())
+          chan.unbanUser(ban.id)
+      }
+      for (let mute of chan.mutes.values()) {
+        if (mute.expired())
+          chan.unmuteUser(mute.id)
+      }
+    }
+  }
 }
 
 @Injectable()
 export class ChanService {
+  public chatService: ChatService;
 
-	constructor(private chanRepo: ChanEntity) {
+	constructor() {
     const chan = ChanManager.instance.findByName("general");
     if (chan)
       return;
@@ -76,12 +96,12 @@ export class ChanService {
 	async checkadmin(cname: string, uname: string): Promise<boolean> {
 		const chan = ChanManager.instance.findByName(cname);
 		if (!chan)
-			throw false
+			throw "Can't find channel"
 		let ret = await chan.checkadmin(uname);
 		return ret;
 	}
 
-	leave(cname: string, uname: string): string {
+	async leave(cname: string, uname: string): Promise<string> {
 		const chan = ChanManager.instance.findByName(cname);
 		if (!chan)
 			throw "Can't find channel";
@@ -92,16 +112,52 @@ export class ChanService {
       catch (err) {}
       return "Left channel " + cname;
     }
+
+    const cusers = chan.users;
+    const user = await UserManager.instance.userRepository.findOne({ where: { id: uname }});
+    if (!user)
+      return "Unexpected error occured";
+
+    for (let index = 0; index < cusers.length; index++) {
+      const toBanData = this.checkban(cname, cusers[index]);
+
+      if (this.chatService.users.has(cusers[index]) && this.chatService.users.get(cusers[index]).blocked.indexOf(uname) == -1 && (!toBanData || toBanData.expired())) {
+        this.chatService.users.get(cusers[index]).sock.emit('recv_message', { name: "", msg: user.name + " left this channel!", isCommandResponse: true });
+      }
+    }
+
     chan.owner = chan.users[0]
 		return "Left channel " + cname;
 	}
 
-	join(cname: string, uname: string, pwd: string = null): string {
+  checkPassword(cname: string, pass: string) {
+    const chan = ChanManager.instance.findByName(cname);
+		if (!chan)
+			throw "Can't find channel";
+		return chan.passwd === pass;
+  }
+
+	async join(cname: string, uname: string, pwd: string = null, dry: boolean = false) : Promise<string> {
 		const chan = ChanManager.instance.findByName(cname);
 		if (!chan)
 			throw "Can't find channel";
-		if (chan.addUser(uname, pwd) == false)
-			throw "Wrong password";
+    if (pwd !== chan.passwd)
+      throw "Wrong password";
+    if (!dry) {
+      const cusers = chan.users;
+      const user = await UserManager.instance.userRepository.findOne({ where: { id: uname }});
+      if (!user)
+        return "Unexpected error occured";
+
+      for (let index = 0; index < cusers.length; index++) {
+        const toBanData = this.checkban(cname, cusers[index]);
+
+        if (this.chatService.users.has(cusers[index]) && this.chatService.users.get(cusers[index]).blocked.indexOf(uname) == -1 && (!toBanData || toBanData.expired())) {
+          this.chatService.users.get(cusers[index]).sock.emit('recv_message', { name: "", msg: user.name + " joined this channel!", isCommandResponse: true });
+        }
+      }
+      chan.addUser(uname, pwd)
+    }
 		return "Moved to channel " + cname;
 	}
 
@@ -145,32 +201,60 @@ export class ChanService {
 		return "Channel " + cname + " set to private";
 	}
 
-	checkban(cname: string, uname: string): string {
+	checkban(cname: string, uname: string): BanData {
 		const chan = ChanManager.instance.findByName(cname);
 		if (!chan)
 			throw "Can't find channel"
-		let dur = chan.checkban(uname);
-		if (dur > 0)
-			dur /= 1000;
-		return dur.toString();
+		return chan.checkban(uname);
 	}
 
-	ban(cname: string, uname: string, duration: number = 0): string {
+  checkmute(cname: string, uname: string): BanData {
+		const chan = ChanManager.instance.findByName(cname);
+		if (!chan)
+			throw "Can't find channel"
+		return chan.checkmute(uname);
+	}
+
+	async ban(cname: string, uname: string, banMode: boolean, reason?: string, duration?: number): Promise<string> {
 		const chan = ChanManager.instance.findByName(cname);
 		if (!chan)
 			 throw "Can't find channel";
-		chan.banUser(uname, duration * 1000);
-		if (duration == 0)
-			return "Banned user " + uname + " from channel " + cname;
-		else
-			return "Muted user " + uname + " from channel " + cname + " for " + duration + " seconds";
+
+    const user = await UserManager.instance.userRepository.findOne({ where: { name: uname }})
+    if (!user)
+      throw "User doesn't exists"
+       
+    const isAdmin = await this.checkadmin(cname, user.id);
+    if (isAdmin)
+      throw "You cannot ban or mute this user"
+
+    if (banMode) {
+		  const banData = chan.banUser(user.id, reason, duration);
+      return "Banned user " + uname + " from channel " + cname + " " + banData.getFormattedTime();
+    }
+    const muteData = chan.muteUser(user.id, reason, duration);
+  	return "Muted user " + uname + " from channel " + cname + " " + muteData.getFormattedTime();
 	}
 
-	unban(cname: string, uname: string): string {
+	async unban(cname: string, uname: string): Promise<string> {
 		const chan = ChanManager.instance.findByName(cname);
 		if (!chan)
 			throw "Can't find channel"
-		chan.unbanUser(uname);
+    const user = await UserManager.instance.userRepository.findOne({ where: { name: uname }})
+    if (!user)
+      throw "User doesn't exists"
+		chan.unbanUser(user.id);
+		return "Unbanned user " + uname + " from channel " + cname;
+	}
+
+  async unmute(cname: string, uname: string): Promise<string> {
+		const chan = ChanManager.instance.findByName(cname);
+		if (!chan)
+			throw "Can't find channel"
+    const user = await UserManager.instance.userRepository.findOne({ where: { name: uname }})
+    if (!user)
+      throw "User doesn't exists"
+		chan.unmuteUser(user.id);
 		return "Unbanned user " + uname + " from channel " + cname;
 	}
 }

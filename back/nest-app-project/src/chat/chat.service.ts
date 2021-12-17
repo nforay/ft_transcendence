@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Socket } from 'socket.io';
-import { ChanService } from './chan.service';
+import { ChanManager, ChanService } from './chan.service';
 import { ChatCommandHandlers } from './chat.commands';
 
 export class ClientIdentifier {
@@ -11,9 +11,11 @@ export class ClientIdentifier {
 
 @Injectable()
 export class ChatService {
-	private users: Map<string, ClientIdentifier> = new Map<string, ClientIdentifier>();
+	public users: Map<string, ClientIdentifier> = new Map<string, ClientIdentifier>();
 
-	constructor(private chanService: ChanService, private chatCommandHandlers: ChatCommandHandlers) {}
+	constructor(private chanService: ChanService, private chatCommandHandlers: ChatCommandHandlers) {
+    chanService.chatService = this;
+  }
 
 	private getUserFromSocket(sock: Socket): string {
 		for (let [key, value] of this.users) {
@@ -49,7 +51,7 @@ export class ChatService {
       "/dchan": this.chatCommandHandlers.dchanCommand,
       "/join": this.chatCommandHandlers.joinCommand,
       "/kick": this.chatCommandHandlers.kickCommand,
-      "/ban": this.chatCommandHandlers.banCommand,
+      "/ban": this.chatCommandHandlers.muteCommand,
       "/mute": this.chatCommandHandlers.muteCommand,
       "/unmute": this.chatCommandHandlers.unmuteCommand,
       "/unban": this.chatCommandHandlers.unmuteCommand,
@@ -64,40 +66,40 @@ export class ChatService {
     } else if (Arr[0].startsWith('/')) {
       client.emit("recv_message", { name: "", msg: "Command not found.", isCommandResponse: true })
     } else {
-      let c = this.users.get(uname).chan;
-      let banstate = this.chanService.checkban(c, uname);
-      switch (banstate) {
-        case "-1":
-          name = "";
-          msg = "You are banned";
-          client.emit('recv_message', { name, msg, isCommandResponse: false });
-          return;
-          
-        case "0":
-          const cusers = await this.chanService.getUsers(c)
-          for (let index = 0; index < cusers.length; index++) {
-            if (this.users.has(cusers[index]) && this.users.get(cusers[index]).blocked.indexOf(uname) == -1) {
-              this.users.get(cusers[index]).sock.emit('recv_message', { name, msg, isCommandResponse: false });
-            }
-          }
-          return;
-  
-        default:
-          name = "";
-          msg = "You are muted for " + banstate + " seconds";
-          client.emit('recv_message', { name, msg, isCommandResponse: false });
-          return;
+      const c = this.users.get(uname).chan;
+      const banData = this.chanService.checkban(c, uname); //throw
+      const muteData = this.chanService.checkmute(c, uname);
+      
+      if (banData && !banData.expired()) {
+        name = "";
+        msg = 'You are banned from this channel ' + banData.getFormattedTime() + '.\nReason: "' + banData.reason + '".';
+        client.emit('recv_message', { name, msg, isCommandResponse: true });
+        return;
+      }
+      if (muteData && !muteData.expired()) {
+        name = "";
+        msg = 'You are muted from this channel ' + muteData.getFormattedTime() + '.\nReason: "' + muteData.reason + '".';
+        client.emit('recv_message', { name, msg, isCommandResponse: true });
+        return;
+      }
+
+      const cusers = this.chanService.getUsers(c)
+      for (let index = 0; index < cusers.length; index++) {
+        const toBanData = this.chanService.checkban(c, cusers[index]);
+        if (this.users.has(cusers[index]) && this.users.get(cusers[index]).blocked.indexOf(uname) == -1 && (!toBanData || toBanData.expired())) {
+          this.users.get(cusers[index]).sock.emit('recv_message', { name, msg, isCommandResponse: false });
+        }
       }
     }
 	}
 
-	addClient(uname: string, client: Socket) {
+	async addClient(uname: string, client: Socket) {
 		this.users.set(uname, {
 			sock: client,
 			chan: "general",
 			blocked: []
 		});
-		this.chanService.join("general", uname);
+		await this.chanService.join("general", uname);
 	}
 
 	rmClient(client: Socket) {

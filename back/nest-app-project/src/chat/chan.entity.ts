@@ -1,5 +1,37 @@
 import { UserManager } from 'src/user/user.model';
 
+export class BanData {
+  public id: string;
+  public at: number = new Date().getTime();
+  public until: number = -1;
+  public reason: string = "";
+
+  constructor(user: string, reason?: string, duration?: number) {
+    this.id = user;
+    if (duration)
+      this.until = new Date().getTime() + (duration * 1000);
+    this.reason = reason ? reason : "The ban hammer has spoken!";
+  }
+
+  expired() : boolean {
+    return this.until != -1 && this.until < new Date().getTime();
+  }
+
+  getFormattedTime(): string {
+    let diff = this.until - new Date().getTime();
+    if (diff < 0) {
+      return "permanently";
+    }
+    else {
+      let days = Math.floor(diff / (1000 * 60 * 60 * 24));
+      let hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      let minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      let seconds = Math.floor((diff % (1000 * 60)) / 1000);
+      return "for " + (days > 0 ? `${days} day(s)` : hours > 0 ? `${hours} hour(s)` : minutes > 0 ? `${minutes} minute(s)` : `${seconds} second(s)`);
+    }
+  }
+}
+
 export class ChanEntity {
 	name: string;
 
@@ -9,14 +41,9 @@ export class ChanEntity {
 
 	users: string[] = [];
 
-	// @Column("text", { default: new Map<string, [number, number]>() })
-	// bans: Map<string, [number, number]>;
+	bans: Map<string, BanData> = new Map<string, BanData>();
+  mutes: Map<string, BanData> = new Map<string, BanData>();
 
-	bansID: string[] = [];
-
-	bansST: number[] = [];
-
-	bansTS: number[] = [];
 	// String is the name, number is the ban
 	// status, 0 is not banned, -1 is banned
 	// and any other number is the timestamp
@@ -38,46 +65,25 @@ export class ChanEntity {
       this.admins = args.admins;
     if (args.users)
       this.users = args.users;
-    if (args.bansID)
-      this.bansID = args.bansID;
-    if (args.bansST)
-      this.bansST = args.bansST;
-    if (args.bansTS)
-      this.bansTS = args.bansTS;
+    if (args.bans)
+      this.bans = args.bans;
+    if (args.mutes)
+      this.mutes = args.mutes;
     if (args.type)
       this.type = args.type;
     if (args.passwd)
       this.passwd = args.passwd;
   }
 
-	addUser(uname: string, pwd: string = null): boolean {
-		if (pwd != this.passwd)
-			return false;
+	addUser(uname: string, pwd: string = null): void {
 		if (this.users.indexOf(uname) == -1)
 			this.users.push(uname);
-		return true;
 	}
 
 	rmUser(uname: string) {
 		let i = this.users.indexOf(uname);
 		if (i != -1)
 			this.users.splice(i, 1);
-		let id = this.bansID.indexOf(uname);
-		if (id != -1) {
-			if (this.bansST[id] == 0) {
-				this.bansID.splice(id, 1);
-				this.bansST.splice(id, 1);
-				this.bansTS.splice(id, 1);
-			}
-			else if (this.bansST[id] > 0) {
-				let now = new Date();
-				if (+now.getTime() >= (+this.bansST[id] + +this.bansTS[id])) {
-					this.bansID.splice(id, 1);
-					this.bansST.splice(id, 1);
-					this.bansTS.splice(id, 1);
-				}
-			}
-		}
 	}
 
 	settype(uname: string, newtype: string): boolean {
@@ -132,53 +138,34 @@ export class ChanEntity {
 		}
 	}
 
-	checkban(uname: string): number {
-		let id = this.bansID.indexOf(uname);
-		if (id != -1) {
-			if (this.bansST[id] == 0) {
-				this.bansID.splice(id, 1);
-				this.bansST.splice(id, 1);
-				this.bansTS.splice(id, 1);
-				return 0;
-			}
-			else if (this.bansST[id] > 0) {
-				let now = new Date();
-				if (+now.getTime() >= (+this.bansST[id] + +this.bansTS[id])) {
-					this.bansID.splice(id, 1);
-					this.bansST.splice(id, 1);
-					this.bansTS.splice(id, 1);
-					return 0;
-				}
-				else {
-					return (+this.bansST[id] + +this.bansTS[id]) - +now.getTime();
-				}
-			}
-			else
-				return -1;
-		}
-		return 0;
+	checkban(uname: string): BanData {
+		if (this.bans.has(uname))
+      return this.bans.get(uname);
+    return null;
 	}
 
-	banUser(uname: string, duration: number = 0) {
-		if (duration == 0) {
-			this.bansID.push(uname);
-			this.bansST.push(-1);
-			this.bansTS.push(0);
-		}
-		else {
-			let now = new Date();
-			this.bansID.push(uname);
-			this.bansST.push(now.getTime());
-			this.bansTS.push(duration);
-		}
+  checkmute(uname: string): BanData {
+		if (this.mutes.has(uname))
+      return this.mutes.get(uname);
+    return null;
+	}
+
+	banUser(uname: string, reason?: string, duration?: number) : BanData {
+    this.bans.set(uname, new BanData(uname, reason, duration));
+    return this.bans.get(uname);
 	}
 
 	unbanUser(uname: string) {
-		let id = this.bansID.indexOf(uname);
-		if (id != -1) {
-			this.bansID.splice(id, 1);
-			this.bansST.splice(id, 1);
-			this.bansTS.splice(id, 1);
-		}
+    this.bans.delete(uname);
 	}
+
+  muteUser(uname: string, reason?: string, duration?: number) : BanData {
+    this.mutes.set(uname, new BanData(uname, reason, duration));
+    return this.mutes.get(uname);
+	}
+
+	unmuteUser(uname: string) {
+    this.mutes.delete(uname);
+	}
+
 }

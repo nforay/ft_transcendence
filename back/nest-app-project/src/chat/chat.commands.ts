@@ -1,7 +1,7 @@
 import { Logger } from '@nestjs/common';
 import { Socket } from 'socket.io';
 import { UserManager } from 'src/user/user.model';
-import { ChanService } from './chan.service';
+import { ChanManager, ChanService } from './chan.service';
 import { ClientIdentifier } from './chat.service';
 
 export class ChatCommandHandlers {
@@ -31,11 +31,11 @@ export class ChatCommandHandlers {
     // msg += "\n/y (<user>) Accept the last challenge or a challenge from a specific user";
     msg += "\n/cchan <name> (<public/private>) Create a new channel";
     msg += "\n/dchan <name> Delete a channel";
-    msg += "\n/op <user> Make a user a channel operator, if the user is already an operator it removes his priviledges if no argument is provided list channel operators";
-    msg += "\n/kick <user> Kick a user back to the general channel without banning him";
-    msg += "\n/ban <user> Ban user";
+    msg += "\n/op <user> Toggle operator permissions for a user, prints a list of channel operators if no argument is provided";
+    msg += "\n/kick <user> Kick a user back to general";
+    msg += "\n/ban <user> (<seconds>) (<reason>) Ban user from channel";
     msg += "\n/unban <user> Unban user";
-    msg += "\n/mute <user> <seconds> Mute user for x seconds";
+    msg += "\n/mute <user> (<seconds>) (<reason>) Mute user in channel";
     msg += "\n/unmute <user> Unmute user";
 		return {name, msg}
   }
@@ -209,7 +209,7 @@ export class ChatCommandHandlers {
     return {name, msg}
   }
 
-  cchanCommand(client: Socket, args: string[], uname: string, users: Map<string, ClientIdentifier>, chanService: ChanService) {
+  async cchanCommand(client: Socket, args: string[], uname: string, users: Map<string, ClientIdentifier>, chanService: ChanService) {
     const name = "";
     let msg = ""
     let pass = null
@@ -229,11 +229,11 @@ export class ChatCommandHandlers {
     try {
       const res = chanService.cchan(args[1], uname, pass)
       msg = res;
-      if (args.length == 3 && args[2] == "public")
+      if (args.length >= 3 && args[2] == "public")
         chanService.setpublic(args[1], uname);
       try {
-        chanService.leave(users.get(uname).chan, uname);
-        chanService.join(args[1], uname, pass);
+        await chanService.leave(users.get(uname).chan, uname);
+        await chanService.join(args[1], uname, pass);
         users.get(uname).chan = args[1];
       } catch (err) {
         msg = "Unknown error"
@@ -270,33 +270,29 @@ export class ChatCommandHandlers {
     return {name, msg}
   }
 
-  joinCommand(client: Socket, args: string[], uname: string, users: Map<string, ClientIdentifier>, chanService: ChanService) {
+  async joinCommand(client: Socket, args: string[], uname: string, users: Map<string, ClientIdentifier>, chanService: ChanService) {
     const name = "";
     let msg = ""
     if (args.length < 2 || args.length > 3) {
       msg = "Wrong number of arguments";
+      return {name, msg}
     }
-    else if (args.length == 2) {
-      try {
-        chanService.leave(users.get(uname).chan, uname);
-        const res = chanService.join(args[1], uname);
-        msg = res;
-        users.get(uname).chan = args[1];
-      } catch (err: any) {
-        Logger.log(err);
-        msg = err;
-      }
+    if (args[1] === users.get(uname).chan) {
+      msg = "You are already in that channel";
+      return {name, msg}
     }
-    else if (args.length == 3) {
-      try {
-        chanService.leave(users.get(uname).chan, uname);
-        const res = chanService.join(args[1], uname, args[2]);
-        msg = res;
-        users.get(uname).chan = args[1];
-      } catch (err: any) {
-        msg = err;
-      }
+
+    try {
+      // Dry run to prevent leaving a channel if join is not going to work
+      await chanService.join(args[1], uname, args.length == 3 ? args[2] : null, true);
+      await chanService.leave(users.get(uname).chan, uname);
+      const res = await chanService.join(args[1], uname, args.length == 3 ? args[2] : null);
+      msg = res;
+      users.get(uname).chan = args[1];
+    } catch (err: any) {
+      msg = err;
     }
+
     return {name, msg}
   }
 
@@ -318,8 +314,8 @@ export class ChatCommandHandlers {
           msg = "can't find user " + args[1];
           return {name, msg}
         }
-        chanService.leave(users.get(args[1]).chan, args[1]);
-        chanService.join("general", args[1]);
+        await chanService.leave(users.get(args[1]).chan, args[1]);
+        await chanService.join("general", args[1]);
         users.get(args[1]).chan = "general";
         msg = "You've been kicked";
         users.get(args[1]).sock.emit('recv_message', { name, msg, isCommandResponse: true });
@@ -331,39 +327,16 @@ export class ChatCommandHandlers {
     return {name, msg}
   }
 
-  async banCommand(client: Socket, args: string[], uname: string, users: Map<string, ClientIdentifier>, chanService: ChanService) {
-    const name = "";
-    let msg = ""
-    
-    if (args.length != 2) {
-      msg = "Wrong number of argmuents";
-    }
-    else {
-      try {
-        const isAdmin = await chanService.checkadmin(users.get(uname).chan, uname)
-        if (isAdmin == false) {
-          msg = "You are not operator of this channel";
-          return {name, msg};
-        }
-
-        const res = chanService.ban(users.get(uname).chan, args[1]);
-        msg = res;
-
-      } catch (err) {
-        msg = "Can't find channel";
-      }
-    }
-    return {name, msg}
-  }
-
+  // Also used for ban
   async muteCommand(client: Socket, args: string[], uname: string, users: Map<string, ClientIdentifier>, chanService: ChanService) {
     const name = "";
     let msg = ""
     
-    if (args.length != 3) {
+    if (args.length < 2) {
       msg = "Wrong number of argmuents";
       return {name, msg};
     }
+
     try {
       const isAdmin = await chanService.checkadmin(users.get(uname).chan, uname)
       if (isAdmin == false) {
@@ -371,37 +344,64 @@ export class ChatCommandHandlers {
         return {name, msg};
       }
       
-      let dur = parseInt(args[2], 10);
-      if (dur != NaN && dur > 0) {
-        const res = chanService.ban(users.get(uname).chan, args[1], dur)
+      let reason = undefined;
+      let dur = undefined;
+      // Permanent ban
+      if (args.length < 3) {
+        const res = await chanService.ban(users.get(uname).chan, args[1], args[0] === '/ban')
         msg = res;
+        return {name, msg}
       }
-      else
+
+      dur = parseInt(args[2], 10);
+      if (dur === NaN) {
+        reason = args.slice(2).join(" ");
+        dur = undefined;
+      }
+      else if (dur <= 0) {
         msg = "Wrong duration";
+        return {name, msg}
+      } else {
+        reason = args.slice(3).join(" ");
+      }
+
+      const res = await chanService.ban(users.get(uname).chan, args[1], args[0] === '/ban', reason, dur);
+      msg = res;
+
     } catch (err) {
       msg = "Can't find channel";
     }
     return {name, msg}
   }
 
+  // Also used for unban
   async unmuteCommand(client: Socket, args: string[], uname: string, users: Map<string, ClientIdentifier>, chanService: ChanService) {
     const name = "";
     let msg = ""
     if (args.length != 2) {
       msg = "Wrong number of arguments";
+      return {name, msg}
     }
-    else {
-      try {
-        const res = chanService.unban(users.get(uname).chan, args[1])
-        msg = res;
-      } catch (err) {
-        msg = err;
-      }
+    const isAdmin = await chanService.checkadmin(users.get(uname).chan, uname)
+    if (isAdmin == false) {
+      msg = "You are not operator of this channel";
+      return {name, msg};
+    }
+
+    try {
+      let res = null;
+      if (args[0] === '/unban')
+        res = await chanService.unban(users.get(uname).chan, args[1])
+      else
+        res = await chanService.unmute(users.get(uname).chan, args[1])
+      msg = res;
+    } catch (err) {
+      msg = err;
     }
     return {name, msg}
   }
 
-  leaveCommand(client: Socket, args: string[], uname: string, users: Map<string, ClientIdentifier>, chanService: ChanService) {
+  async leaveCommand(client: Socket, args: string[], uname: string, users: Map<string, ClientIdentifier>, chanService: ChanService) {
     const name = "";
     let msg = ""
     
@@ -410,8 +410,8 @@ export class ChatCommandHandlers {
     }
     else {
       try {
-        chanService.leave(users.get(uname).chan, uname);
-        const res = chanService.join("general", uname)
+        await chanService.leave(users.get(uname).chan, uname);
+        const res = await chanService.join("general", uname)
         msg = res;
         users.get(uname).chan = "general";
       } catch (err) {
