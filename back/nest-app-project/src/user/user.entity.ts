@@ -3,6 +3,7 @@ import * as bcrypt from 'bcryptjs'
 import * as jwt from 'jsonwebtoken'
 import { UserResponseObject } from './user.dto';
 import { HttpException, HttpStatus } from '@nestjs/common';
+import { BanData } from 'src/chat/chan.entity';
 
 @Entity('user')
 export class UserEntity {
@@ -16,6 +17,11 @@ export class UserEntity {
   @Column('text') password: string;
   @Column({ type: 'boolean', default: false}) has2FA: boolean;
   @Column({ type: 'text', default: ''}) twoFASecret: string;
+  @Column({ type: 'uuid', array: true, default: [] }) blocked: string[];
+
+  @Column({ type: 'text', array: true, default: [] }) chatBan: string[];
+  @Column({ type: 'text', array: true, default: [] }) chatMute: string[];
+
 
   @BeforeInsert()
   private async hashPassword() {
@@ -37,6 +43,24 @@ export class UserEntity {
     };
   }
 
+  block(uuid: string) {
+    if (this.blocked.indexOf(uuid) !== -1)
+      return false;
+    this.blocked.push(uuid);
+    return true;
+  }
+
+  unblock(uuid: string) {
+    if (this.blocked.indexOf(uuid) === -1)
+      return false;
+    this.blocked.splice(this.blocked.indexOf(uuid), 1);
+    return true;
+  }
+
+  isBlocking(uuid: string) {
+    return this.blocked.indexOf(uuid) !== -1
+  }
+
   async checkPassword(password) {
     return await bcrypt.compare(password, this.password);
   }
@@ -48,4 +72,32 @@ export class UserEntity {
   private get expiresIn() {
     return 60 * 60 * 1000;
   }
+
+  checkban(): BanData {
+		return this.chatBan.length > 0 ? new BanData("").fromArray(this.chatBan) : null;
+	}
+
+  checkmute(): BanData {
+		return this.chatMute.length > 0 ? new BanData("").fromArray(this.chatMute) : null;
+	}
+
+	banUser(reason?: string, duration?: number) : BanData {
+    const banData = new BanData(this.id, reason, duration);
+    this.chatBan = banData.toArray();
+    return banData;
+	}
+
+	unbanUser() {
+    this.chatBan = [];
+	}
+
+  muteUser(reason?: string, duration?: number) : BanData {
+    const banData = new BanData(this.id, reason, duration);
+    this.chatMute = banData.toArray();
+    return banData;
+	}
+
+	unmuteUser() {
+    this.chatMute = [];
+	}
 }

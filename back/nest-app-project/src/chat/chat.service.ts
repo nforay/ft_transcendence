@@ -1,12 +1,12 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Socket } from 'socket.io';
-import { ChanManager, ChanService } from './chan.service';
+import { UserManager } from 'src/user/user.model';
+import { ChanService } from './chan.service';
 import { ChatCommandHandlers } from './chat.commands';
 
 export class ClientIdentifier {
 	sock: Socket;
 	chan: string;
-	blocked: string[];
 }
 
 @Injectable()
@@ -36,6 +36,13 @@ export class ChatService {
     let uname = this.getUserFromSocket(client);
 		if (uname == null)
 			return;
+
+    if (msg.length > 250) {
+      client.emit("recv_message", { name: "", msg: "Message too long. You will be disconnected", isCommandResponse: true });
+      client.disconnect(true);
+      return;
+    }
+
 		const Arr = msg.split(" ");
 
     const commands = {
@@ -67,8 +74,8 @@ export class ChatService {
       client.emit("recv_message", { name: "", msg: "Command not found.", isCommandResponse: true })
     } else {
       const c = this.users.get(uname).chan;
-      const banData = this.chanService.checkban(c, uname); //throw
-      const muteData = this.chanService.checkmute(c, uname);
+      const banData = await this.chanService.checkban(c, uname); //throw
+      const muteData = await this.chanService.checkmute(c, uname);
       
       if (banData && !banData.expired()) {
         name = "";
@@ -83,10 +90,18 @@ export class ChatService {
         return;
       }
 
-      const cusers = this.chanService.getUsers(c)
+      const cusers = this.chanService.getUsers(c).sort((a, b) => a.localeCompare(b));
+      const where = cusers.map(x => { return { id: x }});
+      let db_cusers = await UserManager.instance.userRepository.find({where});
+      db_cusers.sort((a, b) => a.id.localeCompare(b.id))
+      if (!db_cusers) {
+        client.emit('recv_message', { name: "", msg: "Unexpected error", isCommandResponse: true });
+        return;
+      }
+
       for (let index = 0; index < cusers.length; index++) {
-        const toBanData = this.chanService.checkban(c, cusers[index]);
-        if (this.users.has(cusers[index]) && this.users.get(cusers[index]).blocked.indexOf(uname) == -1 && (!toBanData || toBanData.expired())) {
+        const toBanData = await this.chanService.checkban(c, cusers[index]);
+        if (!db_cusers[index].isBlocking(uname) && (!toBanData || toBanData.expired())) {
           this.users.get(cusers[index]).sock.emit('recv_message', { name, msg, isCommandResponse: false });
         }
       }
@@ -97,9 +112,8 @@ export class ChatService {
 		this.users.set(uname, {
 			sock: client,
 			chan: "general",
-			blocked: []
 		});
-		await this.chanService.join("general", uname);
+		await this.chanService.join(client, "general", uname);
 	}
 
 	rmClient(client: Socket) {

@@ -2,9 +2,19 @@ import { UserManager } from 'src/user/user.model';
 
 export class BanData {
   public id: string;
-  public at: number = new Date().getTime();
   public until: number = -1;
   public reason: string = "";
+
+  fromArray(array: string[]) : BanData {
+    this.id = array[0];
+    this.reason = array[1];
+    this.until = parseInt(array[2]);
+    return this;
+  }
+
+  toArray() : string[] {
+    return [ this.id, this.reason, this.until.toString() ];
+  }
 
   constructor(user: string, reason?: string, duration?: number) {
     this.id = user;
@@ -26,7 +36,7 @@ export class BanData {
       let days = Math.floor(diff / (1000 * 60 * 60 * 24));
       let hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
       let minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-      let seconds = Math.floor((diff % (1000 * 60)) / 1000);
+      let seconds = Math.ceil((diff % (1000 * 60)) / 1000);
       return "for " + (days > 0 ? `${days} day(s)` : hours > 0 ? `${hours} hour(s)` : minutes > 0 ? `${minutes} minute(s)` : `${seconds} second(s)`);
     }
   }
@@ -110,7 +120,10 @@ export class ChanEntity {
     
     if (newop == null) {
       let where = this.admins.map(x => { return { id: x }});
-      where.push({id: this.owner });
+      if (this.owner.length > 0)
+        where.push({id: this.owner });
+      if (where.length == 0)
+        return "No operators found";
       const users = await UserManager.instance.userRepository.find({where});
       if (!users)
         return "No operators found";
@@ -138,33 +151,69 @@ export class ChanEntity {
 		}
 	}
 
-	checkban(uname: string): BanData {
+	async checkban(uname: string): Promise<BanData> {
+    const user = await UserManager.instance.userRepository.findOne({ id: uname });
+    if (!user)
+      return null;
+    const chatBan = user.checkban();
+    if (chatBan)
+      return chatBan;
 		if (this.bans.has(uname))
       return this.bans.get(uname);
     return null;
 	}
 
-  checkmute(uname: string): BanData {
+  async checkmute(uname: string): Promise<BanData> {
+    const user = await UserManager.instance.userRepository.findOne({ id: uname });
+    if (!user)
+      return null;
+    const chatMute = user.checkmute();
+    if (chatMute)
+      return chatMute;
 		if (this.mutes.has(uname))
       return this.mutes.get(uname);
     return null;
 	}
 
-	banUser(uname: string, reason?: string, duration?: number) : BanData {
+  async banUser(uname: string, reason?: string, duration?: number) : Promise<BanData> {
+    if (this.name === "general") {
+      const user = await UserManager.instance.userRepository.findOne({ id: uname });
+      const banData = user.banUser(reason, duration);
+      await UserManager.instance.userRepository.save(user);
+      return banData;
+    }
     this.bans.set(uname, new BanData(uname, reason, duration));
     return this.bans.get(uname);
-	}
+  }
 
-	unbanUser(uname: string) {
+  async unbanUser(uname: string) {
+    if (this.name === "general") {
+      const user = await UserManager.instance.userRepository.findOne({ id: uname });
+      const banData = user.unbanUser();
+      await UserManager.instance.userRepository.save(user);
+      return banData;
+    }
     this.bans.delete(uname);
-	}
+  }
 
-  muteUser(uname: string, reason?: string, duration?: number) : BanData {
+  async muteUser(uname: string, reason?: string, duration?: number) : Promise<BanData> {
+    if (this.name === "general") {
+      const user = await UserManager.instance.userRepository.findOne({ id: uname });
+      const banData = user.muteUser(reason, duration);
+      await UserManager.instance.userRepository.save(user);
+      return banData;
+    }
     this.mutes.set(uname, new BanData(uname, reason, duration));
     return this.mutes.get(uname);
-	}
+  }
 
-	unmuteUser(uname: string) {
+	async unmuteUser(uname: string) {
+    if (this.name === "general") {
+      const user = await UserManager.instance.userRepository.findOne({ id: uname });
+      const banData = user.unmuteUser();
+      await UserManager.instance.userRepository.save(user);
+      return banData;
+    }
     this.mutes.delete(uname);
 	}
 

@@ -1,4 +1,4 @@
-import { IsString, Length, IsNotEmpty, ValidateIf, IsUUID, IsNumberString } from 'class-validator'
+import { IsString, Length, IsNotEmpty, ValidateIf, IsUUID, IsNumberString, isAlphanumeric, IsAlphanumeric } from 'class-validator'
 
 export class UserPassDTO {
   @IsString()
@@ -17,6 +17,7 @@ export class UserDTO {
   @IsString()
   @Length(3, 20)
   @IsNotEmpty()
+  @IsAlphanumeric()
   name: string;
 
   @IsString()

@@ -1,14 +1,19 @@
 <template>
-  <div class="chat" id="chatboxdiv" @wheel="checkCanScroll">
-    <div style="display: flex; min-height: 100%; justify-content: flex-end; flex-direction: column;">
-      <ul v-for="message in messages" :key="message.id" style="margin: 0 10px 7px; padding: 0;">
-        <span v-html="message.message.name"></span>
-        <span v-if="message.message.isCommandResponse" v-html="message.message.msg"></span>
-        <span v-else>{{ message.message.msg }}</span>
-      </ul>
-    </div>
-    <div>
-      <input v-model="chatMsg.msg" @keyup.enter="onInput" maxlength="250" placeholder="Send Message">
+  <div class="chat-pos">
+    <header class="chat-header">
+      #{{ channel }}
+    </header>
+    <div class="chat" id="chatboxdiv" @wheel="checkCanScroll">
+      <div style="display: flex; min-height: 100%; justify-content: flex-end; flex-direction: column;">
+        <ul v-for="message in messages" :key="message.id" style="margin: 0 10px 7px; padding: 0;">
+          <span v-html="message.message.name"></span>
+          <span v-if="message.message.isCommandResponse" v-html="message.message.msg"></span>
+          <span v-else>{{ message.message.msg }}</span>
+        </ul>
+      </div>
+      <div>
+        <input v-model="chatMsg.msg" @keyup.enter="onInput" maxlength="250" placeholder="Send Message">
+      </div>
     </div>
   </div>
 </template>
@@ -31,6 +36,7 @@ export default class Chat extends Vue {
   socket: any
   autoScrollInterval: any = null
   canAutoScroll = true
+  channel = 'general';
 
   created () : void {
     console.log('created')
@@ -73,6 +79,9 @@ export default class Chat extends Vue {
         this.autoScrollDiv()
       }
     })
+    this.socket.on('switch_channel', (data) => {
+      this.channel = data.channel
+    })
     this.socket.emit('init', globalFunctions.getToken())
   }
 
@@ -113,10 +122,25 @@ export default class Chat extends Vue {
 // #440054 fond violet
 // #2D0033 surligné violet
 
-.chat {
-  position: absolute;
+.chat-pos .chat {
+  position: fixed;
   bottom: 30px;
   right: 0;
+}
+
+.chat-header {
+  height: 36px;
+  font-size: 22px;
+  padding: 7px;
+  position: fixed;
+  width: 400px;
+  border-bottom: 1px solid #777;
+  background-color: #eeeeee;
+  bottom: calc(25%);
+  right: 0;
+}
+
+.chat {
   width: 400px;
   height: calc(25% - 30px);
 

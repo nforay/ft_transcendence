@@ -1,8 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Interval } from '@nestjs/schedule';
+import { Socket } from 'socket.io';
 import { UserManager } from 'src/user/user.model';
 import { BanData, ChanEntity } from './chan.entity';
-import { ChatService } from './chat.service';
+import { ChatService, ClientIdentifier } from './chat.service';
 
 @Injectable()
 export class ChanManager
@@ -119,14 +120,15 @@ export class ChanService {
       return "Unexpected error occured";
 
     for (let index = 0; index < cusers.length; index++) {
-      const toBanData = this.checkban(cname, cusers[index]);
+      const toBanData = await this.checkban(cname, cusers[index]);
 
-      if (this.chatService.users.has(cusers[index]) && this.chatService.users.get(cusers[index]).blocked.indexOf(uname) == -1 && (!toBanData || toBanData.expired())) {
+      if (this.chatService.users.has(cusers[index]) && (!toBanData || toBanData.expired())) {
         this.chatService.users.get(cusers[index]).sock.emit('recv_message', { name: "", msg: user.name + " left this channel!", isCommandResponse: true });
       }
     }
 
-    chan.owner = chan.users[0]
+    if (chan.owner === uname)
+      chan.owner = chan.users[0];
 		return "Left channel " + cname;
 	}
 
@@ -137,7 +139,7 @@ export class ChanService {
 		return chan.passwd === pass;
   }
 
-	async join(cname: string, uname: string, pwd: string = null, dry: boolean = false) : Promise<string> {
+	async join(client: Socket, cname: string, uname: string, pwd: string = null, dry: boolean = false) : Promise<string> {
 		const chan = ChanManager.instance.findByName(cname);
 		if (!chan)
 			throw "Can't find channel";
@@ -150,13 +152,14 @@ export class ChanService {
         return "Unexpected error occured";
 
       for (let index = 0; index < cusers.length; index++) {
-        const toBanData = this.checkban(cname, cusers[index]);
+        const toBanData = await this.checkban(cname, cusers[index]);
 
-        if (this.chatService.users.has(cusers[index]) && this.chatService.users.get(cusers[index]).blocked.indexOf(uname) == -1 && (!toBanData || toBanData.expired())) {
+        if (this.chatService.users.has(cusers[index]) && (!toBanData || toBanData.expired())) {
           this.chatService.users.get(cusers[index]).sock.emit('recv_message', { name: "", msg: user.name + " joined this channel!", isCommandResponse: true });
         }
       }
       chan.addUser(uname, pwd)
+      client.emit('switch_channel', { channel: cname });
     }
 		return "Moved to channel " + cname;
 	}
@@ -170,14 +173,17 @@ export class ChanService {
 		return "Channel " + cname + " has been created";
 	}
 
-	dchan(cname: string, uname: string): string {
+	dchan(users: Map<string, ClientIdentifier>, cname: string, uname: string): string {
 		const chan = ChanManager.instance.findByName(cname);
 		if (!chan)
 			throw "Can't find channel";
 		if (chan.checkowner(uname) == false)
 			throw "You are not the owner of this channel";
 		for (let index = 0; index < chan.users.length; index++) {
-			this.join("general", chan.users[index]);
+      const user = users.get(chan.users[index]);
+      if (!user)
+        continue;
+			this.join(user.sock, "general", chan.users[index]);
 		}
 		ChanManager.instance.delete(cname);
 		return "Channel " + cname + " has been deleted";
@@ -201,18 +207,20 @@ export class ChanService {
 		return "Channel " + cname + " set to private";
 	}
 
-	checkban(cname: string, uname: string): BanData {
+	async checkban(cname: string, uname: string): Promise<BanData> {
 		const chan = ChanManager.instance.findByName(cname);
 		if (!chan)
 			throw "Can't find channel"
-		return chan.checkban(uname);
+		const ret = await chan.checkban(uname);
+    return ret;
 	}
 
-  checkmute(cname: string, uname: string): BanData {
+  async checkmute(cname: string, uname: string): Promise<BanData> {
 		const chan = ChanManager.instance.findByName(cname);
 		if (!chan)
 			throw "Can't find channel"
-		return chan.checkmute(uname);
+    const ret = await chan.checkmute(uname);
+		return ret;
 	}
 
 	async ban(cname: string, uname: string, banMode: boolean, reason?: string, duration?: number): Promise<string> {
@@ -229,10 +237,10 @@ export class ChanService {
       throw "You cannot ban or mute this user"
 
     if (banMode) {
-		  const banData = chan.banUser(user.id, reason, duration);
+		  const banData = await chan.banUser(user.id, reason, duration);
       return "Banned user " + uname + " from channel " + cname + " " + banData.getFormattedTime();
     }
-    const muteData = chan.muteUser(user.id, reason, duration);
+    const muteData = await chan.muteUser(user.id, reason, duration);
   	return "Muted user " + uname + " from channel " + cname + " " + muteData.getFormattedTime();
 	}
 
