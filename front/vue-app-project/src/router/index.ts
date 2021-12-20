@@ -34,6 +34,14 @@ const routes: Array<RouteConfig> = [
     }
   },
   {
+    path: '/profile',
+    name: 'Profile',
+    component: () => import('../views/UserStats.vue'),
+    meta: {
+      requiresAuth: true
+    }
+  },
+  {
     path: '/chat',
     name: 'Chat',
     component: ChatBox
