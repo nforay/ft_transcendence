@@ -9,6 +9,15 @@
         <p class="bio">{{ this.bio }}</p>
       </div>
     </div>
+    <div>
+      <h2>elo = {{ this.elo }}</h2>
+      <h2>Match History:</h2>
+      <ul v-for="res in history" :key="res">{{ res }}</ul>
+    </div>
+    <div v-if="thisuser == true">
+      <h2>Friend list:</h2>
+      <ul v-for="friend in friends" :key="friend">{{ friend }}</ul>
+    </div>
   </div>
 </template>
 
@@ -23,8 +32,11 @@ export default class UserProfile extends Vue {
   public username = ''
   public bio = ''
   public avatar = ''
+  public elo = 1200
+  public history = ['win', 'lose', 'lose', 'win', 'win']
+  public friends = ['aaa', 'bbb', 'ccc']
 
-  thisuser: boolean
+  public thisuser: boolean
 
   constructor () {
     super()
@@ -45,6 +57,7 @@ export default class UserProfile extends Vue {
     if (!this.$route.query.user) {
       if (store.state.userId !== '') {
         this.thisuser = true
+        console.log('store.state.userId = ' + store.state.userId)
         const response = await fetch('http://localhost:4000/user/' + store.state.userId, {
           method: 'GET'
         })
@@ -108,58 +121,6 @@ export default class UserProfile extends Vue {
     margin-left: 270px;
   }
 
-  img.avatar-edit-icon {
-    position: absolute;
-    color: white;
-    top: 50%;
-    left: 50%;
-    width: 40%;
-    height: auto;
-    transform: translate(-50%, -50%);
-  }
-
-  label.avatar-edit {
-    position: absolute;
-    width: 250px;
-    height: 250px;
-    top: 0;
-    left: 0;
-    right: 0;
-    background-color: rgba(0, 0, 0, 0.5);
-    border-radius: 30%;
-    opacity: 0;
-    transition: opacity 0.3s;
-    margin: 10px 10px 10px 10px;
-  }
-
-  label.avatar-edit:hover {
-    opacity: 1;
-    cursor: pointer;
-  }
-
-  input[type=file] {
-    width: 0.1px;
-    height: 0.1px;
-    opacity: 0;
-    overflow: hidden;
-    position: absolute;
-    z-index: -1;
-  }
-
-  textarea.username-edit {
-    display: block;
-    max-width: 70%;
-    height: 100%;
-    font-size: 32px;
-    font-family: "Helvetica";
-    color: #333;
-    background-color: #fff;
-    border: 1px solid #ccc;
-    border-radius: 3px;
-    margin: 10px 10px 10px 0;
-    resize: none;
-  }
-
   p.bio {
     width: 100%;
     word-wrap: break-word;
@@ -168,43 +129,4 @@ export default class UserProfile extends Vue {
     font-family: "Helvetica";
     text-align: left;
   }
-
-  textarea.edit-bio {
-    display: block;
-    font-size: 18px;
-    font-family: "Helvetica";
-    color: #333;
-    background-color: #fff;
-    border: 1px solid #ccc;
-    border-radius: 3px;
-    margin: 0px 10px 10px 0;
-    resize: none;
-    max-width: 70%;
-  }
-
-  button.apply {
-    display: block;
-    margin: 0 auto;
-    margin-top: 10px;
-    border: none;
-    background-color: #4CA750;
-    width: 20%;
-    color: white;
-    height: 40px;
-    font-size: 20px;
-    font-family: "Helvetica";
-    text-decoration: none;
-  }
-
-  button.apply:hover {
-    cursor: pointer;
-    background-color: #499c50;
-  }
-
-  button.apply:active {
-    cursor: pointer;
-    background-color: #3e9242;
-
-  }
-
 </style>
