@@ -18,6 +18,7 @@ export class UserEntity {
   @Column({ type: 'boolean', default: false}) has2FA: boolean;
   @Column({ type: 'text', default: ''}) twoFASecret: string;
   @Column({ type: 'uuid', array: true, default: [] }) blocked: string[];
+  @Column({ type: 'uuid', array: true, default: [] }) friends: string[];
 
   @Column({ type: 'text', array: true, default: [] }) chatBan: string[];
   @Column({ type: 'text', array: true, default: [] }) chatMute: string[];
@@ -59,6 +60,24 @@ export class UserEntity {
 
   isBlocking(uuid: string) {
     return this.blocked.indexOf(uuid) !== -1
+  }
+
+  addFriend(uuid: string) {
+    if (this.friends.indexOf(uuid) !== -1)
+      return false;
+    this.friends.push(uuid);
+    return true;
+  }
+
+  rmFriend(uuid: string) {
+    if (this.friends.indexOf(uuid) === -1)
+      return false;
+    this.friends.splice(this.friends.indexOf(uuid), 1);
+    return true;
+  }
+
+  isFriend(uuid: string) {
+    return this.friends.indexOf(uuid) !== -1
   }
 
   async checkPassword(password) {

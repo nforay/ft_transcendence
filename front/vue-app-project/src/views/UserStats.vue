@@ -12,11 +12,17 @@
     <div>
       <h2>elo = {{ this.elo }}</h2>
       <h2>Match History:</h2>
-      <ul v-for="res in history" :key="res">{{ res }}</ul>
+      <ul v-for="res in history" :key="res.id">{{ res.value }}</ul>
     </div>
-    <div v-if="thisuser == true">
+    <div v-if="thisuser === true">
       <h2>Friend list:</h2>
-      <ul v-for="friend in friends" :key="friend">{{ friend }}</ul>
+      <ul v-for="friend in friends" :key="friend.id">{{ friend.value }}</ul>
+    </div>
+    <div v-else-if="isfriend === true">
+      <h2 v-on:click="rmFriend()">Remove friend</h2>
+    </div>
+    <div v-else>
+      <h2 v-on:click="addFriend()">Add Friend</h2>
     </div>
   </div>
 </template>
@@ -27,16 +33,22 @@ import Component from 'vue-class-component'
 import { store, globalFunctions } from '@/store'
 import router from '@/router'
 
+class ListVue {
+  id: number
+  value: string
+}
+
 @Component
 export default class UserProfile extends Vue {
   public username = ''
   public bio = ''
   public avatar = ''
   public elo = 1200
-  public history = ['win', 'lose', 'lose', 'win', 'win']
-  public friends = ['aaa', 'bbb', 'ccc']
+  public history: ListVue[] = [{ id: 0, value: 'win' }, { id: 1, value: 'lose' }, { id: 2, value: 'lose' }]
+  public friends: ListVue[] = []
 
-  public thisuser: boolean
+  public thisuser = false
+  public isfriend = false
 
   constructor () {
     super()
@@ -57,7 +69,6 @@ export default class UserProfile extends Vue {
     if (!this.$route.query.user) {
       if (store.state.userId !== '') {
         this.thisuser = true
-        console.log('store.state.userId = ' + store.state.userId)
         const response = await fetch('http://localhost:4000/user/' + store.state.userId, {
           method: 'GET'
         })
@@ -66,6 +77,31 @@ export default class UserProfile extends Vue {
           this.username = data.name
           this.bio = data.bio
           this.avatar = data.avatar
+          const resp = await fetch('http://localhost:4000/user/friends/' + store.state.userId, {
+            method: 'GET'
+          })
+          console.log('resp.ok = ' + resp.ok)
+          if (resp.ok) {
+            const data = await resp.json()
+            if (data === '' || data === null || data.length === 0) {
+              this.friends.push({
+                id: 0,
+                value: 'You don\'t have any friends'
+              })
+            } else {
+              for (let index = 0; index < data.length; index++) {
+                this.friends.push({
+                  id: index,
+                  value: data[index]
+                })
+              }
+            }
+          } else {
+            this.friends.push({
+              id: 0,
+              value: 'You don\'t have any friends'
+            })
+          }
         }
       }
     } else {
@@ -77,7 +113,42 @@ export default class UserProfile extends Vue {
         this.username = data.name
         this.bio = data.bio
         this.avatar = data.avatar
+        if (store.state.userId !== '') {
+          const resp = await fetch('http://localhost:4000/user/friends/check/' + store.state.userId + '/' + this.$route.query.user, {
+            method: 'GET'
+          })
+          if (resp.ok) {
+            const dat = await resp.json()
+            this.isfriend = dat
+          }
+        }
       }
+    }
+  }
+
+  async addFriend () : Promise<void> {
+    if (!this.$route.query.user || store.state.userId === '') {
+      return
+    }
+    console.log('Add friend')
+    const response = await fetch('http://localhost:4000/user/friends/' + store.state.userId + '/' + this.$route.query.user, {
+      method: 'Post'
+    })
+    if (response.ok) {
+      this.isfriend = true
+    }
+  }
+
+  async rmFriend () : Promise<void> {
+    if (!this.$route.query.user || store.state.userId === '') {
+      return
+    }
+    console.log('Remove friend')
+    const response = await fetch('http://localhost:4000/user/friends/' + store.state.userId + '/' + this.$route.query.user, {
+      method: 'Delete'
+    })
+    if (response.ok) {
+      this.isfriend = false
     }
   }
 }

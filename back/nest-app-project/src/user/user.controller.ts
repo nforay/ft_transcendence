@@ -53,7 +53,7 @@ export class UserController {
   generateQrCode(@AuthUser() user) {
     return this.userService.generateQrCode(user);
   }
-  
+
   @Get('has2fa')
   has2fa(@AuthUser() user) {
     return this.userService.has2fa(user);
@@ -68,7 +68,7 @@ export class UserController {
   login(@Body() data: Partial<UserDTO>) {
     return this.userService.login(data);
   }
-  
+
   @Post('avatar')
   @UseGuards(AuthGuard)
   @UseInterceptors(FileInterceptor('file', {
@@ -94,27 +94,27 @@ export class UserController {
   async changeAvatar(@Headers() headers, @UploadedFile() file) {
     if (!file)
       throw new HttpException('File must be of type png/jpeg/jpg', HttpStatus.BAD_REQUEST);
-    
+
     Logger.log('Bonjour !!!! ' + file.path, 'info');
-    
+
     const filetype = await FileType.fromFile(file.path);
     const allowedMimes = [ 'image/jpg', 'image/jpeg', 'image/png' ];
     const allowedExtensions = [ 'jpg', 'jpeg', 'png' ];
-    
+
     if (!allowedMimes.includes(filetype.mime) || !allowedExtensions.includes(filetype.ext.toLowerCase()))
     {
       fs.unlinkSync(file.path);
       throw new HttpException('File must be of type png/jpeg/jpg', HttpStatus.BAD_REQUEST);
     }
-    
+
     return this.userService.changeAvatar(file);
   }
-  
+
   @Get('avatar')
   getDefaultAvatar(@Res() response) {
     return response.sendFile(path.join(process.cwd(), '../uploads/avatars', 'default.jpg'));
   }
-  
+
   @Get('avatar/:id')
   getAvatar(@Param('id', ParseUUIDPipe) id: string, @Res() response) {
     const filePath = path.join(process.cwd(), '../uploads/avatars', id + '.jpg');
@@ -122,23 +122,44 @@ export class UserController {
     return response.sendFile(filePath);
     return response.sendFile(path.join(process.cwd(), '../uploads/avatars', 'default.jpg'));
   }
-  
+
   @Post('islogged')
   @UseGuards(AuthGuard)
   isLogged(@Headers() headers) {
     return this.userService.isLogged(headers.authorization);
   }
-  
+
   @Get(':id')
   findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.userService.findOne(id);
   }
-  
+
   @Delete(':id')
   @UseGuards(AuthGuard)
   remove(@Param('id', ParseUUIDPipe) id: string) {
     return this.userService.remove(id);
   }
+
+	@Get('friends/:id')
+	getFriends(@Param('id', ParseUUIDPipe) id: string) {
+		return this.userService.getFriends(id);
+	}
+
+	@Get('friends/check/:id/:name')
+	isFriend(@Param('id', ParseUUIDPipe) id: string, @Param('name') name: string) {
+		console.log('id = ' + id + '\nname = ' + name);
+		return this.userService.isFriend(id, name);
+	}
+
+	@Post('friends/:id/:name')
+	addFriend(@Param('id', ParseUUIDPipe) id: string, @Param('name') name: string) {
+		return this.userService.addFriend(id, name);
+	}
+
+	@Delete('friends/:id/:name')
+	rmFriend(@Param('id', ParseUUIDPipe) id: string, @Param('name') name: string) {
+		return this.userService.rmFriend(id, name);
+	}
 
   @Put('update')
   @Header('Content-Type', 'application/json')

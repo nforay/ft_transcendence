@@ -22,6 +22,41 @@ export class UserService {
     return users.map(user => user.toResponseUser());
   }
 
+	async getFriends(id: string) : Promise<string[]> {
+    const user = await this.repository.findOne({ where: { id } });
+    if (!user)
+      throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+    return user.friends;
+	}
+
+	async isFriend(id: string, name: string) : Promise<boolean> {
+    const user = await this.repository.findOne({ where: { id } });
+    if (!user)
+      throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+		const friend = await this.findByName(name);
+    return user.isFriend(friend.id);
+	}
+
+	async addFriend(id: string, name: string) : Promise<boolean> {
+    const user = await this.repository.findOne({ where: { id } });
+    if (!user)
+      throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+		const friend = await this.findByName(name);
+    user.addFriend(friend.id);
+    await this.repository.save(user);
+		return true;
+	}
+
+	async rmFriend(id: string, name: string) : Promise<boolean> {
+    const user = await this.repository.findOne({ where: { id } });
+    if (!user)
+      throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+		const friend = await this.findByName(name);
+    user.rmFriend(friend.id);
+    await this.repository.save(user);
+		return true;
+	}
+
   async create(data: UserDTO) : Promise<UserResponseObject> {
     const { name } = data;
 
@@ -140,7 +175,7 @@ export class UserService {
     const db_user = await this.repository.findOne({ where: { id } })
     if (!db_user)
       throw new HttpException('User not found', HttpStatus.NOT_FOUND);
-    
+
     const secret = speakeasy.generateSecret();
     const url = speakeasy.otpauthURL({
       secret: secret.base32,
@@ -150,7 +185,7 @@ export class UserService {
     const qr_code = qrcode.toDataURL(url);
 
     UserManager.instance.addSecret(db_user.id, secret.base32)
-    
+
     return qr_code
   }
 
