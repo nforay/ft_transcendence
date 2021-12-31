@@ -16,12 +16,14 @@
     </div>
     <div v-if="thisuser === true">
       <h2>Friend list:</h2>
-      <ul v-for="friend in friends" :key="friend.id">{{ friend.value }}</ul>
+      <ul v-for="friend in friends" :key="friend.id">
+        <span v-html="friend.value"></span>
+      </ul>
     </div>
     <div v-else-if="isfriend === true">
       <h2 v-on:click="rmFriend()">Remove friend</h2>
     </div>
-    <div v-else>
+    <div v-else-if="isloggeduser === false">
       <h2 v-on:click="addFriend()">Add Friend</h2>
     </div>
   </div>
@@ -49,6 +51,7 @@ export default class UserProfile extends Vue {
 
   public thisuser = false
   public isfriend = false
+  public isloggeduser = true
 
   constructor () {
     super()
@@ -80,7 +83,6 @@ export default class UserProfile extends Vue {
           const resp = await fetch('http://localhost:4000/user/friends/' + store.state.userId, {
             method: 'GET'
           })
-          console.log('resp.ok = ' + resp.ok)
           if (resp.ok) {
             const data = await resp.json()
             if (data === '' || data === null || data.length === 0) {
@@ -92,7 +94,7 @@ export default class UserProfile extends Vue {
               for (let index = 0; index < data.length; index++) {
                 this.friends.push({
                   id: index,
-                  value: data[index]
+                  value: '<a href=\'profile?user=' + data[index] + '\'>' + data[index] + '</a>'
                 })
               }
             }
@@ -114,6 +116,9 @@ export default class UserProfile extends Vue {
         this.bio = data.bio
         this.avatar = data.avatar
         if (store.state.userId !== '') {
+          if (store.state.userId !== data.id) {
+            this.isloggeduser = false
+          }
           const resp = await fetch('http://localhost:4000/user/friends/check/' + store.state.userId + '/' + this.$route.query.user, {
             method: 'GET'
           })
@@ -130,7 +135,6 @@ export default class UserProfile extends Vue {
     if (!this.$route.query.user || store.state.userId === '') {
       return
     }
-    console.log('Add friend')
     const response = await fetch('http://localhost:4000/user/friends/' + store.state.userId + '/' + this.$route.query.user, {
       method: 'Post'
     })
@@ -143,7 +147,6 @@ export default class UserProfile extends Vue {
     if (!this.$route.query.user || store.state.userId === '') {
       return
     }
-    console.log('Remove friend')
     const response = await fetch('http://localhost:4000/user/friends/' + store.state.userId + '/' + this.$route.query.user, {
       method: 'Delete'
     })

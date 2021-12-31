@@ -147,7 +147,6 @@ export class UserController {
 
 	@Get('friends/check/:id/:name')
 	isFriend(@Param('id', ParseUUIDPipe) id: string, @Param('name') name: string) {
-		console.log('id = ' + id + '\nname = ' + name);
 		return this.userService.isFriend(id, name);
 	}
 

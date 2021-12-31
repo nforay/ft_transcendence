@@ -64,7 +64,7 @@ export default class Chat extends Vue {
         }
 
         if (cpy.name.length !== 0) {
-          cpy.name = '<a href=\'#/\'>' + cpy.name + '</a>: ' //! Attention il ne faut pas de username avec du HTML sinon grosse faille
+          cpy.name = '<a href=\'profile?user=' + cpy.name + '\'>' + cpy.name + '</a>: ' //! Attention il ne faut pas de username avec du HTML sinon grosse faille
         }
 
         this.messages.push({

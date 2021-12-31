@@ -18,7 +18,7 @@ export class UserEntity {
   @Column({ type: 'boolean', default: false}) has2FA: boolean;
   @Column({ type: 'text', default: ''}) twoFASecret: string;
   @Column({ type: 'uuid', array: true, default: [] }) blocked: string[];
-  @Column({ type: 'uuid', array: true, default: [] }) friends: string[];
+  @Column({ type: 'text', array: true, default: [] }) friends: string[];
 
   @Column({ type: 'text', array: true, default: [] }) chatBan: string[];
   @Column({ type: 'text', array: true, default: [] }) chatMute: string[];
@@ -62,22 +62,22 @@ export class UserEntity {
     return this.blocked.indexOf(uuid) !== -1
   }
 
-  addFriend(uuid: string) {
-    if (this.friends.indexOf(uuid) !== -1)
+  addFriend(name: string) {
+    if (this.friends.indexOf(name) !== -1)
       return false;
-    this.friends.push(uuid);
+    this.friends.push(name);
     return true;
   }
 
-  rmFriend(uuid: string) {
-    if (this.friends.indexOf(uuid) === -1)
+  rmFriend(name: string) {
+    if (this.friends.indexOf(name) === -1)
       return false;
-    this.friends.splice(this.friends.indexOf(uuid), 1);
+    this.friends.splice(this.friends.indexOf(name), 1);
     return true;
   }
 
-  isFriend(uuid: string) {
-    return this.friends.indexOf(uuid) !== -1
+  isFriend(name: string) {
+    return this.friends.indexOf(name) !== -1
   }
 
   async checkPassword(password) {
