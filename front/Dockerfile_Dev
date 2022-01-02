@@ -1,6 +1,6 @@
 FROM node:lts-alpine
 
-MAINTAINER Nicolas Foray <nforay@student.42.fr>
+LABEL maintainer="Nicolas Foray <nforay@student.42.fr>"
 
 EXPOSE 8080
 

@@ -5,17 +5,15 @@
       <li class="error-text" v-for="error in this.errors" :key="error">{{ error }}</li>
     </div>
     <br/>
-    <div class="form">
-      <div class="form-group">
+      <md-field>
         <label for="username">Username</label>
-        <input class="username" type="text" v-model="username" id="login-username" placeholder="Username">
-      </div>
-      <div class="form-group">
+        <md-input v-model="initial" id="login-username"></md-input>
+      </md-field>
+      <md-field>
         <label for="password">Password</label>
-        <input class="password" type="password" v-model="password" id="login-password" placeholder="Password">
-      </div>
-      <button @click="login">Log In</button>
-    </div>
+        <md-input id="login-password" v-model="password" type="password"></md-input>
+      </md-field>
+      <md-button class="md-raised md-primary" @click="login">Log In</md-button>
   </div>
 </template>
 
@@ -88,68 +86,12 @@ export default class LoginForm extends Vue {
 
 <style scoped>
 
+  .md-field:last-child {
+    margin-bottom: 40px;
+  }
+
   .error-text {
     text-align: left;
     color: red;
-  }
-
-  .login-form-content {
-    margin: 0 auto;
-  }
-
-  .form-group {
-    margin-bottom: 10px;
-  }
-
-  label {
-    display: block;
-    text-align: left;
-    margin-bottom: 3px;
-    font-family: "Helvetica";
-    font-size: 16px;
-  }
-
-  label:hover {
-    cursor: text;
-  }
-
-  input {
-    font-family: "Helvetica";
-    border: 1px solid #ccc;
-    border-radius: 3px;
-    height: 35px;
-    width: 100%;
-    margin-bottom: 5px;
-    font-size: 16px;
-    padding-left: 7px;
-  }
-
-  input:focus {
-    border: 1px solid #555;
-  }
-
-  button {
-    display: block;
-    margin: 0 auto;
-    margin-top: 10px;
-    border: none;
-    background-color: #4CA750;
-    width: 75%;
-    color: white;
-    height: 40px;
-    font-size: 20px;
-    font-family: "Helvetica";
-    text-decoration: none;
-  }
-
-  button:hover {
-    cursor: pointer;
-    background-color: #499c50;
-  }
-
-  button:active {
-    cursor: pointer;
-    background-color: #3e9242;
-
   }
 </style>

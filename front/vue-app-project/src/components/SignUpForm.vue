@@ -1,25 +1,23 @@
 <template>
-  <div class="signup-form-content">
-    <div v-if="this.errors.length !== 0">
+  <div>
+    <div class="error-text" v-if="this.errors.length !== 0">
       <b class="error-text">Please correct the following errors:</b>
       <li class="error-text" v-for="error in this.errors" :key="error">{{ error }}</li>
     </div>
     <br/>
-    <div class="form">
-      <div class="form-group">
-        <label for="username">Username</label>
-        <input class="username" type="text" v-model="username" id="signup-username" placeholder="Username">
-      </div>
-      <div class="form-group">
-        <label for="password">Password</label>
-        <input class="password" type="password" v-model="password" id="signup-password" placeholder="Password">
-      </div>
-      <div class="form-group">
-        <label for="password">Confirm Password</label>
-        <input class="confirm-password" type="password" v-model="confirmPassword" id="signup-confirm-password" placeholder="Password">
-      </div>
-      <button @click="signup">Sign Up</button>
-    </div>
+        <md-field md-clearable>
+          <label for="username">Username</label>
+          <md-input v-model="initial" id="signup-username"></md-input>
+        </md-field>
+        <md-field>
+          <label for="password">Password</label>
+          <md-input id="signup-password" v-model="password" type="password"></md-input>
+        </md-field>
+        <md-field>
+          <label for="password">Confirm Password</label>
+          <md-input id="signup-confirm-password" v-model="password" type="password"></md-input>
+        </md-field>
+      <md-button @click="signup" class="md-raised">Sign Up</md-button>
   </div>
 </template>
 
@@ -87,71 +85,14 @@ export default class SignUpForm extends Vue {
 }
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
+
+  .md-field:last-child {
+    margin-bottom: 40px;
+  }
 
   .error-text {
     text-align: left;
     color: red;
-  }
-
-  .signup-form-content {
-    margin: 0 auto;
-    width: 100%;
-  }
-
-  .form-group {
-    margin-bottom: 10px;
-  }
-
-  label {
-    display: block;
-    text-align: left;
-    margin-bottom: 3px;
-    font-family: "Helvetica";
-    font-size: 16px;
-  }
-
-  label:hover {
-    cursor: text;
-  }
-
-  input {
-    font-family: "Helvetica";
-    border: 1px solid #ccc;
-    border-radius: 3px;
-    height: 35px;
-    width: 100%;
-    margin-bottom: 5px;
-    font-size: 16px;
-    padding-left: 7px;
-  }
-
-  input:focus {
-    border: 1px solid #555;
-  }
-
-  button {
-    display: block;
-    margin: 0 auto;
-    margin-top: 10px;
-    border: none;
-    background-color: #4CA750;
-    width: 75%;
-    color: white;
-    height: 40px;
-    font-size: 20px;
-    font-family: "Helvetica";
-    text-decoration: none;
-  }
-
-  button:hover {
-    cursor: pointer;
-    background-color: #499c50;
-  }
-
-  button:active {
-    cursor: pointer;
-    background-color: #3e9242;
-
   }
 </style>

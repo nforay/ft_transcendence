@@ -1,6 +1,6 @@
 FROM node:lts-alpine as build-stage
 
-MAINTAINER Nicolas Foray <nforay@student.42.fr>
+LABEL maintainer="Nicolas Foray <nforay@student.42.fr>"
 
 RUN mkdir /app
 ADD . /app

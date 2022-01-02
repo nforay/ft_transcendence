@@ -3,11 +3,11 @@
     <app-header />
     <Chat v-if="this.isLogged" />
     <div id="nav">
-      <router-link to="/">Home</router-link> |
-      <router-link to="/play">Play</router-link> |
-      <router-link to="/about">About</router-link> |
-      <router-link to="/login">Login</router-link> |
-      <router-link to="/chat">Chat</router-link>
+      <md-button to="/">Home</md-button>
+      <md-button to="/play">Play</md-button>
+      <md-button to="/about">About</md-button>
+      <md-button to="/login">Login</md-button>
+      <md-button to="/chat">Chat</md-button>
     </div>
     <router-view/>
   </div>
