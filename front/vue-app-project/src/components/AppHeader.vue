@@ -1,8 +1,14 @@
 <template>
   <header>
     <md-toolbar>
-      <md-icon :md-src="require('../assets/42logo.svg')" />
-      <h3 class="md-title" style="flex: 1">ft_transcendence</h3>
+      <h3 class="md-title" style="flex: 1"><md-icon :md-src="require('../assets/42logo.svg')" />ft_transcendence</h3>
+      <div id="nav">
+      <md-button to="/">Home</md-button>
+      <md-button to="/play">Play</md-button>
+      <md-button to="/about">About</md-button>
+      <md-button to="/login">Login</md-button>
+      <md-button to="/chat">Chat</md-button>
+    </div>
       <md-menu md-size="medium">
         <md-badge v-if="this.notificationsCount > 0" class="md-primary" :md-content="this.notificationsCount" md-menu-trigger>
           <md-avatar>

@@ -2,13 +2,6 @@
   <div id="app">
     <app-header />
     <Chat v-if="this.isLogged" />
-    <div id="nav">
-      <md-button to="/">Home</md-button>
-      <md-button to="/play">Play</md-button>
-      <md-button to="/about">About</md-button>
-      <md-button to="/login">Login</md-button>
-      <md-button to="/chat">Chat</md-button>
-    </div>
     <router-view/>
   </div>
 </template>
@@ -29,7 +22,6 @@ export default {
 
 <style lang="scss">
 #app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-align: center;

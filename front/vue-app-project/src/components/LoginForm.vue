@@ -1,19 +1,26 @@
 <template>
-  <div class="login-form-content">
-    <div v-if="this.errors.length !== 0">
-      <b class="error-text">Please correct the following errors:</b>
-      <li class="error-text" v-for="error in this.errors" :key="error">{{ error }}</li>
-    </div>
+  <div>
+    <md-card class="md-layout-item md-size-100 md-small-size-100">
+        <md-card-header>
+          <div class="md-title">Log in</div>
+        </md-card-header>
+        <md-card-content>
     <br/>
       <md-field>
         <label for="username">Username</label>
-        <md-input v-model="initial" id="login-username"></md-input>
+        <md-input v-model="username" id="login-username"></md-input>
       </md-field>
       <md-field>
         <label for="password">Password</label>
         <md-input id="login-password" v-model="password" type="password"></md-input>
       </md-field>
-      <md-button class="md-raised md-primary" @click="login">Log In</md-button>
+        </md-card-content>
+        <md-card-actions>
+          <md-button @click="login" class="md-raised md-primary" :disabled="sending">Log in</md-button>
+        </md-card-actions>
+        <md-progress-bar md-mode="indeterminate" v-if="sending" />
+      </md-card>
+    <md-snackbar :md-active.sync="showSnack" >{{ this.errors[0] }}</md-snackbar>
   </div>
 </template>
 
@@ -28,6 +35,8 @@ import router from '@/router'
 export default class LoginForm extends Vue {
   public username = ''
   public password = ''
+  public showSnack = false
+  public sending = false
 
   public errors : string[] = []
 
@@ -46,9 +55,12 @@ export default class LoginForm extends Vue {
   }
 
   async login () : Promise<void> {
-    if (!this.checkForm()) {
+    this.showSnack = false
+    this.showSnack = !this.checkForm()
+    if (this.showSnack) {
       return
     }
+    this.sending = true
 
     const response = await fetch('http://localhost:4000/user/login', {
       method: 'POST',
@@ -65,7 +77,9 @@ export default class LoginForm extends Vue {
       const data = await response.json()
       store.commit('expireToken')
       store.commit('setLogged', false)
-      this.errors.push(data.message)
+      this.errors.push('Incorrect username or password')
+      this.showSnack = true
+      this.sending = false
     } else {
       const data = await response.json()
       if (data.has2FA) {
@@ -85,13 +99,7 @@ export default class LoginForm extends Vue {
 </script>
 
 <style scoped>
-
   .md-field:last-child {
     margin-bottom: 40px;
-  }
-
-  .error-text {
-    text-align: left;
-    color: red;
   }
 </style>
