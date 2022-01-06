@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="md-layout-item">
     <md-card class="md-layout-item md-size-100 md-small-size-100">
         <md-card-header>
           <div class="md-title">Log in</div>
@@ -99,7 +99,11 @@ export default class LoginForm extends Vue {
 </script>
 
 <style scoped>
+  .md-card {
+    margin-top: 16px;
+  }
+
   .md-field:last-child {
-    margin-bottom: 40px;
+    margin-bottom: 20px;
   }
 </style>

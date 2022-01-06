@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="md-layout-item">
     <form novalidate class="md-layout">
       <md-card class="md-layout-item md-size-100 md-small-size-100">
         <md-card-header>
@@ -106,8 +106,12 @@ export default class SignUpForm extends Vue {
 </script>
 
 <style lang="scss" scoped>
+  .md-card {
+    margin-top: 16px;
+  }
+
   .md-field:last-child {
-    margin-bottom: 40px;
+    margin-bottom: 20px;
   }
 
   .error-text {

@@ -1,13 +1,9 @@
 <template>
-  <div class="content">
-    <table cols="2">
-      <td>
-        <LoginForm />
-      </td>
-      <td>
-        <SignUpForm />
-      </td>
-    </table>
+  <div>
+    <div class="md-layout md-gutter">
+      <LoginForm />
+      <SignUpForm />
+    </div>
     <h1 v-if="checkLoggedIn()">You are logged in!</h1>
     <h1 v-else>You are not logged in!</h1>
   </div>
@@ -33,7 +29,7 @@ export default class Login extends Vue {
 
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
   div.content {
     width: 80%;
     margin: 0 auto;
