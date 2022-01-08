@@ -1,21 +1,9 @@
 <template>
-  <div class="content">
-    <table cols="2">
-      <td>
-        <div class="login-div">
-          <h1>Log In</h1>
-          <hr class="login-hr">
-          <LoginForm />
-        </div>
-      </td>
-      <td>
-        <div class="signup-div">
-          <h1>Sign Up</h1>
-          <hr class="login-hr">
-          <SignUpForm />
-        </div>
-      </td>
-    </table>
+  <div>
+    <div class="md-layout md-gutter">
+      <LoginForm />
+      <SignUpForm />
+    </div>
     <h1 v-if="checkLoggedIn()">You are logged in!</h1>
     <h1 v-else>You are not logged in!</h1>
   </div>
@@ -41,9 +29,9 @@ export default class Login extends Vue {
 
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
   div.content {
-    width: 40%;
+    width: 80%;
     margin: 0 auto;
   }
 
@@ -51,6 +39,8 @@ export default class Login extends Vue {
     margin: 0 auto;
     table-layout: fixed;
     width: 100%;
+    min-width: 60%;
+    margin-top: 20px;
     margin-bottom: 100px;
   }
 

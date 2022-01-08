@@ -1,21 +1,26 @@
 <template>
-  <div class="login-form-content">
-    <div v-if="this.errors.length !== 0">
-      <b class="error-text">Please correct the following errors:</b>
-      <li class="error-text" v-for="error in this.errors" :key="error">{{ error }}</li>
-    </div>
+  <div class="md-layout-item">
+    <md-card class="md-layout-item md-size-100 md-small-size-100">
+        <md-card-header>
+          <div class="md-title">Log in</div>
+        </md-card-header>
+        <md-card-content>
     <br/>
-    <div class="form">
-      <div class="form-group">
+      <md-field>
         <label for="username">Username</label>
-        <input class="username" type="text" v-model="username" id="login-username" placeholder="Username">
-      </div>
-      <div class="form-group">
+        <md-input v-model="username" id="login-username"></md-input>
+      </md-field>
+      <md-field>
         <label for="password">Password</label>
-        <input class="password" type="password" v-model="password" id="login-password" placeholder="Password">
-      </div>
-      <button @click="login">Log In</button>
-    </div>
+        <md-input id="login-password" v-model="password" type="password"></md-input>
+      </md-field>
+        </md-card-content>
+        <md-card-actions>
+          <md-button @click="login" class="md-raised md-primary" :disabled="sending">Log in</md-button>
+        </md-card-actions>
+        <md-progress-bar md-mode="indeterminate" v-if="sending" />
+      </md-card>
+    <md-snackbar :md-active.sync="showSnack" >{{ this.errors[0] }}</md-snackbar>
   </div>
 </template>
 
@@ -30,6 +35,8 @@ import router from '@/router'
 export default class LoginForm extends Vue {
   public username = ''
   public password = ''
+  public showSnack = false
+  public sending = false
 
   public errors : string[] = []
 
@@ -48,9 +55,12 @@ export default class LoginForm extends Vue {
   }
 
   async login () : Promise<void> {
-    if (!this.checkForm()) {
+    this.showSnack = false
+    this.showSnack = !this.checkForm()
+    if (this.showSnack) {
       return
     }
+    this.sending = true
 
     const response = await fetch('http://localhost:4000/user/login', {
       method: 'POST',
@@ -67,7 +77,9 @@ export default class LoginForm extends Vue {
       const data = await response.json()
       store.commit('expireToken')
       store.commit('setLogged', false)
-      this.errors.push(data.message)
+      this.errors.push('Incorrect username or password')
+      this.showSnack = true
+      this.sending = false
     } else {
       const data = await response.json()
       if (data.has2FA) {
@@ -87,69 +99,11 @@ export default class LoginForm extends Vue {
 </script>
 
 <style scoped>
-
-  .error-text {
-    text-align: left;
-    color: red;
+  .md-card {
+    margin-top: 16px;
   }
 
-  .login-form-content {
-    margin: 0 auto;
-  }
-
-  .form-group {
-    margin-bottom: 10px;
-  }
-
-  label {
-    display: block;
-    text-align: left;
-    margin-bottom: 3px;
-    font-family: "Helvetica";
-    font-size: 16px;
-  }
-
-  label:hover {
-    cursor: text;
-  }
-
-  input {
-    font-family: "Helvetica";
-    border: 1px solid #ccc;
-    border-radius: 3px;
-    height: 35px;
-    width: 100%;
-    margin-bottom: 5px;
-    font-size: 16px;
-    padding-left: 7px;
-  }
-
-  input:focus {
-    border: 1px solid #555;
-  }
-
-  button {
-    display: block;
-    margin: 0 auto;
-    margin-top: 10px;
-    border: none;
-    background-color: #4CA750;
-    width: 75%;
-    color: white;
-    height: 40px;
-    font-size: 20px;
-    font-family: "Helvetica";
-    text-decoration: none;
-  }
-
-  button:hover {
-    cursor: pointer;
-    background-color: #499c50;
-  }
-
-  button:active {
-    cursor: pointer;
-    background-color: #3e9242;
-
+  .md-field:last-child {
+    margin-bottom: 20px;
   }
 </style>
