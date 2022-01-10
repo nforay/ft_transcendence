@@ -55,7 +55,7 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     const game = GameManager.instance.getGameBySocketId(client.id);
     if (game)
     {
-      if (game.state === GameState.IN_GAME)
+      if (game.state !== GameState.IN_GAME)
         game.cancel(client.id);
       else
         game.disconnect(client.id);

@@ -1,9 +1,5 @@
 <template>
   <div class="validate2fa-container">
-    <div v-if="this.errors.length !== 0">
-      <b class="error-text">Please correct the following errors:</b>
-      <li class="error-text" v-for="error in this.errors" :key="error">{{ error }}</li>
-    </div>
     <label for="twofacode">Enter the code on your authenticator :</label><br>
     <input for="twofacode" type="text" v-model="code" /><br>
     <button @click="validateCode">Validate</button>
@@ -19,7 +15,6 @@ import router from '../router'
 @Component
 export default class Validate2FA extends Vue {
   code = ''
-  errors: string[] = []
 
   beforeCreate () : void {
     if (!this.$route.query.userId) {
@@ -39,8 +34,7 @@ export default class Validate2FA extends Vue {
       })
     })
     if (!response.ok) {
-      this.errors.length = 0
-      this.errors.push('Code is invalid or expired')
+      store.commit('setPopupMessage', 'Code is invalid or expired')
       this.code = ''
       return
     }

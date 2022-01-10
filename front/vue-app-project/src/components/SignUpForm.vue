@@ -30,7 +30,6 @@
         <md-progress-bar md-mode="indeterminate" v-if="sending" />
       </md-card>
       </form>
-      <md-snackbar :md-active.sync="showSnack" >{{ this.errors[0] }}</md-snackbar>
   </div>
 </template>
 
@@ -46,33 +45,29 @@ export default class SignUpForm extends Vue {
   public username = ''
   public password = ''
   public confirmPassword = ''
-  public showSnack = false
   public sending = false
 
-  public errors : string[] = []
-
   checkForm () : boolean {
-    this.errors = []
-
     if (this.username.length === 0) {
-      this.errors.push('Username cannot be empty')
+      store.commit('setPopupMessage', 'Username cannot be empty')
+      return false
     }
 
     if (this.password.length === 0) {
-      this.errors.push('Password cannot be empty')
+      store.commit('setPopupMessage', 'Password cannot be empty')
+      return false
     }
 
     if (this.confirmPassword !== this.password) {
-      this.errors.push('Passwords doesn\'t match')
+      store.commit('setPopupMessage', 'Passwords doesn\'t match')
+      return false
     }
 
-    return this.errors.length === 0
+    return true
   }
 
   async signup () : Promise<void> {
-    this.showSnack = false
-    this.showSnack = !this.checkForm()
-    if (this.showSnack) {
+    if (!this.checkForm()) {
       return
     }
     this.sending = true
@@ -90,9 +85,7 @@ export default class SignUpForm extends Vue {
     if (!response.ok) {
       this.sending = false
       store.commit('logout')
-      router.push('/login')
-      this.errors.push('Cannot create user')
-      this.showSnack = true
+      store.commit('setPopupMessage', 'Cannot create user')
     } else {
       const data = await response.json()
       store.commit('setToken', { token: data.token, expiresIn: data.expiresIn })

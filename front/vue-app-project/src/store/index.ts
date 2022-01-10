@@ -7,11 +7,13 @@ Vue.use(Vuex)
 export const store : StoreOptions<StoreType> = {
   state: {
     isLogged: false,
+    requestedLogin: false,
     username: '',
     notifications: [],
     userId: '',
     errors: [],
-    avatarUpdate: 0
+    avatarUpdate: 0,
+    popupMessage: ''
   },
   mutations: {
     setLogged (state : StoreType, value : boolean) : void {
@@ -44,6 +46,14 @@ export const store : StoreOptions<StoreType> = {
 
     updateAvatar (state : StoreType) : void {
       state.avatarUpdate = new Date().getTime()
+    },
+
+    setRequestedLogin (state : StoreType, data : any) : void {
+      state.requestedLogin = data
+    },
+
+    setPopupMessage (state : StoreType, data : any) : void {
+      state.popupMessage = data
     }
   },
   getters: {
@@ -73,6 +83,14 @@ export const store : StoreOptions<StoreType> = {
 
     avatarUpdate (state : StoreType) : number {
       return state.avatarUpdate
+    },
+
+    requestedLogin (state : StoreType) : boolean {
+      return state.requestedLogin
+    },
+
+    popupMessage (state : StoreType) : string {
+      return state.popupMessage
     }
   }
 }

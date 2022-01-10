@@ -18,7 +18,10 @@ export class UserEntity {
   @Column({ type: 'boolean', default: false}) has2FA: boolean;
   @Column({ type: 'text', default: ''}) twoFASecret: string;
   @Column({ type: 'uuid', array: true, default: [] }) blocked: string[];
-  @Column({ type: 'text', array: true, default: [] }) friends: string[];
+  @Column({ type: 'uuid', array: true, default: [] }) friends: string[];
+  @Column({ type: 'int', default: 1200 }) elo: number;
+  @Column({ type: 'int', default: 0 }) win: number;
+  @Column({ type: 'int', default: 0 }) lose: number;
 
   @Column({ type: 'text', array: true, default: [] }) chatBan: string[];
   @Column({ type: 'text', array: true, default: [] }) chatMute: string[];
@@ -37,6 +40,9 @@ export class UserEntity {
       name: this.name,
       role: this.role,
       bio: this.bio,
+      elo: this.elo,
+      win: this.win,
+      lose: this.lose,
       avatar: `http://localhost:4000/user/avatar/${this.id}`,
       token: (withToken) ? this.token : undefined,
       has2FA: (with2FA) ? this.has2FA : undefined,
@@ -62,22 +68,22 @@ export class UserEntity {
     return this.blocked.indexOf(uuid) !== -1
   }
 
-  addFriend(name: string) {
-    if (this.friends.indexOf(name) !== -1)
+  addFriend(id: string) {
+    if (this.friends.indexOf(id) !== -1)
       return false;
-    this.friends.push(name);
+    this.friends.push(id);
     return true;
   }
 
-  rmFriend(name: string) {
-    if (this.friends.indexOf(name) === -1)
+  rmFriend(id: string) {
+    if (this.friends.indexOf(id) === -1)
       return false;
-    this.friends.splice(this.friends.indexOf(name), 1);
+    this.friends.splice(this.friends.indexOf(id), 1);
     return true;
   }
 
-  isFriend(name: string) {
-    return this.friends.indexOf(name) !== -1
+  isFriend(id: string) {
+    return this.friends.indexOf(id) !== -1
   }
 
   async checkPassword(password) {

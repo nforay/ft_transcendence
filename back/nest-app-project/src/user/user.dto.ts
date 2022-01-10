@@ -51,6 +51,9 @@ export class UserResponseObject {
   role: string;
   bio: string;
   avatar: string;
+  elo: number;
+  win: number;
+  lose: number;
   has2FA?: boolean;
   token?: string;
   expiresIn?: number;

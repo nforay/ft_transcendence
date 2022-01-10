@@ -13,13 +13,7 @@
         </md-tabs>
       </div>
         <md-menu md-size="auto" class="md-xsmall-hide">
-          <md-badge v-if="this.notificationsCount > 0" class="md-primary" :md-content="this.notificationsCount" md-menu-trigger>
-            <md-avatar class="md-xsmall">
-              <img class="avatar md-alignment-top-right" :src="avatar" alt="Avatar">
-              <md-tooltip v-if="this.username.length !== 0" md-direction="left">{{ this.username }}</md-tooltip>
-            </md-avatar>
-          </md-badge>
-          <md-avatar v-else md-menu-trigger>
+          <md-avatar md-menu-trigger>
             <img class="avatar" :src="avatar" alt="Avatar">
             <md-tooltip v-if="this.username.length !== 0" md-direction="left">{{ this.username }}</md-tooltip>
           </md-avatar>

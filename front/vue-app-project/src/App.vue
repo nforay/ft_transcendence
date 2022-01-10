@@ -3,6 +3,7 @@
     <app-header />
     <Chat v-if="this.isLogged" />
     <router-view/>
+    <md-snackbar :md-active.sync="showSnack" >{{ this.recordedPopupMessage }}</md-snackbar>
   </div>
 </template>
 
@@ -10,13 +11,35 @@
 import AppHeader from '@/components/AppHeader.vue'
 import Chat from './components/Chat.vue'
 import { mapGetters } from 'vuex'
+import store from '@/store'
 
 export default {
+  data () {
+    return { showSnack: false, recordedPopupMessage: '' }
+  },
   components: {
     AppHeader,
     Chat
   },
-  computed: { ...mapGetters(['isLogged']) }
+  computed: {
+    ...mapGetters(['isLogged']),
+    popupMessage () {
+      return store.state.popupMessage
+    }
+  },
+  watch: {
+    popupMessage: function (val) {
+      if (val.length > 0) {
+        this.showSnack = true
+        this.recordedPopupMessage = val
+        setTimeout(function () {
+          this.showSnack = false
+          this.recordedPopupMessage = ''
+        }, 100)
+        store.commit('setPopupMessage', '')
+      }
+    }
+  }
 }
 </script>
 

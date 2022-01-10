@@ -9,10 +9,10 @@
         <br/>
         <div class="md-layout md-gutter">
           <div class="md-layout-item md-small-size-100">
-            <span>ELO: 1500</span>
+            <span>ELO: {{ this.elo }}</span>
           </div>
           <div class="md-layout-item md-small-size-100">
-            <span>W/L Ratio: 2.5</span>
+            <span>W/L Ratio: {{this.wlratio }}</span>
           </div>
         </div>
       </md-card-content>
@@ -22,7 +22,6 @@
         </md-card-actions>
       <md-progress-bar md-mode="indeterminate" v-if="sending" />
     </md-card>
-    <md-snackbar :md-active.sync="showSnack" >{{ this.errors[0] }}</md-snackbar>
   </div>
 </template>
 
@@ -30,22 +29,35 @@
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import router from '../router'
+import store from '../store'
 
 @Component
 export default class Play extends Vue {
   queueJoined = false;
-  public errors : string[] = []
-  public showSnack = false
   public sending = false
+  public elo = 100
+  public wlratio = 1.0
 
   created () : void {
     document.addEventListener('beforeunload', this.leaveQueue)
   }
 
-  mounted () : void {
+  async mounted () : Promise<void> {
     window.setInterval(() => {
       this.checkQueue()
     }, 1000)
+    while (!store.state.requestedLogin) {
+      await new Promise(resolve => setTimeout(resolve, 100))
+    }
+    const resp = await fetch('http://localhost:4000/user/' + store.state.userId, {
+      method: 'GET'
+    })
+    if (!resp.ok) {
+      return
+    }
+    const data = await resp.json()
+    this.elo = data.elo
+    this.wlratio = data.lose === 0 ? Math.max(data.win, 1) : data.win / data.lose
   }
 
   async checkQueue () : Promise<void> {
@@ -70,10 +82,8 @@ export default class Play extends Vue {
   }
 
   async joinQueue () : Promise<void> {
-    this.errors = []
     if (document.cookie.indexOf('Token') === -1) {
-      this.errors.push('You must be logged in to join the queue')
-      this.showSnack = true
+      store.commit('setPopupMessage', 'You must be logged in to join the queue')
       return
     }
     const token = document.cookie.split('Token=')[1].split(';')[0]
@@ -93,8 +103,7 @@ export default class Play extends Vue {
 
   async leaveQueue () : Promise<void> {
     if (document.cookie.indexOf('Token') === -1) {
-      this.errors.push('You must be logged in to leave the queue')
-      this.showSnack = true
+      store.commit('setPopupMessage', 'You must be logged in to leave the queue')
       return
     }
     const token = document.cookie.split('Token=')[1].split(';')[0]

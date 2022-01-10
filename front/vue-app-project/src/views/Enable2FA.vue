@@ -1,9 +1,5 @@
 <template>
   <div class="enable2fa-content">
-    <div v-if="this.errors.length !== 0">
-      <b class="error-text">Please correct the following errors:</b>
-      <li class="error-text" v-for="error in this.errors" :key="error">{{ error }}</li>
-    </div>
     <img width="300px" :src="qrCodeData"><br>
     <label for="2fa">Enter your code:</label>
     <input for="2fa" type="text" v-model="twoFACode">
@@ -15,13 +11,12 @@
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import router from '../router'
-import { store, globalFunctions } from '../store'
+import store, { globalFunctions } from '../store'
 
 @Component
 export default class Enable2FA extends Vue {
   qrData = ''
   twoFACode = ''
-  errors: string[] = []
 
   async beforeCreate () : Promise<void> {
     const token = globalFunctions.getToken()
@@ -61,8 +56,7 @@ export default class Enable2FA extends Vue {
     })
     if (!response.ok) {
       this.twoFACode = ''
-      this.errors.length = 0
-      this.errors.push(response.statusText)
+      store.commit('setPopupMessage', response.statusText)
       return
     }
     router.push('/')

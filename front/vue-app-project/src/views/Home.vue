@@ -1,7 +1,7 @@
 <template>
   <div class="home">
     <kinesis-container class="container">
-      <kinesis-element :strength="40" originX="0" originY="0" minX="-10" maxX="10" class="left_paddle">
+      <kinesis-element :strength="40" :originX="0" :originY="0" :minX="-10" :maxX="10" class="left_paddle">
         <svg height="200" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" width="20">
           <rect width="40" height="200"/>
         </svg>
@@ -11,7 +11,7 @@
           <rect width="30" height="30" />
         </svg>
       </kinesis-element>
-      <kinesis-element :strength="40" originX="100" originY="100" minX="-10" maxX="10" class="right_paddle">
+      <kinesis-element :strength="40" :originX="100" :originY="100" :minX="-10" :maxX="10" class="right_paddle">
         <svg height="200" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" width="20">
           <rect width="40" height="200"/>
         </svg>
@@ -22,7 +22,7 @@
       <kinesis-element :strength="10" type="depth_inv" class="textpong">
         <h2><span>"The mighty pong contest"</span></h2>
       </kinesis-element>
-      <kinesis-element :strength="5" originY="100" type="rotate" class="pongbutton">
+      <kinesis-element :strength="5" :originY="100" type="rotate" class="pongbutton">
         <md-button class="md-raised md-primary" href="/play">Play</md-button>
       </kinesis-element>
     </kinesis-container>

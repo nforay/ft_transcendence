@@ -140,9 +140,9 @@ export class UserController {
     return this.userService.remove(id);
   }
 
-	@Get('friends/:id')
-	getFriends(@Param('id', ParseUUIDPipe) id: string) {
-		return this.userService.getFriends(id);
+  @Get('friends/name/:name')
+	getFriendsByName(@Param('name') name: string) {
+		return this.userService.getFriends(name);
 	}
 
 	@Get('friends/check/:id/:name')

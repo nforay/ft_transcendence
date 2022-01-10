@@ -29,6 +29,7 @@ new Vue({
   async beforeCreate () {
     if (document.cookie.indexOf('Token') <= -1) {
       store.commit('logout')
+      store.commit('setRequestedLogin', true)
       return
     }
     const token = document.cookie.split('Token=')[1].split(';')[0]
@@ -40,11 +41,13 @@ new Vue({
     })
     if (!response.ok) {
       store.commit('logout')
+      store.commit('setRequestedLogin', true)
     } else {
       const data = await response.json()
       store.commit('setLogged', data.isLogged)
       store.commit('setUsername', data.name)
       store.commit('setUserId', data.id)
+      store.commit('setRequestedLogin', true)
     }
   }
 }).$mount('#app')

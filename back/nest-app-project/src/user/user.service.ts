@@ -22,18 +22,27 @@ export class UserService {
     return users.map(user => user.toResponseUser());
   }
 
-	async getFriends(id: string) : Promise<string[]> {
-    const user = await this.repository.findOne({ where: { id } });
+	async getFriends(name: string) : Promise<any[]> {
+    const user = await this.repository.findOne({ where: { name } });
     if (!user)
       throw new HttpException('User not found', HttpStatus.NOT_FOUND);
-    return user.friends;
+    if (user.friends.length === 0)
+      return [];
+    const where = user.friends.map(x => { return { id: x } });
+    const friends = await this.repository.find({ where });
+    let res = friends.map(x => { return { id: x.id, name: x.name }});
+
+    return res;
 	}
 
 	async isFriend(id: string, name: string) : Promise<boolean> {
     const user = await this.repository.findOne({ where: { id } });
     if (!user)
       throw new HttpException('User not found', HttpStatus.NOT_FOUND);
-    return user.isFriend(name);
+    const friend = await this.findByName(name);
+    if (!friend)
+      throw new HttpException('Friend not found', HttpStatus.NOT_FOUND);
+    return user.isFriend(friend.id);
 	}
 
 	async addFriend(id: string, name: string) : Promise<boolean> {
@@ -43,9 +52,9 @@ export class UserService {
 		const friend = await this.findByName(name);
 		if (!friend)
 			throw new HttpException('Friend not found', HttpStatus.NOT_FOUND);
-		if (user.name === name)
+		if (user.id === friend.id)
 			throw new HttpException('Cannot add yourself as friend', HttpStatus.NOT_FOUND);
-    user.addFriend(name);
+    user.addFriend(friend.id);
     await this.repository.save(user);
 		return true;
 	}
@@ -57,7 +66,7 @@ export class UserService {
 		const friend = await this.findByName(name);
 		if (!friend)
 			throw new HttpException('Friend not found', HttpStatus.NOT_FOUND);
-    user.rmFriend(name);
+    user.rmFriend(friend.id);
     await this.repository.save(user);
 		return true;
 	}

@@ -242,8 +242,9 @@ export default class GameCanvas extends Vue {
       this.ball.engage = data.game.engage
     })
 
-    this.socketManager.on('gameCancelled', () => {
+    this.socketManager.on('gameCanceled', () => {
       router.push('/play')
+      this.socketManager.disconnect()
     })
 
     this.socketManager.on('gameFinished', (data) => {

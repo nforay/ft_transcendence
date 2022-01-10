@@ -39,16 +39,11 @@ export default class Chat extends Vue {
   channel = 'general';
 
   created () : void {
-    console.log('created')
     this.socket = io.connect('ws://localhost:8082')
     this.chatMsg.token = globalFunctions.getToken()
-    this.socket.on('connect', () => {
-      console.log('Connected to socket')
-    })
     this.socket.on('recv_message', (data) => {
       let lines = []
 
-      console.log(data)
       if (data.isCommandResponse) {
         lines = data.msg.split('\n')
       } else {
@@ -91,7 +86,6 @@ export default class Chat extends Vue {
 
   onInput () : void {
     if (this.chatMsg.msg.length !== 0) {
-      console.log(this.chatMsg)
       this.socket.emit('send_message', this.chatMsg)
       this.chatMsg.msg = ''
     }

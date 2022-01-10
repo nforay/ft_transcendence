@@ -6,6 +6,7 @@ import * as uuid from 'uuid'
 import { CreateGameDto } from './dto/create-game.dto'
 import { GameEntity } from './entities/game.entity'
 import { GameGateway } from './game.gateway'
+import { UserManager } from 'src/user/user.model'
 
 export class GameManager {
   public static instance: GameManager = new GameManager()
@@ -253,7 +254,36 @@ export class Game {
     const game = await GameManager.instance.gameRepository.create(createGameDto);
     if (!game)
       return;
+
+    const winnerUser = await UserManager.instance.userRepository.findOne({where: { id: winner.winner }});
+    const loserUser = await UserManager.instance.userRepository.findOne({where: { id: (winner.winner === this.player1.id ? this.player2.id : this.player1.id) }});
+    if (!winnerUser && !loserUser) {
+      return;
+    }
+    winnerUser.win += 1;
+    loserUser.lose += 1;
+    this.updateEloRatings(winnerUser, loserUser);
+
     await GameManager.instance.gameRepository.save(game);
+  }
+
+  updateEloRatings(winner, loser) : void {
+    const winnerTransformedRating = Math.pow(10, winner.elo / 400);
+    const loserTransformedRating = Math.pow(10, loser.elo / 400);
+
+    const expectedWinner = winnerTransformedRating / (winnerTransformedRating + loserTransformedRating);
+    const expectedLoser = loserTransformedRating / (winnerTransformedRating + loserTransformedRating);
+
+    const scoreWinner = 1;
+    const scoreLoser = 0;
+
+    const k = 32;
+
+    winner.elo = Math.max(Math.round(winner.elo + k * (scoreWinner - expectedWinner)), 100);
+    loser.elo = Math.max(Math.round(loser.elo + k * (scoreLoser - expectedLoser)), 100);
+
+    UserManager.instance.userRepository.save(winner);
+    UserManager.instance.userRepository.save(loser);
   }
 
   collide(player: Player, xDir: number) : boolean {
@@ -319,10 +349,18 @@ export class Game {
   disconnect(socketId : string) : void {
     const winner = this.player1.socketId === socketId ? this.player2 : this.player1;
     this.end(winner.id);
+    const winnerSocket = GameGateway.clients.find(c => c.id === winner.socketId);
+    winnerSocket.disconnect();
+    GameGateway.clients.splice(GameGateway.clients.indexOf(winnerSocket), 1);
   }
 
   cancel(socketId : string) : void {
-	this.state = GameState.FINISHED;
+	  this.state = GameState.FINISHED;
     GameManager.instance.removeGame(this.id);
+    const opponent = this.player1.socketId === socketId ? this.player2 : this.player1;
+    const opponentSocket = GameGateway.clients.find(c => c.id === opponent.socketId);
+    opponentSocket.emit('gameCanceled');
+    opponentSocket.disconnect();
+    GameGateway.clients.splice(GameGateway.clients.indexOf(opponentSocket), 1);
   }
 }

@@ -11,31 +11,31 @@
     </div>
     <div>
       <h2>elo = {{ this.elo }}</h2>
-      <h2>Games won = {{ this.wins }}</h2>
-      <h2>Games lost = {{ this.loses }}</h2>
+      <h2>Games won = {{ this.win }}</h2>
+      <h2>Games lost = {{ this.lose }}</h2>
       <div id="container">
         <div id="first">
           <h2>Match History:</h2>
           <div id="scrollbox">
-            <ul v-for="res in history" :key="res.id">
+            <ul v-for="(res, i) in history" :key="i">
               {{ res.value }}
             </ul>
           </div>
         </div>
         <div id="second">
-          <div v-if="thisuser === true">
+          <div>
             <h2>Friend list:</h2>
             <div id="scrollbox">
-              <ul v-for="friend in friends" :key="friend.id">
-                <span v-html="friend.value"></span>
+              <ul v-for="(friend, i) in friends" :key="i">
+                <span v-html="friend"></span>
               </ul>
             </div>
           </div>
-          <div v-else-if="isfriend === true">
-            <h2 v-on:click="rmFriend()">Remove friend</h2>
+          <div v-if="isfriend === true">
+            <md-button @click="rmFriend()" class="md-accent">Remove Friend</md-button>
           </div>
           <div v-else-if="isloggeduser === false">
-            <h2 v-on:click="addFriend()">Add Friend</h2>
+            <md-button @click="addFriend()" class="md-raised md-primary" :disabled="loading">Add Friend</md-button>
           </div>
         </div>
         <div id="clear"></div>
@@ -50,20 +50,16 @@ import Component from 'vue-class-component'
 import { store, globalFunctions } from '@/store'
 import router from '@/router'
 
-class ListVue {
-  id: number
-  value: string
-}
-
 @Component
 export default class UserProfile extends Vue {
   public username = ''
   public bio = ''
   public avatar = ''
-  public elo = 1200
-  public wins = 2
-  public loses = 2
-  public history: ListVue[] = [
+  public elo = 100
+  public win = 0
+  public lose = 0
+  public loading = true
+  public history: any[] = [
     { id: 0, value: 'win' },
     { id: 1, value: 'lose' },
     { id: 2, value: 'lose' },
@@ -85,7 +81,7 @@ export default class UserProfile extends Vue {
     { id: 18, value: 'win' }
   ]
 
-  public friends: ListVue[] = []
+  public friends: string[] = []
 
   public thisuser = false
   public isfriend = false
@@ -99,88 +95,65 @@ export default class UserProfile extends Vue {
     this.thisuser = false
   }
 
-  async beforeCreate (): Promise<void> {
-    const token = globalFunctions.getToken()
-    if (token === 'error') {
-      router.push('/login')
-    }
-  }
-
   async mounted (): Promise<void> {
-    if (!this.$route.query.user) {
-      if (store.state.userId !== '') {
-        this.thisuser = true
-        const response = await fetch(
-          'http://localhost:4000/user/' + store.state.userId,
-          {
-            method: 'GET'
-          }
-        )
-        if (response.ok) {
-          const data = await response.json()
-          this.username = data.name
-          this.bio = data.bio
-          this.avatar = data.avatar
-          const resp = await fetch(
-            'http://localhost:4000/user/friends/' + store.state.userId,
-            {
-              method: 'GET'
-            }
-          )
-          if (resp.ok) {
-            const data = await resp.json()
-            if (data === '' || data === null || data.length === 0) {
-              this.friends.push({
-                id: 0,
-                value: 'You don\'t have any friends'
-              })
-            } else {
-              for (let index = 0; index < data.length; index++) {
-                this.friends.push({
-                  id: index,
-                  value: '<a href=profile?user=' + data[index] + '>' + data[index] + '</a>'
-                })
-              }
-            }
-          } else {
-            this.friends.push({
-              id: 0,
-              value: 'You don\'t have any friends'
-            })
-          }
-        }
+    while (!store.state.requestedLogin) {
+      await new Promise(resolve => setTimeout(resolve, 10))
+    }
+    this.loading = false
+    const token = globalFunctions.getToken()
+    if (!this.$route.query.user && token === 'error') {
+      router.push('/')
+      return
+    }
+
+    this.thisuser = (!this.$route.query.user)
+    this.username = (this.$route.query.user ? this.$route.query.user : store.state.username)
+
+    const response = await fetch(
+      'http://localhost:4000/user/username/' + this.username, {
+        method: 'GET'
       }
-    } else {
-      const response = await fetch(
-        'http://localhost:4000/user/username/' + this.$route.query.user,
-        {
+    )
+    if (!response.ok) {
+      return
+    }
+    const data = await response.json()
+    this.bio = data.bio
+    this.avatar = data.avatar
+    this.elo = data.elo
+    this.win = data.win
+    this.lose = data.lose
+
+    const friendlistResponse = await fetch(
+      'http://localhost:4000/user/friends/name/' + this.username, {
+        method: 'GET'
+      }
+    )
+    if (!friendlistResponse.ok) {
+      return
+    }
+    const friendlistData = await friendlistResponse.json()
+    this.friends = friendlistData.map(friend => {
+      return '<a href=\'profile?user=' + friend.name + '\'>' + friend.name + '</a>'
+    })
+    if (this.friends.length === 0) {
+      this.friends.push('You don\'t have any friends')
+    }
+
+    if (store.state.userId !== '') {
+      if (store.state.userId !== data.id) {
+        this.isloggeduser = false
+      }
+      const resp = await fetch(
+        'http://localhost:4000/user/friends/check/' + store.state.userId + '/' + this.username, {
           method: 'GET'
         }
       )
-      if (response.ok) {
-        const data = await response.json()
-        this.username = data.name
-        this.bio = data.bio
-        this.avatar = data.avatar
-        if (store.state.userId !== '') {
-          if (store.state.userId !== data.id) {
-            this.isloggeduser = false
-          }
-          const resp = await fetch(
-            'http://localhost:4000/user/friends/check/' +
-              store.state.userId +
-              '/' +
-              this.$route.query.user,
-            {
-              method: 'GET'
-            }
-          )
-          if (resp.ok) {
-            const dat = await resp.json()
-            this.isfriend = dat
-          }
-        }
+      if (!resp.ok) {
+        return
       }
+      const dat = await resp.json()
+      this.isfriend = dat
     }
   }
 
@@ -189,12 +162,8 @@ export default class UserProfile extends Vue {
       return
     }
     const response = await fetch(
-      'http://localhost:4000/user/friends/' +
-        store.state.userId +
-        '/' +
-        this.$route.query.user,
-      {
-        method: 'Post'
+      'http://localhost:4000/user/friends/' + store.state.userId + '/' + this.username, {
+        method: 'POST'
       }
     )
     if (response.ok) {
@@ -207,12 +176,8 @@ export default class UserProfile extends Vue {
       return
     }
     const response = await fetch(
-      'http://localhost:4000/user/friends/' +
-        store.state.userId +
-        '/' +
-        this.$route.query.user,
-      {
-        method: 'Delete'
+      'http://localhost:4000/user/friends/' + store.state.userId + '/' + this.username, {
+        method: 'DELETE'
       }
     )
     if (response.ok) {

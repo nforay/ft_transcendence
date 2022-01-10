@@ -75,22 +75,20 @@ export default class UserProfile extends Vue {
       store.commit('setToken', { token: data.token, expiresIn: data.expiresIn })
       store.commit('setUsername', this.username)
     } else {
-      store.state.errors.push(response.statusText)
+      store.commit('setPopupMessage', response.statusText)
     }
   }
 
   public toggleEditUsername () : void {
-    store.state.errors = []
     if (this.editUsername && this.username.length === 0) {
       this.username = this.startUsername
-      store.state.errors.push('Username cannot be empty')
+      store.commit('setPopupMessage', 'Username cannot be empty')
     }
     this.changed = true
     this.editUsername = !this.editUsername
   }
 
   public toggleEditBio () : void {
-    store.state.errors = []
     this.editBio = !this.editBio
     this.changed = true
   }
