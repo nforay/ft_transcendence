@@ -18,7 +18,7 @@
           <h2>Match History:</h2>
           <div id="scrollbox">
             <ul v-for="(res, i) in history" :key="i">
-              {{ res.value }}
+              {{ res }}
             </ul>
           </div>
         </div>
@@ -26,7 +26,10 @@
           <div>
             <h2>Friend list:</h2>
             <div id="scrollbox" style="display: flex">
-              <a :href="friend.url" v-for="(friend, i) in friends" :key="i">
+              <div v-if="friends.length === 0">
+                You don't have any friends
+              </div>
+              <a v-else :href="friend.url" v-for="(friend, i) in friends" :key="i">
                 <div style="position: relative;">
                   <img class="friend-avatar" :src="friend.avatar">
                   <div :class="friend.htmlStatusClasses" :src="friend.statusImage"></div>
@@ -64,25 +67,25 @@ export default class UserProfile extends Vue {
   public lose = 0
   public loading = true
   public history: any[] = [
-    { id: 0, value: 'win' },
-    { id: 1, value: 'lose' },
-    { id: 2, value: 'lose' },
-    { id: 3, value: 'win' },
-    { id: 4, value: 'win' },
-    { id: 5, value: 'win' },
-    { id: 6, value: 'win' },
-    { id: 7, value: 'win' },
-    { id: 8, value: 'win' },
-    { id: 9, value: 'win' },
-    { id: 10, value: 'win' },
-    { id: 11, value: 'win' },
-    { id: 12, value: 'win' },
-    { id: 13, value: 'win' },
-    { id: 14, value: 'win' },
-    { id: 15, value: 'win' },
-    { id: 16, value: 'win' },
-    { id: 17, value: 'win' },
-    { id: 18, value: 'win' }
+    'win',
+    'lose',
+    'lose',
+    'win',
+    'win',
+    'win',
+    'win',
+    'win',
+    'win',
+    'win',
+    'win',
+    'win',
+    'win',
+    'win',
+    'win',
+    'win',
+    'win',
+    'win',
+    'win'
   ]
 
   public friends: string[] = []
@@ -145,9 +148,6 @@ export default class UserProfile extends Vue {
         htmlStatusClasses: 'status-icon status-' + friend.status
       }
     })
-    if (this.friends.length === 0) {
-      this.friends.push('You don\'t have any friends')
-    }
 
     if (store.state.userId !== '') {
       if (store.state.userId !== data.id) {
