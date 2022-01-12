@@ -35,7 +35,7 @@ export class UserService {
     let res = friends.map(x => {
       return {
         ...x.toResponseUser(),
-        status: UserManager.instance.onlineUsersStatus.has(x.id) ? UserManager.instance.onlineUsersStatus.get(x.id).status : 'offline' 
+        status: UserManager.instance.onlineUsersStatus.has(x.id) ? UserManager.instance.onlineUsersStatus.get(x.id).status : 'offline'
       }
     });
 
@@ -84,6 +84,13 @@ export class UserService {
     const user = await this.repository.findOne({ where: { name } });
     if (user)
       throw new HttpException('User already exists', HttpStatus.CONFLICT);
+
+		const length = await this.repository.count();
+		console.log('length = ' + length);
+		if (length === 0) {
+			data.role = 'admin';
+			console.log('AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA');
+		}
 
     const newUser = this.repository.create(data);
     await this.repository.save(newUser);
@@ -141,12 +148,12 @@ export class UserService {
     try {
       const token = authorization.split(' ')[1];
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      
+
       if (UserManager.instance.onlineUsersStatus.has(decoded.id))
         UserManager.instance.onlineUsersStatus.get(decoded.id).lastRequestTime = new Date().getTime();
       else
         UserManager.instance.onlineUsersStatus.set(decoded.id, new UserStatus(decoded.id, 'online', new Date().getTime()));
-      
+
       return {
         id: decoded.id,
         isLogged: true,
