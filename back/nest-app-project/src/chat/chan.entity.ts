@@ -103,21 +103,21 @@ export class ChanEntity {
 		return true;
 	}
 
-	checkowner(uname: string): boolean {
-		if (uname == this.owner)
+	async checkowner(uname: string): Promise<boolean> {
+    const user = await UserManager.instance.userRepository.findOne({ id: uname });
+    if (user == null)
+      return false;
+		if (uname == this.owner || user.role === 'admin')
 			return true;
 		return false;
 	}
 
 	async checkadmin(uname: string): Promise<boolean> {
-    const user = await UserManager.instance.userRepository.findOne({ id: uname });
-    if (user == null)
-      return false;
-		return this.checkowner(uname) || this.admins.indexOf(uname) != -1 || user.role === 'admin';
+		return this.checkowner(uname) || this.admins.indexOf(uname) != -1;
 	}
 
 	async op(uname: string, newop: string = null): Promise<string> {
-    
+
     if (newop == null) {
       let where = this.admins.map(x => { return { id: x }});
       if (this.owner.length > 0)
@@ -216,5 +216,4 @@ export class ChanEntity {
     }
     this.mutes.delete(uname);
 	}
-
 }

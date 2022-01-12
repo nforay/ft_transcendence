@@ -2,15 +2,31 @@
   <div>
     <div v-if="this.isadmin">
       <h1>Admin View</h1>
-      <h2>User List:</h2>
-      <div id="scrollbox" style="display: flex">
-        <a :href="user.url" v-for="(user, i) in users" :key="i">
-          <div style="position: relative;">
-            <img class="user-avatar" :src="user.avatar">
-            <div :class="user.htmlStatusClasses" :src="user.statusImage"></div>
+      <div id="container">
+        <div id="first">
+          <h2>Users List:</h2>
+          <span style="color: green;" @click="refreshUsers()">refresh</span>
+          <div id="scrollbox" style="display: flex">
+            <a :href="user.url" v-for="(user, i) in users" :key="i">
+              <div style="position: relative;">
+                <img class="user-avatar" :src="user.avatar">
+                <div :class="user.htmlStatusClasses" :src="user.statusImage"></div>
+              </div>
+              <a> {{ user.username }} </a>
+            </a>
           </div>
-          <a> {{ user.username }} </a>
-        </a>
+        </div>
+        <div id="second">
+          <h2>Channels List:</h2>
+          <span style="color: green;" @click="refreshChans()">refresh</span>
+          <div id="scrollbox">
+            <ul v-for="(chan, i) in chans" :key="i">
+              {{ chan }}
+              <span v-if="chan !== 'general'" style="color: red;" @click="deletechan(chan)">x</span>
+            </ul>
+          </div>
+        </div>
+        <div id="clear"></div>
       </div>
     </div>
   </div>
@@ -25,15 +41,17 @@ import router from '@/router'
 @Component
 export default class UserProfile extends Vue {
   public users: string[] = []
+  public chans: string[] = []
 
   public isadmin = false
+  private token: string
 
   async mounted (): Promise<void> {
     while (!store.state.requestedLogin) {
       await new Promise(resolve => setTimeout(resolve, 10))
     }
-    const token = globalFunctions.getToken()
-    if (token === 'error') {
+    this.token = globalFunctions.getToken()
+    if (this.token === 'error') {
       router.push('/')
       return
     }
@@ -47,7 +65,6 @@ export default class UserProfile extends Vue {
       return
     }
     const data = await response.json()
-    console.log('data.role = ' + data.role)
     if (data.role === 'admin') {
       this.isadmin = true
     } else {
@@ -75,6 +92,57 @@ export default class UserProfile extends Vue {
     if (this.users.length === 0) {
       this.users.push('No user is registered')
     }
+
+    const chansResponse = await fetch(
+      'http://localhost:4000/chan/' + this.token, {
+        method: 'GET'
+      }
+    )
+    if (!chansResponse.ok) {
+      return
+    }
+    const chansData = await chansResponse.json()
+    this.chans = chansData.chans
+  }
+
+  async refreshUsers (): Promise<void> {
+    const usersResponse = await fetch(
+      'http://localhost:4000/user/', {
+        method: 'GET'
+      }
+    )
+    if (!usersResponse.ok) {
+      return
+    }
+    const usersData = await usersResponse.json()
+    this.users = usersData.map(user => {
+      return {
+        username: user.name,
+        url: '/profile?user=' + user.name,
+        avatar: user.avatar,
+        htmlStatusClasses: 'status-icon status-' + user.status
+      }
+    })
+    if (this.users.length === 0) {
+      this.users.push('No user is registered')
+    }
+  }
+
+  async refreshChans (): Promise<void> {
+    const chansResponse = await fetch(
+      'http://localhost:4000/chan/' + this.token, {
+        method: 'GET'
+      }
+    )
+    if (!chansResponse.ok) {
+      return
+    }
+    const chansData = await chansResponse.json()
+    this.chans = chansData.chans
+  }
+
+  async deletechan (chan: string) {
+    console.log('deleting channel ' + chan)
   }
 }
 </script>
@@ -105,5 +173,26 @@ h2 {
   overflow-wrap: break-word;
   height: 200px;
   width: 200px;
+}
+
+#container {
+  width: 400px;
+  margin: auto;
+}
+
+#first {
+  width: 200px;
+  float: left;
+  height: 200px;
+}
+
+#second {
+  width: 200px;
+  float: left;
+  height: 200px;
+}
+
+#clear {
+  clear: both;
 }
 </style>
