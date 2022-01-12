@@ -18,7 +18,7 @@
           <h2>Match History:</h2>
           <div id="scrollbox">
             <ul v-for="(res, i) in history" :key="i">
-              {{ res }}
+              {{ res.format(username) }}
             </ul>
           </div>
         </div>
@@ -57,6 +57,38 @@ import Component from 'vue-class-component'
 import { store, globalFunctions } from '@/store'
 import router from '@/router'
 
+class GameData {
+  public player1Id = ''
+  public player2Id = ''
+  public player1Avatar = ''
+  public player2Avatar = ''
+  public player1Name = ''
+  public player2Name = ''
+  public player1Score = 0;
+  public player2Score = 0;
+  public player1Won = true
+
+  constructor (player1Id: string, player2Id: string, player1Avatar: string, player2Avatar: string, player1Name: string, player2Name: string, score1: number, score2: number, player1Won: boolean) {
+    this.player1Id = player1Id
+    this.player2Id = player2Id
+    this.player1Avatar = player1Avatar
+    this.player2Avatar = player2Avatar
+    this.player1Name = player1Name
+    this.player2Name = player2Name
+    this.player1Score = score1
+    this.player2Score = score2
+    this.player1Won = player1Won
+  }
+
+  format (username: string) : string {
+    const userScore = (username === this.player1Name ? this.player1Score : this.player2Score)
+    const opponentScore = (username === this.player1Name ? this.player2Score : this.player1Score)
+    const userWon = (username === this.player1Name ? this.player1Won : !this.player1Won)
+    const opponentName = (username === this.player1Name ? this.player2Name : this.player1Name)
+    return `${username} ${userWon ? 'won' : 'lost'} ${userScore} - ${opponentScore} ${opponentName}`
+  }
+}
+
 @Component
 export default class UserProfile extends Vue {
   public username = ''
@@ -66,27 +98,7 @@ export default class UserProfile extends Vue {
   public win = 0
   public lose = 0
   public loading = true
-  public history: any[] = [
-    'win',
-    'lose',
-    'lose',
-    'win',
-    'win',
-    'win',
-    'win',
-    'win',
-    'win',
-    'win',
-    'win',
-    'win',
-    'win',
-    'win',
-    'win',
-    'win',
-    'win',
-    'win',
-    'win'
-  ]
+  public history: GameData[] = []
 
   public friends: string[] = []
 
@@ -149,6 +161,7 @@ export default class UserProfile extends Vue {
       }
     })
 
+    // Useless? Can't we just check the list?
     if (store.state.userId !== '') {
       if (store.state.userId !== data.id) {
         this.isloggeduser = false
@@ -164,6 +177,29 @@ export default class UserProfile extends Vue {
       const dat = await resp.json()
       this.isfriend = dat
     }
+
+    const matchHistory = await fetch(
+      'http://localhost:4000/user/history/name/' + this.username, {
+        method: 'GET'
+      }
+    )
+    if (!matchHistory.ok) {
+      return
+    }
+    const matchHistoryData = await matchHistory.json()
+    this.history = matchHistoryData.map(match => {
+      return new GameData(
+        match.player1Id,
+        match.player2Id,
+        match.player1Avatar,
+        match.player2Avatar,
+        match.player1Name,
+        match.player2Name,
+        match.player1Score,
+        match.player2Score,
+        match.player1Won
+      )
+    })
   }
 
   async addFriend (): Promise<void> {

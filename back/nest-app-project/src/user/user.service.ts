@@ -6,6 +6,7 @@ import * as path from 'path';
 import * as pngToJpeg from 'png-to-jpeg';
 import * as qrcode from 'qrcode';
 import * as speakeasy from 'speakeasy';
+import { GameManager } from 'src/game/game.model';
 import { Repository } from 'typeorm';
 import { SecretCodeDTO, UserDTO, UserPassDTO, UserResponseObject } from './user.dto';
 import { UserEntity } from './user.entity';
@@ -39,6 +40,34 @@ export class UserService {
       }
     });
 
+    return res;
+	}
+
+  async getHistory(name: string) : Promise<any[]> {
+    const user = await this.repository.findOne({ where: { name } });
+    if (!user)
+      throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+    let history = await GameManager.instance.gameRepository.find({ where: [
+      { player1Id: user.id },
+      { player2Id: user.id }
+    ]});
+    if (!history)
+      return [];
+    history.sort((a, b) => b.created.getTime() - a.created.getTime());
+    let res = await Promise.all(history.map(async (x) => {
+      const opponent = await this.repository.findOne({ where: { id: (x.player1Id == user.id ? x.player2Id : x.player1Id)}});
+      let opponentName = '';
+      if (opponent)
+        opponentName = opponent.name;
+      
+      return {
+        ...x.toResponseGame(),
+        player1Avatar: `http://localhost:4000/user/avatar/${x.player1Id}}`,
+        player2Avatar: `http://localhost:4000/user/avatar/${x.player2Id}`,
+        player1Name: (x.player1Id == user.id ? user.name : opponentName),
+        player2Name: (x.player2Id == user.id ? user.name : opponentName),
+      }
+    }));
     return res;
 	}
 

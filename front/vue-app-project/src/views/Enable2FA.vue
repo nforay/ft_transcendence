@@ -42,7 +42,7 @@ export default class Enable2FA extends Vue {
     return this.qrData
   }
 
-  public async send2FACode () : void {
+  public async send2FACode () : Promise<void> {
     const body = JSON.stringify({
       userId: store.state.userId,
       code: this.twoFACode

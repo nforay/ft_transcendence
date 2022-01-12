@@ -1,4 +1,4 @@
-import { Get, Post, Put, Delete, Param, Controller, Headers, Logger, Query, UploadedFile, HttpStatus, HttpException, Res, Header } from '@nestjs/common';
+import { Get, Post, Put, Delete, Param, Controller, Headers, UploadedFile, HttpStatus, HttpException, Res, Header } from '@nestjs/common';
 import { UserService } from './user.service';
 import { SecretCodeDTO, UserDTO, UserPassDTO } from './user.dto'
 import { Body } from '@nestjs/common';
@@ -95,8 +95,6 @@ export class UserController {
     if (!file)
       throw new HttpException('File must be of type png/jpeg/jpg', HttpStatus.BAD_REQUEST);
 
-    Logger.log('Bonjour !!!! ' + file.path, 'info');
-
     const filetype = await FileType.fromFile(file.path);
     const allowedMimes = [ 'image/jpg', 'image/jpeg', 'image/png' ];
     const allowedExtensions = [ 'jpg', 'jpeg', 'png' ];
@@ -143,6 +141,11 @@ export class UserController {
   @Get('friends/name/:name')
 	getFriendsByName(@Param('name') name: string) {
 		return this.userService.getFriends(name);
+	}
+
+  @Get('history/name/:name')
+	getHistoryByName(@Param('name') name: string) {
+		return this.userService.getHistory(name);
 	}
 
 	@Get('friends/check/:id/:name')

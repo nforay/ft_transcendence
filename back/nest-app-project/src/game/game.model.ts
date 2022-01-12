@@ -260,7 +260,7 @@ export class Game {
     createGameDto.player2Id = this.player2.id;
     createGameDto.player1Score = this.player1.score;
     createGameDto.player2Score = this.player2.score;
-    createGameDto.player1Won = this.player1.score >= this.player2.score;
+    createGameDto.player1Won = (winnerId ? winnerId === this.player1.id : this.player1.score >= this.player2.score);
     const game = await GameManager.instance.gameRepository.create(createGameDto);
     if (!game)
       return;
