@@ -2,9 +2,14 @@
   <div>
     <div v-if="this.isadmin">
       <h1>Admin View</h1>
+      <h2>User List:</h2>
       <div id="scrollbox" style="display: flex">
-        <a :href="users.url" v-for="(user, i) in users" :key="i">
-          {{ user.username }}
+        <a :href="user.url" v-for="(user, i) in users" :key="i">
+          <div style="position: relative;">
+            <img class="user-avatar" :src="user.avatar">
+            <div :class="user.htmlStatusClasses" :src="user.statusImage"></div>
+          </div>
+          <a> {{ user.username }} </a>
         </a>
       </div>
     </div>
@@ -75,9 +80,22 @@ export default class UserProfile extends Vue {
 </script>
 
 <style scoped>
+img.user-avatar {
+  display: block;
+  width: 50px;
+  height: 50px;
+  margin: 10px 10px 10px 10px;
+  border-radius: 30%;
+  overflow: hidden;
+}
+
 h1 {
   font-family: "Helvetica";
   font-size: 32px;
+}
+
+h2 {
+  font-family: "Helvetica";
   text-align: left;
 }
 
