@@ -19,9 +19,9 @@
           </md-avatar>
 
           <md-menu-content>
-            <md-menu-item v-if="this.isLogged">
-              <md-icon>notifications</md-icon>
-              <span>Notifications</span>
+            <md-menu-item v-if="this.isLogged" @click="redirectToProfile()">
+              <md-icon>person</md-icon>
+              <span>Profile</span>
             </md-menu-item>
 
             <md-menu-item v-if="this.isLogged" @click="redirectToSettings()">
@@ -69,6 +69,10 @@ export default class AppHeader extends Vue {
 
   public redirectToLogin () : void {
     router.push('/login')
+  }
+
+  public redirectToProfile () : void {
+    router.push('/profile')
   }
 }
 </script>

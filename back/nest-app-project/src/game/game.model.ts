@@ -6,7 +6,7 @@ import * as uuid from 'uuid'
 import { CreateGameDto } from './dto/create-game.dto'
 import { GameEntity } from './entities/game.entity'
 import { GameGateway } from './game.gateway'
-import { UserManager } from 'src/user/user.model'
+import { UserManager, UserStatus } from 'src/user/user.model'
 
 export class GameManager {
   public static instance: GameManager = new GameManager()
@@ -167,7 +167,9 @@ export class Game {
     if (this.player1.socketId && this.player2.socketId) {
       GameGateway.clients.find(client => client.id === this.player1.socketId)?.emit('startSoon', { delay: 3 })
       GameGateway.clients.find(client => client.id === this.player2.socketId)?.emit('startSoon', { delay: 3 })
-      setTimeout(() => { 
+      setTimeout(() => {
+        if (this.state == GameState.FINISHED)
+          return;
         this.state = GameState.IN_GAME;
         this.ballXSpeed = (Math.random() < 0.5 ? -1 : 1) * 1000;
         this.ballYSpeed = Math.random() * (700 - (-700)) + -700;
@@ -176,6 +178,14 @@ export class Game {
         const time = new Date().getTime();
         this.player1.positionTime = time;
         this.player2.positionTime = time;
+        if (UserManager.instance.onlineUsersStatus.has(this.player1.id)) {
+          UserManager.instance.onlineUsersStatus.get(this.player1.id).status = 'ingame';
+          UserManager.instance.onlineUsersStatus.get(this.player1.id).lastRequestTime = new Date().getTime();
+        }
+        if (UserManager.instance.onlineUsersStatus.has(this.player2.id)) {
+          UserManager.instance.onlineUsersStatus.get(this.player2.id).status = 'ingame';
+          UserManager.instance.onlineUsersStatus.get(this.player2.id).lastRequestTime = new Date().getTime();
+        }
       }, 3000);
     }
   }
@@ -263,6 +273,15 @@ export class Game {
     winnerUser.win += 1;
     loserUser.lose += 1;
     this.updateEloRatings(winnerUser, loserUser);
+
+    if (UserManager.instance.onlineUsersStatus.has(this.player1.id)) {
+      UserManager.instance.onlineUsersStatus.get(this.player1.id).status = 'online';
+      UserManager.instance.onlineUsersStatus.get(this.player1.id).lastRequestTime = new Date().getTime();
+    }
+    if (UserManager.instance.onlineUsersStatus.has(this.player2.id)) {
+      UserManager.instance.onlineUsersStatus.get(this.player2.id).status = 'online';
+      UserManager.instance.onlineUsersStatus.get(this.player2.id).lastRequestTime = new Date().getTime();
+    }
 
     await GameManager.instance.gameRepository.save(game);
   }
@@ -362,5 +381,13 @@ export class Game {
     opponentSocket.emit('gameCanceled');
     opponentSocket.disconnect();
     GameGateway.clients.splice(GameGateway.clients.indexOf(opponentSocket), 1);
+    if (UserManager.instance.onlineUsersStatus.has(this.player1.id)) {
+      UserManager.instance.onlineUsersStatus.get(this.player1.id).status = 'online';
+      UserManager.instance.onlineUsersStatus.get(this.player1.id).lastRequestTime = new Date().getTime();
+    }
+    if (UserManager.instance.onlineUsersStatus.has(this.player2.id)) {
+      UserManager.instance.onlineUsersStatus.get(this.player2.id).status = 'online';
+      UserManager.instance.onlineUsersStatus.get(this.player2.id).lastRequestTime = new Date().getTime();
+    }
   }
 }

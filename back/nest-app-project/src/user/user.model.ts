@@ -33,18 +33,40 @@ export class TwoFAUser {
   }
 }
 
+export class UserStatus {
+  userId: string;
+  status: string;
+  lastRequestTime: number;
+
+  constructor(userId: string, status: string, lastRequestTime: number) {
+    this.userId = userId
+    this.status = status
+    this.lastRequestTime = lastRequestTime
+  }
+}
+
 export class UserManager {
   public static instance: UserManager = new UserManager()
   public userRepository: Repository<UserEntity>
   public twoFASercrets: SecretPair[] = []
   public twoFAlist: TwoFAUser[] = []
   public disableTwoFAlist: TwoFAUser[] = []
+  public onlineUsersStatus: Map<string, UserStatus> = new Map<string, UserStatus>()
 
   @Interval(2000)
   cleanExpired2FA() {
     this.twoFAlist = this.twoFAlist.filter(elem => !elem.expired())
     this.twoFASercrets = this.twoFASercrets.filter(elem => !elem.expired())
     this.disableTwoFAlist = this.disableTwoFAlist.filter(elem => !elem.expired())
+  }
+
+  @Interval(5000)
+  checkAFKUsers() {
+    const now = new Date().getTime();
+    // Converting to array and then setting the result to avoid in place deleting
+    const users = Array.from(this.onlineUsersStatus.values())
+    const usersStillOnline = users.filter(elem => now - elem.lastRequestTime > 1000 * 60 * 10)
+    usersStillOnline.forEach(elem => this.onlineUsersStatus.delete(elem.userId))
   }
 
   constructor() {

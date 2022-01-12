@@ -9,7 +9,7 @@ import * as speakeasy from 'speakeasy';
 import { Repository } from 'typeorm';
 import { SecretCodeDTO, UserDTO, UserPassDTO, UserResponseObject } from './user.dto';
 import { UserEntity } from './user.entity';
-import { TwoFAUser, UserManager } from './user.model';
+import { TwoFAUser, UserManager, UserStatus } from './user.model';
 
 @Injectable()
 export class UserService {
@@ -30,7 +30,14 @@ export class UserService {
       return [];
     const where = user.friends.map(x => { return { id: x } });
     const friends = await this.repository.find({ where });
-    let res = friends.map(x => { return { id: x.id, name: x.name }});
+    if (!friends)
+      return [];
+    let res = friends.map(x => {
+      return {
+        ...x.toResponseUser(),
+        status: UserManager.instance.onlineUsersStatus.has(x.id) ? UserManager.instance.onlineUsersStatus.get(x.id).status : 'offline' 
+      }
+    });
 
     return res;
 	}
@@ -134,6 +141,12 @@ export class UserService {
     try {
       const token = authorization.split(' ')[1];
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      
+      if (UserManager.instance.onlineUsersStatus.has(decoded.id))
+        UserManager.instance.onlineUsersStatus.get(decoded.id).lastRequestTime = new Date().getTime();
+      else
+        UserManager.instance.onlineUsersStatus.set(decoded.id, new UserStatus(decoded.id, 'online', new Date().getTime()));
+      
       return {
         id: decoded.id,
         isLogged: true,

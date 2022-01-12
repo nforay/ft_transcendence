@@ -25,10 +25,14 @@
         <div id="second">
           <div>
             <h2>Friend list:</h2>
-            <div id="scrollbox">
-              <ul v-for="(friend, i) in friends" :key="i">
-                <span v-html="friend"></span>
-              </ul>
+            <div id="scrollbox" style="display: flex">
+              <a :href="friend.url" v-for="(friend, i) in friends" :key="i">
+                <div style="position: relative;">
+                  <img class="friend-avatar" :src="friend.avatar">
+                  <div :class="friend.htmlStatusClasses" :src="friend.statusImage"></div>
+                </div>
+                <a> {{ friend.username }} </a>
+              </a>
             </div>
           </div>
           <div v-if="isfriend === true">
@@ -134,7 +138,12 @@ export default class UserProfile extends Vue {
     }
     const friendlistData = await friendlistResponse.json()
     this.friends = friendlistData.map(friend => {
-      return '<a href=\'profile?user=' + friend.name + '\'>' + friend.name + '</a>'
+      return {
+        username: friend.name,
+        url: '/profile?user=' + friend.name,
+        avatar: friend.avatar,
+        htmlStatusClasses: 'status-icon status-' + friend.status
+      }
     })
     if (this.friends.length === 0) {
       this.friends.push('You don\'t have any friends')
@@ -209,6 +218,38 @@ img.avatar {
   margin: 10px 10px 10px 10px;
   border-radius: 30%;
   overflow: hidden;
+}
+
+img.friend-avatar {
+  display: block;
+  width: 50px;
+  height: 50px;
+  margin: 10px 10px 10px 10px;
+  border-radius: 30%;
+  overflow: hidden;
+}
+
+div.status-online {
+  background-color: #4CAF50;
+}
+
+div.status-offline {
+  background-color: #777777;
+}
+
+div.status-ingame {
+  background-color: #F44336;
+}
+
+div.status-icon {
+  position: absolute;
+  bottom: -3px;
+  right: 7px;
+  width: 15px;
+  height: 15px;
+  margin: 0;
+  padding: 0;
+  border-radius: 50%;
 }
 
 td.user-name {
