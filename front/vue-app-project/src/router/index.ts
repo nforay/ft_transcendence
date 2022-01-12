@@ -34,6 +34,14 @@ const routes: Array<RouteConfig> = [
     }
   },
   {
+    path: '/admin',
+    name: 'Admin',
+    component: () => import('../views/AdminView.vue'),
+    meta: {
+      requiresAuth: true
+    }
+  },
+  {
     path: '/profile',
     name: 'Profile',
     component: () => import('../views/UserStats.vue'),
