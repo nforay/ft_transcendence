@@ -131,6 +131,10 @@ export class UserService {
     const user = await this.repository.findOne({ where: { id } });
     if (!user)
       throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+		const fs = require('fs');
+		fs.unlink('../uploads/avatars/' + user.id + '.jpg', err => {
+			Logger.log(err);
+		});
     await this.repository.delete({ id });
     return user.toResponseUser();
   }
