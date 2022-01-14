@@ -142,7 +142,14 @@ export default class UserProfile extends Vue {
   }
 
   async deletechan (chan: string) {
-    console.log('deleting channel ' + chan)
+    const chanResponse = await fetch(
+      'http://localhost:4000/chan/test/' + this.token + '/' + chan, {
+        method: 'DELETE'
+      }
+    )
+    if (chanResponse.ok) {
+      await this.refreshChans()
+    }
   }
 }
 </script>

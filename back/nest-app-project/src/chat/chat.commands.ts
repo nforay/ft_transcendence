@@ -226,7 +226,7 @@ export class ChatCommandHandlers {
     const name = "";
     let msg = ""
     let pass = null
-    
+
     if (args.length < 2 || args.length > 4) {
       msg = "Wrong number of arguments";
       return {name, msg}
@@ -250,7 +250,7 @@ export class ChatCommandHandlers {
     if (args.length === 4) {
       pass = args[3]
     }
-    
+
     try {
       const res = chanService.cchan(args[1], uname, pass)
       msg = res;
@@ -279,7 +279,7 @@ export class ChatCommandHandlers {
     else {
       try {
         const cusers = chanService.getUsers(args[1])
-        const ret = chanService.dchan(users, args[1], uname)
+        const ret = await chanService.dchan(users, args[1], uname)
         msg = ret;
         for (let index = 0; index < cusers.length; index++) {
           if (users.has(cusers[index])) {
@@ -324,7 +324,7 @@ export class ChatCommandHandlers {
   async kickCommand(client: Socket, args: string[], uname: string, users: Map<string, ClientIdentifier>, chanService: ChanService) {
     const name = "";
     let msg = ""
-    
+
     if (args.length != 2) {
       msg = "Wrong number of arguments";
     }
@@ -356,7 +356,7 @@ export class ChatCommandHandlers {
   async muteCommand(client: Socket, args: string[], uname: string, users: Map<string, ClientIdentifier>, chanService: ChanService) {
     const name = "";
     let msg = ""
-    
+
     if (args.length < 2) {
       msg = "Wrong number of argmuents";
       return {name, msg};
@@ -368,7 +368,7 @@ export class ChatCommandHandlers {
         msg = "You are not operator of this channel";
         return {name, msg};
       }
-      
+
       let reason = undefined;
       let dur = undefined;
       // Permanent ban
@@ -429,7 +429,7 @@ export class ChatCommandHandlers {
   async leaveCommand(client: Socket, args: string[], uname: string, users: Map<string, ClientIdentifier>, chanService: ChanService) {
     const name = "";
     let msg = ""
-    
+
     if (args.length != 1) {
       msg = "Wrong number of arguments";
     }

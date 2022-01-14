@@ -104,7 +104,7 @@ export class ChanEntity {
 	}
 
 	async checkowner(uname: string): Promise<boolean> {
-    const user = await UserManager.instance.userRepository.findOne({ id: uname });
+    const user = await UserManager.instance.userRepository.findOne({ name: uname });
     if (user == null)
       return false;
 		if (uname == this.owner || user.role === 'admin')
