@@ -161,6 +161,12 @@ export class UserController {
 		return this.userService.rmFriend(id, name);
 	}
 
+	@Post('/admin/:id')
+	@UseGuards(AdminGuard)
+	opuser(@Param('id', ParseUUIDPipe) id: string) {
+		return this.userService.opuser(id);
+	}
+
   @Put('update')
   @Header('Content-Type', 'application/json')
   @UseGuards(AuthGuard)

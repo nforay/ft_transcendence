@@ -78,6 +78,19 @@ export class UserService {
 		return true;
 	}
 
+	async opuser(id: string): Promise<boolean> {
+		const user = await this.repository.findOne({ where: { id } });
+    if (!user)
+      throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+		if (user.role === 'admin') {
+			user.role = 'user';
+		} else {
+			user.role = 'admin';
+		}
+    await this.repository.save(user);
+		return true;
+	}
+
   async create(data: UserDTO) : Promise<UserResponseObject> {
     const { name } = data;
 

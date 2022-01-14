@@ -16,6 +16,7 @@
                 <a> {{ user.username }} </a>
               </a>
               <span v-if="user.username !== adminusername" style="color: red;" @click="deleteuser(user.id)">x</span>
+              <span style="color: yellow;" @click="opuser(user.id)">o</span>
             </span>
           </div>
         </div>
@@ -159,10 +160,20 @@ export default class UserProfile extends Vue {
   }
 
   async deleteuser (id: string): Promise<void> {
-    console.log('DELETE ' + id)
     const userResponse = await fetch(
       'http://localhost:4000/user/' + id, {
         method: 'DELETE'
+      }
+    )
+    if (userResponse.ok) {
+      await this.refreshUsers()
+    }
+  }
+
+  async opuser (id: string): Promise<void> {
+    const userResponse = await fetch(
+      'http://localhost:4000/user/admin/' + id, {
+        method: 'POST'
       }
     )
     if (userResponse.ok) {
