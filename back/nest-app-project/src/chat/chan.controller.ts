@@ -2,11 +2,12 @@ import { Get, Delete, Param, Controller, HttpException, HttpStatus } from '@nest
 import { ChanService } from './chan.service';
 import { ChatUsersManager } from './chat.service';
 import { AuthUser } from '../shared/auth-user.decorator';
+import { ChatCommandHandlers } from './chat.commands';
 
 @Controller('chan')
 export class ChanController {
 
-	constructor(private readonly chanService: ChanService) { }
+	constructor(private readonly chanService: ChanService, private readonly chatCommandHandlers: ChatCommandHandlers) { }
 
 	@Get()
 	async findAll(@AuthUser() user) {
@@ -26,7 +27,7 @@ export class ChanController {
 		if (user.role !== 'admin') {
 			throw new HttpException('User is not admin', HttpStatus.FORBIDDEN);
 		}
-		const ret = await this.chanService.dchan(ChatUsersManager.users, cname, user.name);
+		const ret = await this.chatCommandHandlers.dchanCommand(null, ['', cname], user.name, ChatUsersManager.users, this.chanService);
 		return { msg: ret };
 	}
 }
