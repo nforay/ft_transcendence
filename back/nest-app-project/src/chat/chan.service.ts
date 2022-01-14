@@ -86,6 +86,14 @@ export class ChanService {
 		return chan.users;
 	}
 
+  changePasswd(cname: string, newpass: string): string {
+    const chan = ChanManager.instance.findByName(cname);
+    if (!chan)
+      throw "Can't find channel";
+    chan.passwd = newpass;
+    return "Password changed";
+  }
+
 	async op(cname: string, uname: string, newop: string = null): Promise<string> {
 		const chan = ChanManager.instance.findByName(cname);
 		if (!chan)

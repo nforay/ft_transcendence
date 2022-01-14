@@ -62,7 +62,9 @@ export class ChatService {
       "/mute": this.chatCommandHandlers.muteCommand,
       "/unmute": this.chatCommandHandlers.unmuteCommand,
       "/unban": this.chatCommandHandlers.unmuteCommand,
-      "/leave": this.chatCommandHandlers.leaveCommand
+      "/leave": this.chatCommandHandlers.leaveCommand,
+      "/passwd": this.chatCommandHandlers.passwdCommand,
+      "/rmpasswd": this.chatCommandHandlers.passwdCommand
     }
 
     if (Arr[0] in commands) {

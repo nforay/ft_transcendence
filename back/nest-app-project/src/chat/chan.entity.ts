@@ -1,3 +1,4 @@
+import { Logger } from '@nestjs/common';
 import { UserManager } from 'src/user/user.model';
 
 export class BanData {
@@ -104,14 +105,12 @@ export class ChanEntity {
 	}
 
 	checkowner(uname: string): boolean {
-		if (uname == this.owner)
-			return true;
-		return false;
+		return uname == this.owner
 	}
 
 	async checkadmin(uname: string): Promise<boolean> {
     const user = await UserManager.instance.userRepository.findOne({ id: uname });
-    if (user == null)
+    if (!user)
       return false;
 		return this.checkowner(uname) || this.admins.indexOf(uname) != -1 || user.role === 'admin';
 	}

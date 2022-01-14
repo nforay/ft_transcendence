@@ -37,6 +37,8 @@ export class ChatCommandHandlers {
     msg += "\n/unban (user) Unban user";
     msg += "\n/mute (user) [seconds] [reason] Mute user in channel";
     msg += "\n/unmute (user) Unmute user";
+    msg += "\n/passwd (new password) Change password";
+    msg += "\n/rmpasswd Remove password";
 		return {name, msg}
   }
 
@@ -442,6 +444,32 @@ export class ChatCommandHandlers {
       } catch (err) {
         msg = err;
       }
+    }
+    return {name, msg}
+  }
+
+  async passwdCommand(client: Socket, args: string[], uname: string, users: Map<string, ClientIdentifier>, chanService: ChanService) {
+    const name = "";
+    let msg = ""
+    let expectedLength = 2
+
+    if (args[0] === '/rmpasswd')
+      expectedLength = 1
+  
+    if (args.length != expectedLength) {
+      msg = "Wrong number of arguments";
+      return {name, msg}
+    }
+    try {
+      const isAdmin = await chanService.checkadmin(users.get(uname).chan, uname)
+      if (isAdmin == false) {
+        msg = "You are not operator of this channel";
+        return {name, msg};
+      }
+      const res = await chanService.changePasswd(users.get(uname).chan, (args[0] === '/rmpasswd' ? null : args[1]))
+      msg = (args[0] === '/rmpasswd' ? "Password removed" : res);
+    } catch (err) {
+      msg = err;
     }
     return {name, msg}
   }
