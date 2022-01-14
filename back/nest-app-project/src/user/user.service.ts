@@ -102,7 +102,8 @@ export class UserService {
 		console.log('length = ' + length);
 		if (length === 0) {
 			data.role = 'admin';
-			console.log('AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA');
+		} else {
+			data.role = 'user';
 		}
 
     const newUser = this.repository.create(data);

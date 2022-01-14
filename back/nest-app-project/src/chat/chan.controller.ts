@@ -1,7 +1,7 @@
-import { Get, Delete, Param, Controller, UseGuards } from '@nestjs/common';
+import { Get, Delete, Param, Controller, HttpException, HttpStatus } from '@nestjs/common';
 import { ChanService } from './chan.service';
 import { ChatUsersManager } from './chat.service';
-import { AdminGuard } from '../shared/admin.guard';
+import { AuthUser } from '../shared/auth-user.decorator';
 
 @Controller('chan')
 export class ChanController {
@@ -9,15 +9,24 @@ export class ChanController {
 	constructor(private readonly chanService: ChanService) { }
 
 	@Get()
-  @UseGuards(AdminGuard)
-	async findAll() {
+	async findAll(@AuthUser() user) {
+		console.log('user.role = ' + user.role);
+		console.log('user.name = ' + user.name);
+		if (user === undefined) {
+			console.log('AAAAAAAAAAAAAAAAAAA');
+		}
+		if (user.role !== 'admin') {
+			throw new HttpException('User is not admin', HttpStatus.FORBIDDEN);
+		}
 		return { chans: this.chanService.findAll() };
 	}
 
-	@Delete(':uname/:cname')
-  @UseGuards(AdminGuard)
-	async dchan(@Param('uname') uname: string, @Param('cname') cname: string) {
-		const ret = await this.chanService.dchan(ChatUsersManager.users, cname, uname);
+	@Delete(':cname')
+	async dchan(@Param('cname') cname: string, @AuthUser() user) {
+		if (user.role !== 'admin') {
+			throw new HttpException('User is not admin', HttpStatus.FORBIDDEN);
+		}
+		const ret = await this.chanService.dchan(ChatUsersManager.users, cname, user.name);
 		return { msg: ret };
 	}
 }

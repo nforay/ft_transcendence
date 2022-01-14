@@ -15,8 +15,12 @@
                 </div>
                 <a> {{ user.username }} </a>
               </a>
-              <span v-if="user.username !== adminusername" style="color: red;" @click="deleteuser(user.id)">x</span>
-              <span style="color: yellow;" @click="opuser(user.id)">o</span>
+              <div v-if="user.username !== adminusername">
+                <span style="color: red;" @click="deleteuser(user.id)">x</span>
+                &nbsp;
+                <span v-if="user.role !== 'admin'" style="color: orange;" @click="opuser(user.id)">o</span>
+                <span v-else style="color: darkgreen;" @click="opuser(user.id)">o</span>
+              </div>
             </span>
           </div>
         </div>
@@ -49,13 +53,14 @@ export default class UserProfile extends Vue {
 
   public isadmin = false
   public adminusername = ''
+  private token: string
 
   async mounted (): Promise<void> {
     while (!store.state.requestedLogin) {
       await new Promise(resolve => setTimeout(resolve, 10))
     }
-    const token = globalFunctions.getToken()
-    if (token === 'error') {
+    this.token = globalFunctions.getToken()
+    if (this.token === 'error') {
       router.push('/')
       return
     }
@@ -92,7 +97,8 @@ export default class UserProfile extends Vue {
         url: '/profile?user=' + user.name,
         avatar: user.avatar,
         htmlStatusClasses: 'status-icon status-' + user.status,
-        id: user.id
+        id: user.id,
+        role: user.role
       }
     })
     if (this.users.length === 0) {
@@ -101,7 +107,10 @@ export default class UserProfile extends Vue {
 
     const chansResponse = await fetch(
       'http://localhost:4000/chan/', {
-        method: 'GET'
+        method: 'GET',
+        headers: {
+          Authorization: 'Bearer ' + this.token
+        }
       }
     )
     if (!chansResponse.ok) {
@@ -127,7 +136,8 @@ export default class UserProfile extends Vue {
         url: '/profile?user=' + user.name,
         avatar: user.avatar,
         htmlStatusClasses: 'status-icon status-' + user.status,
-        id: user.id
+        id: user.id,
+        role: user.role
       }
     })
     if (this.users.length === 0) {
@@ -138,7 +148,10 @@ export default class UserProfile extends Vue {
   async refreshChans (): Promise<void> {
     const chansResponse = await fetch(
       'http://localhost:4000/chan/', {
-        method: 'GET'
+        method: 'GET',
+        headers: {
+          Authorization: 'Bearer ' + this.token
+        }
       }
     )
     if (!chansResponse.ok) {
@@ -150,8 +163,11 @@ export default class UserProfile extends Vue {
 
   async deletechan (chan: string): Promise<void> {
     const chanResponse = await fetch(
-      'http://localhost:4000/chan/' + this.adminusername + chan, {
-        method: 'DELETE'
+      'http://localhost:4000/chan/' + chan, {
+        method: 'DELETE',
+        headers: {
+          Authorization: 'Bearer ' + this.token
+        }
       }
     )
     if (chanResponse.ok) {
@@ -162,7 +178,10 @@ export default class UserProfile extends Vue {
   async deleteuser (id: string): Promise<void> {
     const userResponse = await fetch(
       'http://localhost:4000/user/' + id, {
-        method: 'DELETE'
+        method: 'DELETE',
+        headers: {
+          Authorization: 'Bearer ' + this.token
+        }
       }
     )
     if (userResponse.ok) {
@@ -173,7 +192,10 @@ export default class UserProfile extends Vue {
   async opuser (id: string): Promise<void> {
     const userResponse = await fetch(
       'http://localhost:4000/user/admin/' + id, {
-        method: 'POST'
+        method: 'POST',
+        headers: {
+          Authorization: 'Bearer ' + this.token
+        }
       }
     )
     if (userResponse.ok) {
