@@ -254,7 +254,7 @@ export class ChatCommandHandlers {
     }
     
     try {
-      const res = chanService.cchan(args[1], uname, pass)
+      const res = await chanService.cchan(args[1], uname, pass)
       msg = res;
       if (args.length >= 3 && args[2] === "public")
         chanService.setpublic(args[1], uname);

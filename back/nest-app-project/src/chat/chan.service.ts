@@ -4,6 +4,7 @@ import { Socket } from 'socket.io';
 import { UserManager } from 'src/user/user.model';
 import { BanData, ChanEntity } from './chan.entity';
 import { ChatService, ClientIdentifier } from './chat.service';
+import * as bcrypt from 'bcryptjs';
 
 @Injectable()
 export class ChanManager
@@ -15,10 +16,12 @@ export class ChanManager
     return this.chans.find(chan => chan.name === name)
   }
 
-  create(name: string, owner: string, args?: any) {
+  async create(name: string, owner: string, args?: any) {
     if (this.findByName(name) !== undefined)
       throw "Channel Already Exists"
-    const chan = new ChanEntity(name, owner, args)
+    let chan = new ChanEntity(name, owner, args)
+    if (args.passwd)
+      chan.passwd = await bcrypt.hash(args.passwd, 10)
     this.chans.push(chan)
     return chan
   }
@@ -61,11 +64,9 @@ export class ChanService {
     if (chan)
       return;
 
-    try {
-    	ChanManager.instance.create("general", "", { type: "public" });
-    } catch (e) {
+  	ChanManager.instance.create("general", "", { type: "public" }).then(() => {}).catch(e => {
       Logger.log(e);
-    }
+    });
 	}
 
 	getPublicChannels(): string[] {
@@ -86,11 +87,14 @@ export class ChanService {
 		return chan.users;
 	}
 
-  changePasswd(cname: string, newpass: string): string {
+  async changePasswd(cname: string, newpass: string): Promise<string> {
     const chan = ChanManager.instance.findByName(cname);
     if (!chan)
       throw "Can't find channel";
-    chan.passwd = newpass;
+    if (newpass)
+      chan.passwd = await bcrypt.hash(newpass, 10);
+    else
+      chan.passwd = null;
     return "Password changed";
   }
 
@@ -140,24 +144,27 @@ export class ChanService {
 		return "Left channel " + cname;
 	}
 
-  checkPassword(cname: string, pass: string) {
+  async checkPassword(cname: string, pass: string) {
     const chan = ChanManager.instance.findByName(cname);
 		if (!chan)
 			throw "Can't find channel";
-		return chan.passwd === pass;
+    if (chan.passwd)
+		  return !pass ? false : await bcrypt.compare(pass, chan.passwd);
+    return pass == null;
   }
 
 	async join(client: Socket, cname: string, uname: string, pwd: string = null, dry: boolean = false) : Promise<string> {
 		const chan = ChanManager.instance.findByName(cname);
 		if (!chan)
 			throw "Can't find channel";
-    if (pwd !== chan.passwd)
+    const user = await UserManager.instance.userRepository.findOne({ where: { id: uname }});
+    if (!user)
+      return "Unexpected error occured";
+    const correctPass = await this.checkPassword(cname, pwd);
+    if (!correctPass && user.role !== 'admin')
       throw "Wrong password";
     if (!dry) {
       const cusers = chan.users;
-      const user = await UserManager.instance.userRepository.findOne({ where: { id: uname }});
-      if (!user)
-        return "Unexpected error occured";
 
       for (let index = 0; index < cusers.length; index++) {
         const toBanData = await this.checkban(cname, cusers[index]);
@@ -166,18 +173,18 @@ export class ChanService {
           this.chatService.users.get(cusers[index]).sock.emit('recv_message', { name: "", msg: user.name + " joined this channel!", isCommandResponse: true });
         }
       }
-      chan.addUser(uname, pwd)
+      chan.addUser(uname)
       client.emit('switch_channel', { channel: cname });
     }
 		return "Moved to channel " + cname;
 	}
 
-	cchan(cname: string, newowner: string, pass: string): string {
+	async cchan(cname: string, newowner: string, pass: string): Promise<string> {
 		const chan = ChanManager.instance.findByName(cname);
 		if (chan)
 			throw "Channel already exists"
 
-		ChanManager.instance.create(cname, newowner, { passwd: pass });
+		await ChanManager.instance.create(cname, newowner, { passwd: pass });
 		return "Channel " + cname + " has been created";
 	}
 

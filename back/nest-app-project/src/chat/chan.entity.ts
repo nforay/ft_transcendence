@@ -1,5 +1,6 @@
 import { Logger } from '@nestjs/common';
 import { UserManager } from 'src/user/user.model';
+import * as bcrypt from 'bcryptjs'
 
 export class BanData {
   public id: string;
@@ -82,11 +83,9 @@ export class ChanEntity {
       this.mutes = args.mutes;
     if (args.type)
       this.type = args.type;
-    if (args.passwd)
-      this.passwd = args.passwd;
   }
 
-	addUser(uname: string, pwd: string = null): void {
+	addUser(uname: string): void {
 		if (this.users.indexOf(uname) == -1)
 			this.users.push(uname);
 	}
