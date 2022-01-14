@@ -133,8 +133,10 @@ export class UserController {
   }
 
   @Delete(':id')
-  @UseGuards(AuthGuard)
-  remove(@Param('id', ParseUUIDPipe) id: string) {
+  remove(@Param('id', ParseUUIDPipe) id: string, @AuthUser() user) {
+		if (user.role !== 'admin') {
+			throw new HttpException('User is not admin', HttpStatus.FORBIDDEN);
+		}
     return this.userService.remove(id);
   }
 
@@ -161,6 +163,14 @@ export class UserController {
 	@Delete('friends/:id/:name')
 	rmFriend(@Param('id', ParseUUIDPipe) id: string, @Param('name') name: string) {
 		return this.userService.rmFriend(id, name);
+	}
+
+	@Post('/admin/:id')
+	opuser(@Param('id', ParseUUIDPipe) id: string, @AuthUser() user) {
+		if (user.role !== 'admin') {
+			throw new HttpException('User is not admin', HttpStatus.FORBIDDEN);
+		}
+		return this.userService.opuser(id);
 	}
 
   @Put('update')

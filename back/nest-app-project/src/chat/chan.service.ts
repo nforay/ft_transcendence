@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Interval } from '@nestjs/schedule';
+import { channel } from 'diagnostics_channel';
 import { Socket } from 'socket.io';
 import { UserManager } from '../user/user.model';
 import { BanData, ChanEntity } from './chan.entity';
@@ -66,6 +67,14 @@ export class ChanService {
     } catch (e) {
       Logger.log(e);
     }
+	}
+
+	findAll(): string[] {
+		let tab : string[] = [];
+		for (let index = 0; index < ChanManager.instance.chans.length; index++) {
+			tab.push(ChanManager.instance.chans[index].name);
+		}
+		return tab;
 	}
 
 	getPublicChannels(): string[] {
@@ -173,11 +182,11 @@ export class ChanService {
 		return "Channel " + cname + " has been created";
 	}
 
-	dchan(users: Map<string, ClientIdentifier>, cname: string, uname: string): string {
+	async dchan(users: Map<string, ClientIdentifier>, cname: string, uname: string): Promise<string> {
 		const chan = ChanManager.instance.findByName(cname);
 		if (!chan)
 			throw "Can't find channel";
-		if (chan.checkowner(uname) == false)
+		if (await chan.checkowner(uname) == false)
 			throw "You are not the owner of this channel";
 		for (let index = 0; index < chan.users.length; index++) {
       const user = users.get(chan.users[index]);
@@ -231,7 +240,7 @@ export class ChanService {
     const user = await UserManager.instance.userRepository.findOne({ where: { name: uname }})
     if (!user)
       throw "User doesn't exists"
-       
+
     const isAdmin = await this.checkadmin(cname, user.id);
     if (isAdmin)
       throw "You cannot ban or mute this user"

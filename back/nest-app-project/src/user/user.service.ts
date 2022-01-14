@@ -36,7 +36,7 @@ export class UserService {
     let res = friends.map(x => {
       return {
         ...x.toResponseUser(),
-        status: UserManager.instance.onlineUsersStatus.has(x.id) ? UserManager.instance.onlineUsersStatus.get(x.id).status : 'offline' 
+        status: UserManager.instance.onlineUsersStatus.has(x.id) ? UserManager.instance.onlineUsersStatus.get(x.id).status : 'offline'
       }
     });
 
@@ -107,12 +107,33 @@ export class UserService {
 		return true;
 	}
 
+	async opuser(id: string): Promise<boolean> {
+		const user = await this.repository.findOne({ where: { id } });
+    if (!user)
+      throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+		if (user.role === 'admin') {
+			user.role = 'user';
+		} else {
+			user.role = 'admin';
+		}
+    await this.repository.save(user);
+		return true;
+	}
+
   async create(data: UserDTO) : Promise<UserResponseObject> {
     const { name } = data;
 
     const user = await this.repository.findOne({ where: { name } });
     if (user)
       throw new HttpException('User already exists', HttpStatus.CONFLICT);
+
+		const length = await this.repository.count();
+		console.log('length = ' + length);
+		if (length === 0) {
+			data.role = 'admin';
+		} else {
+			data.role = 'user';
+		}
 
     const newUser = this.repository.create(data);
     await this.repository.save(newUser);
@@ -139,6 +160,10 @@ export class UserService {
     const user = await this.repository.findOne({ where: { id } });
     if (!user)
       throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+		const fs = require('fs');
+		fs.unlink('../uploads/avatars/' + user.id + '.jpg', err => {
+			Logger.log(err);
+		});
     await this.repository.delete({ id });
     return user.toResponseUser();
   }
@@ -170,12 +195,12 @@ export class UserService {
     try {
       const token = authorization.split(' ')[1];
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      
+
       if (UserManager.instance.onlineUsersStatus.has(decoded.id))
         UserManager.instance.onlineUsersStatus.get(decoded.id).lastRequestTime = new Date().getTime();
       else
         UserManager.instance.onlineUsersStatus.set(decoded.id, new UserStatus(decoded.id, 'online', new Date().getTime()));
-      
+
       return {
         id: decoded.id,
         isLogged: true,

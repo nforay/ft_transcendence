@@ -9,13 +9,22 @@ export class ClientIdentifier {
 	chan: string;
 }
 
+export class ChatUsersManager {
+	public static users: Map<string, ClientIdentifier> = new Map<string, ClientIdentifier>();
+}
+
 @Injectable()
 export class ChatService {
-	public users: Map<string, ClientIdentifier> = new Map<string, ClientIdentifier>();
+	// public users: Map<string, ClientIdentifier> = new Map<string, ClientIdentifier>();
+	public users = ChatUsersManager.users;
 
 	constructor(private chanService: ChanService, private chatCommandHandlers: ChatCommandHandlers) {
     chanService.chatService = this;
   }
+
+	getUsers(): Map<string, ClientIdentifier> {
+		return this.users;
+	}
 
 	private getUserFromSocket(sock: Socket): string {
 		for (let [key, value] of this.users) {
@@ -24,7 +33,7 @@ export class ChatService {
 		}
 		return null;
 	}
-  
+
 	async execute(name: string, msg: string, client: Socket) {
     //! Rajouter:
     //! /challenge <user>
@@ -69,14 +78,14 @@ export class ChatService {
       const data = await commands[Arr[0]](client, Arr, uname, this.users, this.chanService);
       if (Arr[0] !== "/pm")
         client.emit("recv_message", { ...data, isCommandResponse: true })
-      
+
     } else if (Arr[0].startsWith('/')) {
       client.emit("recv_message", { name: "", msg: "Command not found.", isCommandResponse: true })
     } else {
       const c = this.users.get(uname).chan;
       const banData = await this.chanService.checkban(c, uname); //throw
       const muteData = await this.chanService.checkmute(c, uname);
-      
+
       if (banData && !banData.expired()) {
         name = "";
         msg = 'You are banned from this channel ' + banData.getFormattedTime() + '.\nReason: "' + banData.reason + '".';
