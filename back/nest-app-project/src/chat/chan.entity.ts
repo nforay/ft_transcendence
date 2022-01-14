@@ -1,4 +1,4 @@
-import { UserManager } from 'src/user/user.model';
+import { UserManager } from '../user/user.model';
 
 export class BanData {
   public id: string;

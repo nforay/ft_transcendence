@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Socket } from 'socket.io';
-import { UserManager } from 'src/user/user.model';
+import { UserManager } from '../user/user.model';
 import { ChanService } from './chan.service';
 import { ChatCommandHandlers } from './chat.commands';
 

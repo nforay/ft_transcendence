@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Interval } from '@nestjs/schedule';
 import { Socket } from 'socket.io';
-import { UserManager } from 'src/user/user.model';
+import { UserManager } from '../user/user.model';
 import { BanData, ChanEntity } from './chan.entity';
 import { ChatService, ClientIdentifier } from './chat.service';
 

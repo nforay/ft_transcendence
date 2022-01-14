@@ -3,7 +3,7 @@ import * as bcrypt from 'bcryptjs'
 import * as jwt from 'jsonwebtoken'
 import { UserResponseObject } from './user.dto';
 import { HttpException, HttpStatus } from '@nestjs/common';
-import { BanData } from 'src/chat/chan.entity';
+import { BanData } from '../chat/chan.entity';
 
 @Entity('user')
 export class UserEntity {

@@ -6,7 +6,7 @@ import * as path from 'path';
 import * as pngToJpeg from 'png-to-jpeg';
 import * as qrcode from 'qrcode';
 import * as speakeasy from 'speakeasy';
-import { GameManager } from 'src/game/game.model';
+import { GameManager } from '../game/game.model';
 import { Repository } from 'typeorm';
 import { SecretCodeDTO, UserDTO, UserPassDTO, UserResponseObject } from './user.dto';
 import { UserEntity } from './user.entity';

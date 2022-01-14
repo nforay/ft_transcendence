@@ -6,7 +6,7 @@ import * as uuid from 'uuid'
 import { CreateGameDto } from './dto/create-game.dto'
 import { GameEntity } from './entities/game.entity'
 import { GameGateway } from './game.gateway'
-import { UserManager, UserStatus } from 'src/user/user.model'
+import { UserManager, UserStatus } from '../user/user.model'
 
 export class GameManager {
   public static instance: GameManager = new GameManager()

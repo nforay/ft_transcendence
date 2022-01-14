@@ -1,6 +1,6 @@
 import { Logger } from '@nestjs/common';
 import { Socket } from 'socket.io';
-import { UserManager } from 'src/user/user.model';
+import { UserManager } from '../user/user.model';
 import { ChanManager, ChanService } from './chan.service';
 import { ClientIdentifier } from './chat.service';
 

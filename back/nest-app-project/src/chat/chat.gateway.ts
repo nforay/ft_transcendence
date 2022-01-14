@@ -4,7 +4,7 @@ import { MessageBody, SubscribeMessage, WebSocketGateway, WebSocketServer, OnGat
 import { Server, Socket } from 'socket.io';
 import { Logger } from '@nestjs/common';
 import * as jwt from 'jsonwebtoken'
-import { UserManager } from 'src/user/user.model';
+import { UserManager } from '../user/user.model';
 
 @WebSocketGateway(8082, {
 	cors: {
