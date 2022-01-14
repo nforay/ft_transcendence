@@ -7,13 +7,16 @@
           <h2>Users List:</h2>
           <span style="color: green;" @click="refreshUsers()">refresh</span>
           <div id="scrollbox" style="display: flex">
-            <a :href="user.url" v-for="(user, i) in users" :key="i">
-              <div style="position: relative;">
-                <img class="user-avatar" :src="user.avatar">
-                <div :class="user.htmlStatusClasses" :src="user.statusImage"></div>
-              </div>
-              <a> {{ user.username }} </a>
-            </a>
+            <span v-for="(user, i) in users" :key="i">
+              <a :href="user.url">
+                <div style="position: relative;">
+                  <img class="user-avatar" :src="user.avatar">
+                  <div :class="user.htmlStatusClasses" :src="user.statusImage"></div>
+                </div>
+                <a> {{ user.username }} </a>
+              </a>
+              <span v-if="user.username !== adminusername" style="color: red;" @click="deleteuser(user.id)">x</span>
+            </span>
           </div>
         </div>
         <div id="second">
@@ -44,14 +47,14 @@ export default class UserProfile extends Vue {
   public chans: string[] = []
 
   public isadmin = false
-  private token: string
+  public adminusername = ''
 
   async mounted (): Promise<void> {
     while (!store.state.requestedLogin) {
       await new Promise(resolve => setTimeout(resolve, 10))
     }
-    this.token = globalFunctions.getToken()
-    if (this.token === 'error') {
+    const token = globalFunctions.getToken()
+    if (token === 'error') {
       router.push('/')
       return
     }
@@ -67,6 +70,7 @@ export default class UserProfile extends Vue {
     const data = await response.json()
     if (data.role === 'admin') {
       this.isadmin = true
+      this.adminusername = data.name
     } else {
       router.push('/')
       return
@@ -86,7 +90,8 @@ export default class UserProfile extends Vue {
         username: user.name,
         url: '/profile?user=' + user.name,
         avatar: user.avatar,
-        htmlStatusClasses: 'status-icon status-' + user.status
+        htmlStatusClasses: 'status-icon status-' + user.status,
+        id: user.id
       }
     })
     if (this.users.length === 0) {
@@ -94,7 +99,7 @@ export default class UserProfile extends Vue {
     }
 
     const chansResponse = await fetch(
-      'http://localhost:4000/chan/' + this.token, {
+      'http://localhost:4000/chan/', {
         method: 'GET'
       }
     )
@@ -120,7 +125,8 @@ export default class UserProfile extends Vue {
         username: user.name,
         url: '/profile?user=' + user.name,
         avatar: user.avatar,
-        htmlStatusClasses: 'status-icon status-' + user.status
+        htmlStatusClasses: 'status-icon status-' + user.status,
+        id: user.id
       }
     })
     if (this.users.length === 0) {
@@ -130,7 +136,7 @@ export default class UserProfile extends Vue {
 
   async refreshChans (): Promise<void> {
     const chansResponse = await fetch(
-      'http://localhost:4000/chan/' + this.token, {
+      'http://localhost:4000/chan/', {
         method: 'GET'
       }
     )
@@ -141,14 +147,26 @@ export default class UserProfile extends Vue {
     this.chans = chansData.chans
   }
 
-  async deletechan (chan: string) {
+  async deletechan (chan: string): Promise<void> {
     const chanResponse = await fetch(
-      'http://localhost:4000/chan/test/' + this.token + '/' + chan, {
+      'http://localhost:4000/chan/' + this.adminusername + chan, {
         method: 'DELETE'
       }
     )
     if (chanResponse.ok) {
       await this.refreshChans()
+    }
+  }
+
+  async deleteuser (id: string): Promise<void> {
+    console.log('DELETE ' + id)
+    const userResponse = await fetch(
+      'http://localhost:4000/user/' + id, {
+        method: 'DELETE'
+      }
+    )
+    if (userResponse.ok) {
+      await this.refreshUsers()
     }
   }
 }
