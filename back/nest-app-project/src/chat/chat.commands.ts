@@ -37,6 +37,8 @@ export class ChatCommandHandlers {
     msg += "\n/unban (user) Unban user";
     msg += "\n/mute (user) [seconds] [reason] Mute user in channel";
     msg += "\n/unmute (user) Unmute user";
+    msg += "\n/passwd (new password) Change password";
+    msg += "\n/rmpasswd Remove password";
 		return {name, msg}
   }
 
@@ -252,7 +254,7 @@ export class ChatCommandHandlers {
     }
 
     try {
-      const res = chanService.cchan(args[1], uname, pass)
+      const res = await chanService.cchan(args[1], uname, pass)
       msg = res;
       if (args.length >= 3 && args[2] === "public")
         chanService.setpublic(args[1], uname);
@@ -363,11 +365,12 @@ export class ChatCommandHandlers {
     }
 
     try {
+      if (!users.get(uname) || !users.get(uname).chan)
+        throw "Unexpected error";
+
       const isAdmin = await chanService.checkadmin(users.get(uname).chan, uname)
-      if (isAdmin == false) {
-        msg = "You are not operator of this channel";
-        return {name, msg};
-      }
+      if (isAdmin == false)
+        throw "You are not operator of this channel";
 
       let reason = undefined;
       let dur = undefined;
@@ -384,8 +387,7 @@ export class ChatCommandHandlers {
         dur = undefined;
       }
       else if (dur <= 0) {
-        msg = "Wrong duration";
-        return {name, msg}
+        throw "Wrong duration";
       } else {
         reason = args.slice(3).join(" ");
       }
@@ -394,7 +396,7 @@ export class ChatCommandHandlers {
       msg = res;
 
     } catch (err) {
-      msg = "Can't find channel";
+      msg = err;
     }
     return {name, msg}
   }
@@ -442,6 +444,32 @@ export class ChatCommandHandlers {
       } catch (err) {
         msg = err;
       }
+    }
+    return {name, msg}
+  }
+
+  async passwdCommand(client: Socket, args: string[], uname: string, users: Map<string, ClientIdentifier>, chanService: ChanService) {
+    const name = "";
+    let msg = ""
+    let expectedLength = 2
+
+    if (args[0] === '/rmpasswd')
+      expectedLength = 1
+  
+    if (args.length != expectedLength) {
+      msg = "Wrong number of arguments";
+      return {name, msg}
+    }
+    try {
+      const isAdmin = await chanService.checkadmin(users.get(uname).chan, uname)
+      if (isAdmin == false) {
+        msg = "You are not operator of this channel";
+        return {name, msg};
+      }
+      const res = await chanService.changePasswd(users.get(uname).chan, (args[0] === '/rmpasswd' ? null : args[1]))
+      msg = (args[0] === '/rmpasswd' ? "Password removed" : res);
+    } catch (err) {
+      msg = err;
     }
     return {name, msg}
   }

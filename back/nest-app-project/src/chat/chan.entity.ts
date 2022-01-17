@@ -1,4 +1,6 @@
 import { UserManager } from '../user/user.model';
+import { Logger } from '@nestjs/common';
+import * as bcrypt from 'bcryptjs'
 
 export class BanData {
   public id: string;
@@ -81,11 +83,9 @@ export class ChanEntity {
       this.mutes = args.mutes;
     if (args.type)
       this.type = args.type;
-    if (args.passwd)
-      this.passwd = args.passwd;
   }
 
-	addUser(uname: string, pwd: string = null): void {
+	addUser(uname: string): void {
 		if (this.users.indexOf(uname) == -1)
 			this.users.push(uname);
 	}
@@ -104,7 +104,7 @@ export class ChanEntity {
 	}
 
 	async checkowner(uname: string): Promise<boolean> {
-    const user = await UserManager.instance.userRepository.findOne({ name: uname });
+    const user = await UserManager.instance.userRepository.findOne({ id: uname });
     if (user == null)
       return false;
 		if (uname == this.owner || user.role === 'admin')
@@ -113,7 +113,10 @@ export class ChanEntity {
 	}
 
 	async checkadmin(uname: string): Promise<boolean> {
-		return this.checkowner(uname) || this.admins.indexOf(uname) != -1;
+    const user = await UserManager.instance.userRepository.findOne({ id: uname });
+    if (!user)
+      return false;
+		return this.admins.indexOf(uname) != -1 || user.role === 'admin' || this.checkowner(uname);
 	}
 
 	async op(uname: string, newop: string = null): Promise<string> {
