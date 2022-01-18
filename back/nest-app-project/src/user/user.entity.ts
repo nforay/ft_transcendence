@@ -10,6 +10,8 @@ export class UserEntity {
   @PrimaryGeneratedColumn('uuid') id: string;
   @CreateDateColumn() created: Date;
 
+  @Column({ type: 'int', default: -1 }) fortyTwoId: number;
+
   @Column({ type: 'text', unique: true }) name: string;
   @Column({ type: 'text', default: 'user' }) role: string;
   @Column({ type: 'text', default: '' }) bio: string;
@@ -29,6 +31,8 @@ export class UserEntity {
 
   @BeforeInsert()
   private async hashPassword() {
+    if (this.fortyTwoId !== -1)
+      return;
     if (!this.password)
       throw new HttpException('Password is required', HttpStatus.BAD_REQUEST);
     this.password = await bcrypt.hash(this.password, 10);

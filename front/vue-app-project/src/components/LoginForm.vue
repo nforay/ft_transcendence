@@ -16,6 +16,7 @@
       </md-field>
         </md-card-content>
         <md-card-actions>
+          <md-button @click="loginwith42" class="md-raised" :disabled="sending">Login With <img src="../assets/42logo.svg" height="24" width="24"/></md-button>
           <md-button @click="login" class="md-raised md-primary" :disabled="sending">Log in</md-button>
         </md-card-actions>
         <md-progress-bar md-mode="indeterminate" v-if="sending" />
@@ -50,6 +51,10 @@ export default class LoginForm extends Vue {
     }
 
     return true
+  }
+
+  loginwith42 () : void {
+    window.location.href = 'https://api.intra.42.fr/oauth/authorize?client_id=7e4d240305d7f5de6fab4ab3b3ca9eb1a2712ca08034ca4e3d3cb699ced48145&redirect_uri=http%3A%2F%2Flocalhost%3A8080%2Fauthenticate&response_type=code'
   }
 
   async login () : Promise<void> {
