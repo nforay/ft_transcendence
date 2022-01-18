@@ -57,7 +57,7 @@ export default class Play extends Vue {
     }
     const data = await resp.json()
     this.elo = data.elo
-    this.wlratio = data.lose === 0 ? Math.max(data.win, 1) : data.win / data.lose
+    this.wlratio = data.lose === 0 ? Math.max(data.win, 1) : Math.round(data.win / data.lose * 100) / 100
   }
 
   async checkQueue () : Promise<void> {

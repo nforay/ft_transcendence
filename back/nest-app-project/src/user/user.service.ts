@@ -318,4 +318,15 @@ export class UserService {
     UserManager.instance.disableTwoFAlist.push(new TwoFAUser(user.id));
     return { success: true }
   }
+
+  async getLeaderboard(rangeMin: number, rangeMax: number) {
+    const leaderboard = await this.repository.find({
+      order: {
+        elo: 'DESC'
+      },
+      skip: rangeMin,
+      take: rangeMax
+    });
+    return { players: leaderboard.map(x => x.toResponseUser()) };
+  }
 }

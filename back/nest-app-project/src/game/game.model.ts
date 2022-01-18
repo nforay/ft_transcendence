@@ -272,7 +272,10 @@ export class Game {
     }
     winnerUser.win += 1;
     loserUser.lose += 1;
+    winnerUser.xp += 50;
+    loserUser.xp += 30;
     this.updateEloRatings(winnerUser, loserUser);
+
 
     if (UserManager.instance.onlineUsersStatus.has(this.player1.id)) {
       UserManager.instance.onlineUsersStatus.get(this.player1.id).status = 'online';

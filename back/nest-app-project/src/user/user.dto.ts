@@ -54,6 +54,7 @@ export class UserResponseObject {
   elo: number;
   win: number;
   lose: number;
+  level: number;
   has2FA?: boolean;
   token?: string;
   expiresIn?: number;

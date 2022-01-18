@@ -22,6 +22,7 @@ export class UserEntity {
   @Column({ type: 'int', default: 1200 }) elo: number;
   @Column({ type: 'int', default: 0 }) win: number;
   @Column({ type: 'int', default: 0 }) lose: number;
+  @Column({ type: 'int', default: 0 }) xp: number;
 
   @Column({ type: 'text', array: true, default: [] }) chatBan: string[];
   @Column({ type: 'text', array: true, default: [] }) chatMute: string[];
@@ -43,6 +44,7 @@ export class UserEntity {
       elo: this.elo,
       win: this.win,
       lose: this.lose,
+      level: this.getLevel(),
       avatar: `http://localhost:4000/user/avatar/${this.id}`,
       token: (withToken) ? this.token : undefined,
       has2FA: (with2FA) ? this.has2FA : undefined,
@@ -80,6 +82,16 @@ export class UserEntity {
       return false;
     this.friends.splice(this.friends.indexOf(id), 1);
     return true;
+  }
+
+  getLevel() {
+    let level = 0;
+    let xp = this.xp;
+    while (xp >= ((level / 3) * 65)) {
+      level++;
+      xp -= ((level / 3) * 65);
+    }
+    return level + (xp / ((level / 3) * 65));
   }
 
   isFriend(id: string) {

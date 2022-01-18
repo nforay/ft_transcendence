@@ -1,4 +1,4 @@
-import { Get, Post, Put, Delete, Param, Controller, Headers, UploadedFile, HttpStatus, HttpException, Res, Header } from '@nestjs/common';
+import { Get, Post, Put, Delete, Param, Controller, Headers, UploadedFile, HttpStatus, HttpException, Res, Header, Query } from '@nestjs/common';
 import { UserService } from './user.service';
 import { SecretCodeDTO, UserDTO, UserPassDTO } from './user.dto'
 import { Body } from '@nestjs/common';
@@ -22,6 +22,11 @@ export class UserController {
   @Get()
   findAll(){
     return this.userService.findAll();
+  }
+
+  @Get('leaderboard')
+  getLeaderboard(@Query('rangeMin') rangeMin: number, @Query('rangeMax') rangeMax: number) {
+    return this.userService.getLeaderboard(rangeMin, rangeMax);
   }
 
   @Post()
