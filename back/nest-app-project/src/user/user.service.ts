@@ -365,7 +365,12 @@ export class UserService {
       }
       
       user.fortyTwoId = userInfoData.id;
-      user.name = userInfoData.login;
+      let sameName = await this.repository.findOne({ where: { name: userInfoData.login }});
+      while (sameName)
+      {
+        user.name = userInfoData.login + '_' + Math.floor(Math.random() * 100000);
+        sameName = await this.repository.findOne({ where: { name: user.name }});
+      }
       user.password = '';
       await this.repository.save(user);
 
