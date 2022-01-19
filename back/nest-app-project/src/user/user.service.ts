@@ -11,6 +11,10 @@ import { Repository } from 'typeorm';
 import { SecretCodeDTO, UserDTO, UserPassDTO, UserResponseObject } from './user.dto';
 import { UserEntity } from './user.entity';
 import { TwoFAUser, UserManager, UserStatus } from './user.model';
+import fetch from 'cross-fetch';
+import * as FormData from 'form-data';
+import * as utf8 from 'utf8';
+import * as https from 'https';
 
 @Injectable()
 export class UserService {
@@ -128,7 +132,6 @@ export class UserService {
       throw new HttpException('User already exists', HttpStatus.CONFLICT);
 
 		const length = await this.repository.count();
-		console.log('length = ' + length);
 		if (length === 0) {
 			data.role = 'admin';
 		} else {
@@ -173,7 +176,7 @@ export class UserService {
     if (!name ||!password)
       throw new HttpException('Missing data', HttpStatus.BAD_REQUEST);
     const user = await this.repository.findOne({ where: { name } });
-    if (!user)
+    if (!user || user.fortyTwoId !== -1)
       throw new HttpException('User not found', HttpStatus.NOT_FOUND);
     if (!(await user.checkPassword(password)))
       throw new HttpException('Invalid password', HttpStatus.UNAUTHORIZED);
@@ -310,7 +313,7 @@ export class UserService {
 
   async disable2FAPass(data: UserPassDTO) : Promise<any> {
     const user = await this.repository.findOne({ where: { id: data.id } });
-    if (!user)
+    if (!user || user.fortyTwoId !== -1)
       throw new HttpException('User not found', HttpStatus.NOT_FOUND);
     if (!(await user.checkPassword(data.password)))
       throw new HttpException('Invalid password', HttpStatus.UNAUTHORIZED);
@@ -328,5 +331,69 @@ export class UserService {
       take: rangeMax
     });
     return { players: leaderboard.map(x => x.toResponseUser()) };
+  }
+
+  async authenticate (code: string) {
+
+    const encodedForm = 'grant_type=authorization_code'
+    + '&client_id=' + process.env.OAUTH2_UID
+    + '&client_secret=' + process.env.OAUTH2_SECRET
+    + '&code=' + code
+    + '&redirect_uri=http://localhost:8080/authenticate'
+
+    const genTokenResponse = await fetch('https://api.intra.42.fr/oauth/token', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: encodedForm,
+    });
+    if (!genTokenResponse.ok)
+      throw new HttpException('42 API Returned an error code', genTokenResponse.status);
+    const genTokenData = (await genTokenResponse.json()) as any;
+
+    const token = genTokenData.access_token;
+
+    const userInfoResponse = await fetch('https://api.intra.42.fr/v2/me', {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    if (!userInfoResponse.ok)
+      throw new HttpException('42 API Returned an error code', userInfoResponse.status);
+    const userInfoData = (await userInfoResponse.json()) as any;
+
+    let user = await this.repository.findOne({ where: { fortyTwoId: userInfoData.id }});
+
+    if (!user) {
+      user = new UserEntity();
+      const length = await this.repository.count();
+      if (length === 0) {
+        user.role = 'admin';
+      } else {
+        user.role = 'user';
+      }
+      
+      user.fortyTwoId = userInfoData.id;
+      let sameName = await this.repository.findOne({ where: { name: userInfoData.login }});
+      while (sameName)
+      {
+        user.name = userInfoData.login + '_' + Math.floor(Math.random() * 100000);
+        sameName = await this.repository.findOne({ where: { name: user.name }});
+      }
+      user.password = '';
+      await this.repository.save(user);
+
+      https.get(userInfoData.image_url, (res) => {
+        const path = '../uploads/avatars/' + user.id + '.jpg';
+        const file = fs.createWriteStream(path);
+        res.pipe(file);
+        res.on('finish', () => {
+          file.close();
+        })
+      })
+    }
+    return user.toResponseUser(true);
   }
 }

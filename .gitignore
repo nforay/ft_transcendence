@@ -1,5 +1,6 @@
-front/vue-app-project/.vscode
-front/vue-app-project/node_modules
-front/vue-app-project/dist
+.vscode
+node_modules/
+dist/
 back/uploads
 dbdata
+*/*/.env

@@ -52,6 +52,7 @@ import Component from 'vue-class-component'
 import store from '@/store'
 import router from '@/router'
 import { mapGetters } from 'vuex'
+import { Watch } from 'vue-property-decorator'
 
 @Component({
   computed: mapGetters(['username', 'isLogged', 'notificationsCount', 'avatar'])
@@ -73,6 +74,15 @@ export default class AppHeader extends Vue {
 
   public redirectToProfile () : void {
     router.push('/profile')
+  }
+
+  public get avatarUpdate () : string {
+    return store.state.avatarUpdate
+  }
+
+  @Watch('avatarUpdate')
+  public onAvatarUpdate (value: string, newValue: string) : void {
+    this.avatar = this.avatar.replace(/\?.*/, '') + '?' + newValue
   }
 }
 </script>
