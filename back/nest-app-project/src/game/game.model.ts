@@ -381,8 +381,11 @@ export class Game {
     GameManager.instance.removeGame(this.id);
     const opponent = this.player1.socketId === socketId ? this.player2 : this.player1;
     const opponentSocket = GameGateway.clients.find(c => c.id === opponent.socketId);
-    opponentSocket.emit('gameCanceled');
-    opponentSocket.disconnect();
+    if (opponentSocket)
+    {
+      opponentSocket.emit('gameCanceled');
+      opponentSocket.disconnect();
+    }
     GameGateway.clients.splice(GameGateway.clients.indexOf(opponentSocket), 1);
     if (UserManager.instance.onlineUsersStatus.has(this.player1.id)) {
       UserManager.instance.onlineUsersStatus.get(this.player1.id).status = 'online';

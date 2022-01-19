@@ -11,10 +11,11 @@
           <span v-else>{{ message.message.msg }}</span>
         </ul>
       </div>
-      <div>
-        <input v-model="chatMsg.msg" @keyup.enter="onInput" maxlength="250" placeholder="Send Message">
-      </div>
     </div>
+    <md-field class="chat-input">
+      <md-input v-model="chatMsg.msg" @keyup.enter="onInput" maxlength="250" placeholder="Send Message"></md-input>
+      <md-icon>question_answer</md-icon>
+    </md-field>
   </div>
 </template>
 
@@ -118,7 +119,7 @@ export default class Chat extends Vue {
 
 .chat-pos .chat {
   position: fixed;
-  bottom: 30px;
+  top: calc(49px + 36px);
   right: 0;
 }
 
@@ -127,35 +128,34 @@ export default class Chat extends Vue {
   font-size: 22px;
   padding: 7px;
   position: fixed;
-  width: 400px;
+  width: 20%;
   border-bottom: 1px solid #777;
-  background-color: #eeeeee;
-  bottom: calc(25%);
+  background-color: #fff;
+  top: calc(49px);
   right: 0;
 }
 
 .chat {
-  width: 400px;
-  height: calc(25% - 30px);
+  width: 20%;
+  height: calc(100% - 49px - 36px - 70px);
 
   overflow-y: scroll;
   overflow-x: hidden;
   overflow-wrap: break-word;
   text-align: left;
-  background-color: #eeeeee;
+  background-color: #fff;
   color: #000000;
 
   a {
     color:rgb(255, 217, 0);
   }
 
-  input {
-    position: fixed;
-    bottom: 0;
-    width: 100%;
-    height: 30px;
-    background-color: #ffffff;
-    color: #000000;
-  }
+}
+
+.chat-input {
+  position: fixed !important;
+  top: calc(100% - 75px);
+  background-color: #fff;
+  width: 20% !important;
 }
 </style>

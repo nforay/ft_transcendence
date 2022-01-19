@@ -58,11 +58,6 @@ const routes: Array<RouteConfig> = [
     }
   },
   {
-    path: '/chat',
-    name: 'Chat',
-    component: ChatBox
-  },
-  {
     path: '/play',
     name: 'Play',
     component: () => import('../views/Play.vue'),

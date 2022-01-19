@@ -26,8 +26,8 @@
           <div>
             <h2>Friend list:</h2>
             <div id="scrollbox" style="display: flex">
-              <div v-if="friends.length === 0">
-                You don't have any friends
+              <div style="margin: auto;" v-if="friends.length === 0">
+                User doesn't have any friends
               </div>
               <a v-else :href="friend.url" v-for="(friend, i) in friends" :key="i">
                 <div style="position: relative;">

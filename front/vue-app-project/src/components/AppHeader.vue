@@ -1,5 +1,5 @@
 <template>
-  <header>
+  <header style="position: sticky; top: 1px; z-index: 2;">
     <div class="md-layout">
       <md-toolbar class="md-dense" style="background: white;">
         <md-icon :md-src="require('../assets/42logo.svg')" class="md-small md-small-hide" /><span class="md-title md-small-hide" style="flex: 1">ft_transcendence</span>
@@ -9,8 +9,7 @@
           <md-tab id="tab-play" md-label="Play" to="/play"></md-tab>
           <md-tab id="tab-leaderboard" md-label="Leaderboard" to="/leaderboard"></md-tab>
           <md-tab id="tab-about" md-label="About" to="/about"></md-tab>
-          <md-tab id="tab-login" md-label="Login" to="/login"></md-tab>
-          <md-tab id="tab-chat" md-label="Chat" to="/chat"></md-tab>
+          <md-tab v-if="!isLogged" id="tab-login" md-label="Login" to="/login"></md-tab>
         </md-tabs>
       </div>
         <md-menu md-size="auto" class="md-xsmall-hide">
