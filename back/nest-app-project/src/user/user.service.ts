@@ -140,6 +140,8 @@ export class UserService {
 
     const newUser = this.repository.create(data);
     await this.repository.save(newUser);
+    console.log(data.password)
+    console.log(newUser.password)
     return newUser.toResponseUser(true);
   }
 
@@ -173,11 +175,14 @@ export class UserService {
 
   async login(data: Partial<UserDTO>) : Promise<UserResponseObject> {
     const { name, password } = data;
-    if (!name ||!password)
+    if (!name || !password)
       throw new HttpException('Missing data', HttpStatus.BAD_REQUEST);
     const user = await this.repository.findOne({ where: { name } });
-    if (!user || user.fortyTwoId !== -1)
+    if (!user)
       throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+    console.log(user.fortyTwoId)
+    if (user.fortyTwoId !== -1)
+      throw new HttpException('User is a 42 user', HttpStatus.NOT_FOUND);
     if (!(await user.checkPassword(password)))
       throw new HttpException('Invalid password', HttpStatus.UNAUTHORIZED);
     if (user.has2FA) {
@@ -377,12 +382,15 @@ export class UserService {
       
       user.fortyTwoId = userInfoData.id;
       let sameName = await this.repository.findOne({ where: { name: userInfoData.login }});
-      while (sameName)
-      {
+      if (!sameName)
+        user.name = userInfoData.login;
+      while (sameName) {
         user.name = userInfoData.login + '_' + Math.floor(Math.random() * 100000);
         sameName = await this.repository.findOne({ where: { name: user.name }});
       }
-      user.password = '';
+      const password = Math.random().toString(36).slice(-16);
+      console.log(password)
+      user.password = password;
       await this.repository.save(user);
 
       https.get(userInfoData.image_url, (res) => {

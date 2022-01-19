@@ -32,8 +32,6 @@ export class UserEntity {
 
   @BeforeInsert()
   private async hashPassword() {
-    if (this.fortyTwoId !== -1)
-      return;
     if (!this.password)
       throw new HttpException('Password is required', HttpStatus.BAD_REQUEST);
     this.password = await bcrypt.hash(this.password, 10);
