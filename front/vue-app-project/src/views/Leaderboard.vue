@@ -18,9 +18,11 @@
       <md-table-row v-for="(player, i) of this.leaderboard" :key="i">
         <md-table-cell style="width: 0;" md-numeric>#{{ i + 1 }}</md-table-cell>
         <md-table-cell style="width: 0;" class="leaderboard-avatar">
-          <img class="leaderboard-avatar" :src="userAvatar(player.id)">
+          <router-link :to="`/profile?user=${player.username}`">
+            <img class="leaderboard-avatar" :src="userAvatar(player.id)">
+          </router-link>
         </md-table-cell>
-        <md-table-cell style="width: 30%; text-align: left">{{ player.username }}</md-table-cell>
+        <md-table-cell style="width: 30%; text-align: left"><router-link :to="`/profile?user=${player.username}`">{{ player.username }}</router-link></md-table-cell>
         <md-table-cell md-numeric>{{ player.elo }}</md-table-cell>
         <md-table-cell md-numeric>{{ player.win + player.loss }}</md-table-cell>
         <md-table-cell md-numeric>{{ player.win }}</md-table-cell>

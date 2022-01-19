@@ -7,6 +7,7 @@
         <md-tabs md-sync-route md-alignment="right">
           <md-tab id="tab-home" md-label="Home" to="/" exact></md-tab>
           <md-tab id="tab-play" md-label="Play" to="/play"></md-tab>
+          <md-tab id="tab-leaderboard" md-label="Leaderboard" to="/leaderboard"></md-tab>
           <md-tab id="tab-about" md-label="About" to="/about"></md-tab>
           <md-tab id="tab-login" md-label="Login" to="/login"></md-tab>
           <md-tab id="tab-chat" md-label="Chat" to="/chat"></md-tab>
