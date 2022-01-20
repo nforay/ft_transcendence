@@ -73,7 +73,7 @@ export default class AppHeader extends Vue {
   }
 
   public redirectToProfile () : void {
-    router.push('/profile')
+    router.push('/myprofile')
   }
 
   public get avatarUpdate () : string {

@@ -9,3 +9,11 @@ export class ChatMessage {
 
   isCommandResponse: boolean = false;
 }
+
+export class RequestMessage {
+	@IsNotEmpty()
+	token: string;
+
+	@IsNotEmpty()
+	to: string;
+}

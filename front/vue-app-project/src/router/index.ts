@@ -63,6 +63,14 @@ const routes: Array<RouteConfig> = [
     }
   },
   {
+    path: '/myprofile',
+    name: 'MyProfile',
+    component: () => import('../views/MyProfile.vue'),
+    meta: {
+      requiresAuth: true
+    }
+  },
+  {
     path: '/play',
     name: 'Play',
     component: () => import('../views/Play.vue'),

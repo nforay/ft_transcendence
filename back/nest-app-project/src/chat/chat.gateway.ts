@@ -1,10 +1,11 @@
 import { ChatService } from './chat.service';
-import { ChatMessage } from './chat.dto';
+import { ChatMessage, RequestMessage } from './chat.dto';
 import { MessageBody, SubscribeMessage, WebSocketGateway, WebSocketServer, OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit, ConnectedSocket } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { Logger } from '@nestjs/common';
 import * as jwt from 'jsonwebtoken'
 import { UserManager } from '../user/user.model';
+import { ChallengeManager } from 'src/challenge/challenge.model';
 
 @WebSocketGateway(8082, {
 	cors: {
@@ -57,6 +58,42 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect, On
       client.disconnect(true);
     }
 	}
+
+  @SubscribeMessage('sendChallengeRequest')
+  async sendChallengeRequest(@MessageBody() request: RequestMessage, @ConnectedSocket() client: Socket) {
+    let user = undefined;
+    try {
+      const decoded = await jwt.verify(request.token, process.env.JWT_SECRET);
+      user = await UserManager.instance.userRepository.findOne({ id: decoded.id });
+      if (!user)
+      {
+        client.disconnect(true);
+        return;
+      }
+    } catch (err) {
+      client.disconnect(true);
+      return;
+    }
+    const target = await UserManager.instance.userRepository.findOne({ name: request.to });
+    if (!target || target.id === user.id)
+    {
+      client.emit('sendChallengeResponse', { success: false });
+      return;
+    }
+    const targetSocket = this.chatService.users.get(target.id);
+    if (!targetSocket) {
+      client.emit('sendChallengeResponse', { success: false });
+      return;
+    }
+    if (ChallengeManager.instance.pendingRequests.has(user.id) && ChallengeManager.instance.pendingRequests.get(user.id).to === target.id) {
+      client.emit('sendChallengeResponse', { success: false });
+      return;
+    }
+    ChallengeManager.instance.addChallenge(user.id, target.id);
+    const challenge = ChallengeManager.instance.pendingRequests.get(user.id)
+    client.emit('sendChallengeResponse', { from: user.name, to: target.name, success: true });
+    targetSocket.sock.emit('recieveChallengeRequest', { from: user.name, to: target.name, expiresIn: challenge.expireDate - new Date().getTime() });
+  }
 
 	handleConnection(client: Socket, ...args: any[]) {
 		Logger.log('User connected', "Chat");
