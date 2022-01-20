@@ -44,11 +44,6 @@ export class UserController {
     return this.userService.disable2FA(data);
   }
 
-  @Post('disable2fapass')
-  disable2FAPass(@Body() data: UserPassDTO) {
-    return this.userService.disable2FAPass(data);
-  }
-
   @Get('username/:name')
   findByName(@Param('name') name: string) {
     return this.userService.findByName(name);

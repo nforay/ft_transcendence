@@ -127,10 +127,6 @@ export class UserManager {
   }
 
   validateSecretToDisable(user: UserEntity, code: string) : boolean {
-    const pair = this.disableTwoFAlist.find(elem => elem.userId == user.id && !elem.expired())
-    if (!pair)
-      return false;
-
     const valid = speakeasy.totp.verify({
       secret: user.twoFASecret,
       token: code,

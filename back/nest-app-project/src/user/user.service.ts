@@ -311,20 +311,8 @@ export class UserService {
     if (!validSecret)
       throw new HttpException('Code is invalid or expired', HttpStatus.UNAUTHORIZED)
 
-    UserManager.instance.remove2FAUserToDisable(user.id);
     this.repository.update({ id: user.id }, { has2FA: false, twoFASecret: '' });
     return { disabled: true }
-  }
-
-  async disable2FAPass(data: UserPassDTO) : Promise<any> {
-    const user = await this.repository.findOne({ where: { id: data.id } });
-    if (!user || user.fortyTwoId !== -1)
-      throw new HttpException('User not found', HttpStatus.NOT_FOUND);
-    if (!(await user.checkPassword(data.password)))
-      throw new HttpException('Invalid password', HttpStatus.UNAUTHORIZED);
-
-    UserManager.instance.disableTwoFAlist.push(new TwoFAUser(user.id));
-    return { success: true }
   }
 
   async getLeaderboard(rangeMin: number, rangeMax: number) {
@@ -401,6 +389,10 @@ export class UserService {
           file.close();
         })
       })
+    }
+    if (user.has2FA) {
+      UserManager.instance.twoFAlist.push(new TwoFAUser(user.id));
+      return user.toResponseUser(false, true);
     }
     return user.toResponseUser(true);
   }

@@ -95,14 +95,6 @@ const routes: Array<RouteConfig> = [
     }
   },
   {
-    path: '/disable2fapass',
-    name: 'Disable2FAPass',
-    component: () => import('../views/Disable2FAPass.vue'),
-    meta: {
-      requiresAuth: true
-    }
-  },
-  {
     path: '/disable2fa',
     name: 'Disable2FA',
     component: () => import('../views/Disable2FA.vue'),
