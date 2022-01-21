@@ -455,13 +455,13 @@ export class ChatCommandHandlers {
 
     if (args[0] === '/rmpasswd')
       expectedLength = 1
-  
+
     if (args.length != expectedLength) {
       msg = "Wrong number of arguments";
       return {name, msg}
     }
     try {
-      const isAdmin = await chanService.checkadmin(users.get(uname).chan, uname)
+      const isAdmin = await chanService.checkowner(users.get(uname).chan, uname)
       if (isAdmin == false) {
         msg = "You are not operator of this channel";
         return {name, msg};

@@ -123,6 +123,14 @@ export class ChanService {
 		return ret;
 	}
 
+	async checkowner(cname: string, uname: string): Promise<boolean> {
+		const chan = ChanManager.instance.findByName(cname);
+		if (!chan)
+			throw "Can't find channel"
+		let ret = await chan.checkowner(uname);
+		return ret;
+	}
+
 	async leave(cname: string, uname: string): Promise<string> {
 		const chan = ChanManager.instance.findByName(cname);
 		if (!chan)
