@@ -65,7 +65,11 @@ export default class AppHeader extends Vue {
   }
 
   public redirectToSettings () : void {
-    router.push('/settings')
+    router.push('/settings').catch(error => {
+      if (error.name !== 'NavigationDuplicated' && !error.message.includes('Avoided redundant navigation to current location')) {
+        console.log(error)
+      }
+    })
   }
 
   public redirectToLogin () : void {
