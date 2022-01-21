@@ -11,11 +11,6 @@ export class ChanController {
 
 	@Get()
 	async findAll(@AuthUser() user) {
-		console.log('user.role = ' + user.role);
-		console.log('user.name = ' + user.name);
-		if (user === undefined) {
-			console.log('AAAAAAAAAAAAAAAAAAA');
-		}
 		if (user.role !== 'admin') {
 			throw new HttpException('User is not admin', HttpStatus.FORBIDDEN);
 		}

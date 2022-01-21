@@ -12,7 +12,7 @@
           <md-tab v-if="!isLogged" id="tab-login" md-label="Login" to="/login"></md-tab>
         </md-tabs>
       </div>
-        <md-menu md-size="auto" class="md-xsmall-hide">
+        <md-menu md-size="auto">
           <md-avatar md-menu-trigger>
             <img class="avatar" :src="avatar" alt="Avatar">
             <md-tooltip v-if="this.username.length !== 0" md-direction="left">{{ this.username }}</md-tooltip>
@@ -73,7 +73,7 @@ export default class AppHeader extends Vue {
   }
 
   public redirectToProfile () : void {
-    router.push('/profile')
+    router.push('/redirect?to=/profile')
   }
 
   public get avatarUpdate () : string {

@@ -140,8 +140,6 @@ export class UserService {
 
     const newUser = this.repository.create(data);
     await this.repository.save(newUser);
-    console.log(data.password)
-    console.log(newUser.password)
     return newUser.toResponseUser(true);
   }
 
@@ -180,7 +178,6 @@ export class UserService {
     const user = await this.repository.findOne({ where: { name } });
     if (!user)
       throw new HttpException('User not found', HttpStatus.NOT_FOUND);
-    console.log(user.fortyTwoId)
     if (user.fortyTwoId !== -1)
       throw new HttpException('User is a 42 user', HttpStatus.NOT_FOUND);
     if (!(await user.checkPassword(password)))
@@ -377,7 +374,6 @@ export class UserService {
         sameName = await this.repository.findOne({ where: { name: user.name }});
       }
       const password = Math.random().toString(36).slice(-16);
-      console.log(password)
       user.password = password;
       await this.repository.save(user);
 

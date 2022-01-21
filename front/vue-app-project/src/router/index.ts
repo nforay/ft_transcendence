@@ -63,6 +63,14 @@ const routes: Array<RouteConfig> = [
     }
   },
   {
+    path: '/redirect',
+    name: 'Redirect',
+    component: () => import('../views/Redirect.vue'),
+    meta: {
+      requiresAuth: true
+    }
+  },
+  {
     path: '/play',
     name: 'Play',
     component: () => import('../views/Play.vue'),

@@ -4,17 +4,42 @@
       #{{ channel }}
     </header>
     <div class="chat" id="chatboxdiv" @wheel="checkCanScroll">
+      <div v-if="recievedChallenges.length > 0" class="md-elevation-4" style="position: fixed; width: 20%; background-color: white;">
+        <div class="md-layout md-size-100">
+          <div class="md-layout md-alignment-center-left md-size-100">
+            <div class="md-layout-item">
+              <p style="margin-left: 5px;" class="md-subheading">{{ recievedChallenges[0].sender }} is challenging you</p>
+            </div>
+            <div class="md-alignment-center-right">
+                <md-button class="md-icon-button md-mini" @click="acceptChallenge"><md-icon>done</md-icon></md-button>
+                <md-button class="md-icon-button md-mini" @click="declineChallenge"><md-icon>close</md-icon></md-button>
+            </div>
+          </div>
+          <div class="md-layout-item md-size-100">
+            <md-progress-bar :md-value="recievedChallenges[0].expirePercentage" />
+          </div>
+        </div>
+      </div>
       <div style="display: flex; min-height: 100%; justify-content: flex-end; flex-direction: column;">
         <ul v-for="message in messages" :key="message.id" style="margin: 0 10px 7px; padding: 0;">
-          <span v-html="message.message.name"></span>
+          <md-menu md-direction="bottom-start" md-size="small">
+            <span md-menu-trigger style="color: #478ee6; cursor: pointer;" v-if="!message.message.isCommandResponse">{{ message.message.name + ':'}}&nbsp;</span>
+            <md-menu-content>
+              <md-menu-item @click="redirectTo(`/profile?user=${message.message.name}`)">
+                <md-icon>person</md-icon><span>{{ message.message.name }}'s Profile</span>
+              </md-menu-item>
+              <md-menu-item @click="challenge(message.message.name)"><md-icon>supervisor_account</md-icon><span>Challenge {{ message.message.name }}</span></md-menu-item>
+            </md-menu-content>
+          </md-menu>
           <span v-if="message.message.isCommandResponse" v-html="message.message.msg"></span>
           <span v-else>{{ message.message.msg }}</span>
         </ul>
       </div>
     </div>
     <md-field class="chat-input">
-      <md-input v-model="chatMsg.msg" @keyup.enter="onInput" maxlength="250" placeholder="Send Message"></md-input>
       <md-icon>question_answer</md-icon>
+      <label>Send a message</label>
+      <md-input v-model="chatMsg.msg" @keyup.enter="onInput" maxlength="250"></md-input>
     </md-field>
   </div>
 </template>
@@ -23,11 +48,33 @@
 import * as io from 'socket.io-client'
 import Vue from 'vue'
 import Component from 'vue-class-component'
-import { globalFunctions } from '../store'
+import router from '../router'
+import store, { globalFunctions } from '../store'
 
 class ChatMessage {
   token = ''
   msg = ''
+}
+
+class RecievedChallengeData {
+  public sender: string
+  public expireDate: number
+  public originExpiresIn: number
+  public expirePercentage = 100
+
+  constructor (sender: string, expireDate: number) {
+    this.sender = sender
+    this.expireDate = expireDate
+    this.originExpiresIn = expireDate - new Date().getTime()
+  }
+
+  public get isExpired (): boolean {
+    return this.expireDate < new Date().getTime()
+  }
+
+  public updateExpirePercentage (): void {
+    this.expirePercentage = (this.expireDate - new Date().getTime()) / this.originExpiresIn * 100
+  }
 }
 
 @Component
@@ -37,7 +84,42 @@ export default class Chat extends Vue {
   socket: any
   autoScrollInterval: any = null
   canAutoScroll = true
-  channel = 'general';
+  channel = 'general'
+  listenSendChallengeResponse = false
+
+  recievedChallenges: RecievedChallengeData[] = []
+
+  public redirectTo (url: string) : void {
+    router.push(url)
+  }
+
+  public async challenge (name: string) : Promise<void> {
+    if (globalFunctions.getToken() === 'error') {
+      store.commit('logout')
+      store.commit('expireToken')
+      return
+    }
+    this.listenSendChallengeResponse = true
+    this.socket.emit('sendChallengeRequest', { token: globalFunctions.getToken(), to: name })
+  }
+
+  updateReceivedChallenges () : void {
+    if (!this.recievedChallenges) {
+      return
+    }
+
+    this.recievedChallenges = this.recievedChallenges.filter(challenge => !challenge.isExpired)
+    if (this.recievedChallenges.length > 0) {
+      this.recievedChallenges[0].updateExpirePercentage()
+    }
+  }
+
+  mounted () {
+    this.updateReceivedChallenges()
+    setInterval(() => {
+      this.updateReceivedChallenges()
+    }, 100)
+  }
 
   created () : void {
     this.socket = io.connect('ws://localhost:8082')
@@ -59,10 +141,6 @@ export default class Chat extends Vue {
           cpy.msg = '<i style="color: #009100;">' + cpy.msg + '</i>'
         }
 
-        if (cpy.name.length !== 0) {
-          cpy.name = '<a href=\'profile?user=' + cpy.name + '\'>' + cpy.name + '</a>: ' //! Attention il ne faut pas de username avec du HTML sinon grosse faille
-        }
-
         this.messages.push({
           id: this.messages.length === 150 ? this.messages[0].id : this.messages.length,
           message: { ...cpy }
@@ -77,6 +155,32 @@ export default class Chat extends Vue {
     })
     this.socket.on('switch_channel', (data) => {
       this.channel = data.channel
+    })
+    this.socket.on('sendChallengeResponse', (data) => {
+      if (!this.listenSendChallengeResponse) {
+        return
+      }
+      this.listenSendChallengeResponse = false
+      if (data.success) {
+        store.commit('setPopupMessage', 'Duel request has been sent to ' + data.to + '.')
+      } else {
+        store.commit('setPopupMessage', 'Duel request failed to be sent.')
+      }
+    })
+    this.socket.on('recieveChallengeRequest', (data) => {
+      store.commit('setPopupMessage', 'Duel request from ' + data.from + '.')
+      this.recievedChallenges.push(new RecievedChallengeData(data.from, new Date().getTime() + data.expiresIn))
+    })
+    this.socket.on('challengeGameStarting', (data) => {
+      if (!data.success) {
+        store.commit('setPopupMessage', 'Failed to accept duel request.')
+        this.recievedChallenges.shift()
+        return
+      }
+
+      this.recievedChallenges.length = 0
+      router.push('/game?id=' + data.gameId)
+      window.localStorage.setItem('gameJwt', data.gameJwt)
     })
     this.socket.emit('init', globalFunctions.getToken())
   }
@@ -109,6 +213,27 @@ export default class Chat extends Vue {
     } else {
       this.canAutoScroll = false
     }
+  }
+
+  acceptChallenge () : void {
+    if (globalFunctions.getToken() === 'error') {
+      store.commit('logout')
+      store.commit('expireToken')
+      return
+    }
+
+    this.socket.emit('acceptChallengeRequest', { token: globalFunctions.getToken(), sender: this.recievedChallenges[0].sender })
+  }
+
+  declineChallenge () : void {
+    if (globalFunctions.getToken() === 'error') {
+      store.commit('logout')
+      store.commit('expireToken')
+      return
+    }
+
+    this.socket.emit('declineChallengeRequest', { token: globalFunctions.getToken(), sender: this.recievedChallenges[0].sender })
+    this.recievedChallenges.splice(0, 1)
   }
 }
 </script>

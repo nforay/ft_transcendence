@@ -23,7 +23,7 @@
         <h2><span>"The mighty pong contest"</span></h2>
       </kinesis-element>
       <kinesis-element :strength="5" :originY="100" type="rotate" class="pongbutton">
-        <md-button class="md-raised md-primary" href="/play">Play</md-button>
+        <md-button class="md-raised md-primary" to="/play">Play</md-button>
       </kinesis-element>
     </kinesis-container>
   </div>
