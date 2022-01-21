@@ -55,15 +55,14 @@ export class Ball {
   props: {
     gameId: {
       type: String
-    },
-    gameJwt: {
-      type: String
     }
   }
 })
 export default class GameCanvas extends Vue {
   canvas: HTMLCanvasElement | undefined
   ctx: CanvasRenderingContext2D | undefined
+
+  gameJwt = window.localStorage.getItem('gameJwt')
 
   socketManager = new SocketManager('http://localhost:4001/?gameJwt=' + this.gameJwt)
 
@@ -86,10 +85,11 @@ export default class GameCanvas extends Vue {
   packetId = 0
   updateId = -1
 
-  ball = new Ball(0, 0, 0, 0, 0)
+  ball = new Ball(0, 0, 0, 0, 0, false)
 
   destroyed () : void {
     this.socketManager.disconnect()
+    window.localStorage.removeItem('gameJwt')
   }
 
   gameLoop () : void {

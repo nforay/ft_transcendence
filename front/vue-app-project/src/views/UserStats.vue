@@ -29,13 +29,13 @@
               <div style="margin: auto;" v-if="friends.length === 0">
                 User doesn't have any friends
               </div>
-              <a v-else :href="friend.url" v-for="(friend, i) in friends" :key="i">
+              <router-link v-else :to="friend.url" v-for="(friend, i) in friends" :key="i">
                 <div style="position: relative;">
                   <img class="friend-avatar" :src="friend.avatar">
                   <div :class="friend.htmlStatusClasses" :src="friend.statusImage"></div>
                 </div>
-                <a> {{ friend.username }} </a>
-              </a>
+                <span> {{ friend.username }} </span>
+              </router-link>
             </div>
           </div>
           <div v-if="isfriend === true">
@@ -155,7 +155,7 @@ export default class UserProfile extends Vue {
     this.friends = friendlistData.map(friend => {
       return {
         username: friend.name,
-        url: '/profile?user=' + friend.name,
+        url: '/redirect?to=/profile?user=' + friend.name,
         avatar: friend.avatar,
         htmlStatusClasses: 'status-icon status-' + friend.status
       }
@@ -260,7 +260,7 @@ img.friend-avatar {
   display: block;
   width: 50px;
   height: 50px;
-  margin: 10px 10px 10px 10px;
+  margin: 10px 10px 0px 10px;
   border-radius: 30%;
   overflow: hidden;
 }

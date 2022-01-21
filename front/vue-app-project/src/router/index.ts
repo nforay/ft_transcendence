@@ -63,9 +63,9 @@ const routes: Array<RouteConfig> = [
     }
   },
   {
-    path: '/myprofile',
-    name: 'MyProfile',
-    component: () => import('../views/MyProfile.vue'),
+    path: '/redirect',
+    name: 'Redirect',
+    component: () => import('../views/Redirect.vue'),
     meta: {
       requiresAuth: true
     }

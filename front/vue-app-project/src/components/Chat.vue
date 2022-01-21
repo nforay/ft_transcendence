@@ -11,8 +11,8 @@
               <p style="margin-left: 5px;" class="md-subheading">{{ recievedChallenges[0].sender }} is challenging you</p>
             </div>
             <div class="md-alignment-center-right">
-                <md-button class="md-icon-button md-mini"><md-icon>done</md-icon></md-button>
-                <md-button class="md-icon-button md-mini"><md-icon>close</md-icon></md-button>
+                <md-button class="md-icon-button md-mini" @click="acceptChallenge"><md-icon>done</md-icon></md-button>
+                <md-button class="md-icon-button md-mini" @click="declineChallenge"><md-icon>close</md-icon></md-button>
             </div>
           </div>
           <div class="md-layout-item md-size-100">
@@ -73,7 +73,6 @@ class RecievedChallengeData {
   }
 
   public updateExpirePercentage (): void {
-    console.log((this.expireDate - new Date().getTime()))
     this.expirePercentage = (this.expireDate - new Date().getTime()) / this.originExpiresIn * 100
   }
 }
@@ -172,6 +171,17 @@ export default class Chat extends Vue {
       store.commit('setPopupMessage', 'Duel request from ' + data.from + '.')
       this.recievedChallenges.push(new RecievedChallengeData(data.from, new Date().getTime() + data.expiresIn))
     })
+    this.socket.on('challengeGameStarting', (data) => {
+      if (!data.success) {
+        store.commit('setPopupMessage', 'Failed to accept duel request.')
+        this.recievedChallenges.shift()
+        return
+      }
+
+      this.recievedChallenges.length = 0
+      router.push('/game?id=' + data.gameId)
+      window.localStorage.setItem('gameJwt', data.gameJwt)
+    })
     this.socket.emit('init', globalFunctions.getToken())
   }
 
@@ -205,13 +215,26 @@ export default class Chat extends Vue {
     }
   }
 
-  /* acceptchallenge () : void {
+  acceptChallenge () : void {
+    if (globalFunctions.getToken() === 'error') {
+      store.commit('logout')
+      store.commit('expireToken')
+      return
+    }
 
+    this.socket.emit('acceptChallengeRequest', { token: globalFunctions.getToken(), sender: this.recievedChallenges[0].sender })
   }
 
-  declinechallenge () : void {
+  declineChallenge () : void {
+    if (globalFunctions.getToken() === 'error') {
+      store.commit('logout')
+      store.commit('expireToken')
+      return
+    }
 
-  } */
+    this.socket.emit('declineChallengeRequest', { token: globalFunctions.getToken(), sender: this.recievedChallenges[0].sender })
+    this.recievedChallenges.splice(0, 1)
+  }
 }
 </script>
 

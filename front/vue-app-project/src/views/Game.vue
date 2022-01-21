@@ -1,6 +1,6 @@
 <template>
   <div class="game">
-    <GameCanvas :gameId="this.gameId" :gameJwt="this.gameJwt"></GameCanvas>
+    <GameCanvas :gameId="this.gameId"></GameCanvas>
   </div>
 </template>
 

@@ -17,3 +17,14 @@ export class RequestMessage {
 	@IsNotEmpty()
 	to: string;
 }
+
+export class DeclineMessage {
+	@IsNotEmpty()
+	token: string;
+
+	@IsNotEmpty()
+	sender: string;
+}
+
+export class AcceptMessage extends DeclineMessage {
+}

@@ -1,11 +1,13 @@
 import { ChatService } from './chat.service';
-import { ChatMessage, RequestMessage } from './chat.dto';
+import { AcceptMessage, ChatMessage, DeclineMessage, RequestMessage } from './chat.dto';
 import { MessageBody, SubscribeMessage, WebSocketGateway, WebSocketServer, OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit, ConnectedSocket } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { Logger } from '@nestjs/common';
 import * as jwt from 'jsonwebtoken'
 import { UserManager } from '../user/user.model';
 import { ChallengeManager } from 'src/challenge/challenge.model';
+import { GameManager } from 'src/game/game.model';
+import { PlayerPair } from 'src/matchmaking/matchmaking.service';
 
 @WebSocketGateway(8082, {
 	cors: {
@@ -80,6 +82,11 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect, On
       client.emit('sendChallengeResponse', { success: false });
       return;
     }
+    if (GameManager.instance.getGameByPlayerId(user.id) || GameManager.instance.getGameByPlayerId(target.id))
+    {
+      client.emit('sendChallengeResponse', { success: false });
+      return;
+    }
     const targetSocket = this.chatService.users.get(target.id);
     if (!targetSocket) {
       client.emit('sendChallengeResponse', { success: false });
@@ -98,6 +105,70 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect, On
 	handleConnection(client: Socket, ...args: any[]) {
 		Logger.log('User connected', "Chat");
 	}
+
+  @SubscribeMessage('declineChallengeRequest')
+  async declineChallengeRequest(@MessageBody() request: DeclineMessage, @ConnectedSocket() client: Socket) {
+    let user = undefined;
+    try {
+      const decoded = await jwt.verify(request.token, process.env.JWT_SECRET);
+      user = await UserManager.instance.userRepository.findOne({ id: decoded.id });
+      if (!user)
+      {
+        client.disconnect(true);
+        return;
+      }
+    } catch (err) {
+      client.disconnect(true);
+      return;
+    }
+    const sender = await UserManager.instance.userRepository.findOne({ name: request.sender });
+    if (!sender || sender.id === user.id)
+      return;
+    
+    ChallengeManager.instance.rejectRequest(sender.id, user.id);
+  }
+
+  @SubscribeMessage('acceptChallengeRequest')
+  async acceptChallengeRequest(@MessageBody() request: AcceptMessage, @ConnectedSocket() client: Socket) {
+    let user = undefined;
+    try {
+      const decoded = await jwt.verify(request.token, process.env.JWT_SECRET);
+      user = await UserManager.instance.userRepository.findOne({ id: decoded.id });
+      if (!user)
+      {
+        client.disconnect(true);
+        return;
+      }
+    } catch (err) {
+      client.disconnect(true);
+      return;
+    }
+    const sender = await UserManager.instance.userRepository.findOne({ name: request.sender });
+    if (!sender || sender.id === user.id)
+      return;
+    if (!ChallengeManager.instance.pendingRequests.has(sender.id) || ChallengeManager.instance.pendingRequests.get(sender.id).to !== user.id)
+    {
+      client.emit('challengeGameStarting', { success: false });
+      return
+    }
+
+    const senderSocket = this.chatService.users.get(sender.id);
+    if (!senderSocket) {
+      client.emit('challengeGameStarting', { success: false });
+      return;
+    }
+    if (ChallengeManager.instance.pendingRequests.has(user.id) && ChallengeManager.instance.pendingRequests.get(user.id).to === sender.id) {
+      client.emit('challengeGameStarting', { success: false });
+      return;
+    }
+    const game = GameManager.instance.createGame(user.id, sender.id, false);
+    const player1Jwt = await jwt.sign({ gameId: game.id, playerId: user.id }, process.env.JWT_SECRET, {expiresIn: '1y'});
+    const player2Jwt = await jwt.sign({ gameId: game.id, playerId: sender.id }, process.env.JWT_SECRET, {expiresIn: '1y'});
+    client.emit('challengeGameStarting', { success: true, gameId: game.id, gameJwt: player1Jwt });
+    senderSocket.sock.emit('challengeGameStarting', { success: true, gameId: game.id, gameJwt: player2Jwt });
+    ChallengeManager.instance.clearAllChallenges(user.id);
+    ChallengeManager.instance.clearAllChallenges(sender.id);
+  }
 
 	async handleDisconnect(client: Socket) {
 		try {

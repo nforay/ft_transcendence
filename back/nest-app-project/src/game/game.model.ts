@@ -20,7 +20,7 @@ export class GameManager {
     GameManager.instance = this
   }
 
-  createGame(player1Id: string, player2Id: string): Game {
+  createGame(player1Id: string, player2Id: string, updateStats: boolean = true): Game {
     let alreadyExistingGame = this.getGameByPlayerId(player1Id);
     if (alreadyExistingGame)
       GameManager.instance.removeGame(alreadyExistingGame.id);
@@ -28,7 +28,7 @@ export class GameManager {
     if (alreadyExistingGame)
       GameManager.instance.removeGame(alreadyExistingGame.id);
 
-    const game = new Game(player1Id, player2Id)
+    const game = new Game(player1Id, player2Id, updateStats)
     this.games.push(game)
     return game
   }
@@ -105,25 +105,35 @@ export class Game {
   lastUpdate: number = new Date().getTime();
   updateId = 0;
 
-  constructor(player1Id: string, player2Id: string) {
+  updateStats: boolean;
+
+  constructor(player1Id: string, player2Id: string, updateStats: boolean) {
     this.player1 = new Player(player1Id, 100)
     this.player2 = new Player(player2Id, 1900)
 
     this.ballLastX = this.ballX;
     this.ballLastY = this.ballY;
 
+    this.updateStats = updateStats
+
     setTimeout(() => {
       if (!this.player1.socketId || !this.player2.socketId) {
         if (this.player1.socketId) {
           const socket = GameGateway.clients.find(client => client.id === this.player1.socketId)
-          socket?.emit('gameCancelled', {})
+          socket?.emit('gameCanceled', {})
           socket?.disconnect()
+          GameGateway.clients.splice(GameGateway.clients.indexOf(socket), 1);
         }
         if (this.player2.socketId) {
           const socket = GameGateway.clients.find(client => client.id === this.player2.socketId)
-          socket?.emit('gameCancelled', {})
+          socket?.emit('gameCanceled', {})
           socket?.disconnect()
+          GameGateway.clients.splice(GameGateway.clients.indexOf(socket), 1);
         }
+
+        this.state = GameState.FINISHED;
+        GameManager.instance.removeGame(this.id)
+
       }
     }, 15000)
   }
@@ -270,11 +280,13 @@ export class Game {
     if (!winnerUser && !loserUser) {
       return;
     }
-    winnerUser.win += 1;
-    loserUser.lose += 1;
-    winnerUser.xp += 50;
-    loserUser.xp += 30;
-    this.updateEloRatings(winnerUser, loserUser);
+    if (this.updateStats) {
+      winnerUser.win += 1;
+      loserUser.lose += 1;
+      winnerUser.xp += 50;
+      loserUser.xp += 30;
+      this.updateEloRatings(winnerUser, loserUser);
+    }
 
 
     if (UserManager.instance.onlineUsersStatus.has(this.player1.id)) {

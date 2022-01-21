@@ -30,6 +30,16 @@ export class ChallengeManager {
     this.pendingRequests.delete(from)
   }
 
+  public clearAllChallenges(user: string) {
+    let pendingdelete: string[] = []
+    this.pendingRequests.forEach((value, key) => {
+      if (value.to === user)
+        pendingdelete.push(key)
+    })
+    pendingdelete.forEach(key => this.pendingRequests.delete(key))
+    this.pendingRequests.delete(user)
+  }
+
   public rejectRequest(from: string, to: string)
   {
     if (this.pendingRequests.has(from) && this.pendingRequests.get(from).to === to)
