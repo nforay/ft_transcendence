@@ -3,7 +3,7 @@ import { MessageBody, OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit, S
 import { Server } from "socket.io";
 import { Socket } from "socket.io";
 import { MoveGameModelDto } from "./dto/move-game-model.dto";
-import { GameManager, GameState } from "./game.model";
+import { GameManager, GameState, Player, Spectator } from "./game.model";
 import * as jwt from 'jsonwebtoken'
 import { Interval } from '@nestjs/schedule'
 
@@ -29,6 +29,9 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       if (game.updateId % 2 === 0) {
         GameGateway.clients.find(client => client.id === game.player1.socketId)?.emit('broadcast', { game, time });
         GameGateway.clients.find(client => client.id === game.player2.socketId)?.emit('broadcast', { game, time });
+        game.spectators.forEach(spectator => {
+          GameGateway.clients.find(client => client.id === spectator.socketId)?.emit('broadcast', { game, time });
+        })
       }
     })
   }
@@ -40,11 +43,17 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       let game = GameManager.instance.getGame(decoded.gameId)
       if (!game)
         return
-      if (game.player1.id === decoded.playerId)
+      if (game.player1.id === decoded.playerId) {
         game.player1.socketId = client.id;
-      else if (game.player2.id === decoded.playerId)
+        game.startIfBothConnected();
+      }
+      else if (game.player2.id === decoded.playerId) {
         game.player2.socketId = client.id;
-      game.startIfBothConnected();
+        game.startIfBothConnected();
+      }
+      else if (decoded.spectator === true) {
+        game.spectators.push(new Spectator(decoded.playerId, client.id));
+      }
     } catch (err) {
       return
     }
@@ -55,7 +64,19 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     const game = GameManager.instance.getGameBySocketId(client.id);
     if (game)
     {
-      if (game.state !== GameState.IN_GAME)
+      if (game.spectators.find(spectator => spectator.socketId === client.id))
+      {
+        console.log('EIOGHJAZEIOUG')
+        console.log('EIOGHJAZEIOUG')
+        console.log('EIOGHJAZEIOUG')
+        console.log('EIOGHJAZEIOUG')
+        console.log('EIOGHJAZEIOUG')
+        console.log('EIOGHJAZEIOUG')
+        console.log('EIOGHJAZEIOUG')
+        console.log('EIOGHJAZEIOUG')
+        game.spectators = game.spectators.filter(spectator => spectator.socketId !== client.id);
+      }
+      else if (game.state !== GameState.IN_GAME)
         game.cancel(client.id);
       else
         game.disconnect(client.id);
@@ -75,7 +96,7 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       let game = GameManager.instance.getGame(decoded.gameId);
       if (!game)
         return null;
-      return { event: 'init', data: { game, isPlayer1: (decoded.playerId == game.player1.id) } };
+      return { event: 'init', data: { game, isPlayer1: (decoded.playerId == game.player1.id || decoded.spectator === true) } };
     } catch (err) {
       return null;
     }
@@ -85,6 +106,8 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
   async move(@MessageBody() data: MoveGameModelDto) {
     try {
       const decoded = await jwt.verify(data.gameJwt, process.env.JWT_SECRET);
+      if (decoded.spectator === true)
+        return null;
       let game = GameManager.instance.getGame(decoded.gameId);
       if (game && game.state === GameState.IN_GAME) {
         game.move(decoded.playerId, data.yPosition, data.packetId);
@@ -93,11 +116,5 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     } catch (err) {
       return null;
     }
-  }
-
-  @SubscribeMessage("echo")
-  echo(@MessageBody() data: any) : WsResponse {
-    this.logger.log(`Message from user : ${data}`);
-    return { event: "echo", data: data };
   }
 }
