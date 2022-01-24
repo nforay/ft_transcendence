@@ -77,7 +77,7 @@ export default class Play extends Vue {
     const data = await response.json()
     if (data.found) {
       this.queueJoined = false
-      router.push(`/game?id=${data.gameId}`).catch(() => {})
+      router.push(`/game?id=${data.gameId}`).catch(() => { Function.prototype() })
       window.localStorage.setItem('gameJwt', data.gameJwt)
     }
   }

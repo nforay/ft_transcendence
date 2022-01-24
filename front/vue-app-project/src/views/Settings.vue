@@ -26,7 +26,7 @@ export default class Settings extends Vue {
   async beforeCreate () : Promise<void> {
     const token = globalFunctions.getToken()
     if (token === 'error') {
-      router.push('/login').catch(() => {})
+      router.push('/login').catch(() => { Function.prototype() })
       return
     }
 
@@ -37,7 +37,7 @@ export default class Settings extends Vue {
       }
     })
     if (!response.ok) {
-      router.push('/login').catch(() => {})
+      router.push('/login').catch(() => { Function.prototype() })
       return
     }
     const data = await response.json()
@@ -53,11 +53,11 @@ export default class Settings extends Vue {
   }
 
   public reditectTo2FA () : void {
-    router.push('/enable2fa').catch(() => {})
+    router.push('/enable2fa').catch(() => { Function.prototype() })
   }
 
   public reditectToCodePage () : void {
-    router.push('/disable2fa').catch(() => {})
+    router.push('/disable2fa').catch(() => { Function.prototype() })
   }
 }
 

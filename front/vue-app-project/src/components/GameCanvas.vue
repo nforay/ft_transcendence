@@ -243,7 +243,7 @@ export default class GameCanvas extends Vue {
     })
 
     this.socketManager.on('gameCanceled', () => {
-      router.push('/play').catch(() => {})
+      router.push('/play').catch(() => { Function.prototype() })
       store.commit('setPopupMessage', 'You were sent back to the play page because the game was canceled.')
       this.socketManager.disconnect()
     })

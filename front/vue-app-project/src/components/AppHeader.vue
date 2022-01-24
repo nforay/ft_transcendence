@@ -61,19 +61,19 @@ export default class AppHeader extends Vue {
   public logout () : void {
     store.commit('logout')
     store.commit('expireToken')
-    router.push('/').catch(() => {})
+    router.push('/').catch(() => { Function.prototype() })
   }
 
   public redirectToSettings () : void {
-    router.push('/settings').catch(() => {})
+    router.push('/settings').catch(() => { Function.prototype() })
   }
 
   public redirectToLogin () : void {
-    router.push('/login').catch(() => {})
+    router.push('/login').catch(() => { Function.prototype() })
   }
 
   public redirectToProfile () : void {
-    router.push('/redirect?to=/profile').catch(() => {})
+    router.push('/redirect?to=/profile').catch(() => { Function.prototype() })
   }
 
   public get avatarUpdate () : string {

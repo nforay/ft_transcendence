@@ -18,7 +18,7 @@ export default class Validate2FA extends Vue {
 
   beforeCreate () : void {
     if (!this.$route.query.userId) {
-      router.push('/login').catch(() => {})
+      router.push('/login').catch(() => { Function.prototype() })
     }
   }
 
@@ -43,7 +43,7 @@ export default class Validate2FA extends Vue {
     store.commit('setLogged', true)
     store.commit('setUsername', data.name)
     store.commit('setUserId', data.id)
-    router.push('/').catch(() => {})
+    router.push('/').catch(() => { Function.prototype() })
   }
 
   get userId () : string {

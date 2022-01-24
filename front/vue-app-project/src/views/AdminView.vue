@@ -61,7 +61,7 @@ export default class UserProfile extends Vue {
     }
     this.token = globalFunctions.getToken()
     if (this.token === 'error') {
-      router.push('/').catch(() => {})
+      router.push('/').catch(() => { Function.prototype() })
       return
     }
 
@@ -78,7 +78,7 @@ export default class UserProfile extends Vue {
       this.isadmin = true
       this.adminusername = data.name
     } else {
-      router.push('/').catch(() => {})
+      router.push('/').catch(() => { Function.prototype() })
       return
     }
 

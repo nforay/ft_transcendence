@@ -11,10 +11,10 @@ import router from '../router'
 export default class Redirect extends Vue {
   created () {
     if (!this.$route.query.to || !this.$route.query.to.toString().startsWith('/')) {
-      router.push('/').catch(() => {})
+      router.push('/').catch(() => { Function.prototype() })
       return
     }
-    router.push(this.$route.query.to.toString()).catch(() => {})
+    router.push(this.$route.query.to.toString()).catch(() => { Function.prototype() })
   }
 }
 </script>
