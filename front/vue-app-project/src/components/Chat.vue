@@ -90,7 +90,7 @@ export default class Chat extends Vue {
   recievedChallenges: RecievedChallengeData[] = []
 
   public redirectTo (url: string) : void {
-    router.push(url)
+    router.push(url).catch(() => {})
   }
 
   public async challenge (name: string) : Promise<void> {
@@ -179,7 +179,7 @@ export default class Chat extends Vue {
       }
 
       this.recievedChallenges.length = 0
-      router.push('/game?id=' + data.gameId)
+      router.push('/game?id=' + data.gameId).catch(() => {})
       window.localStorage.setItem('gameJwt', data.gameJwt)
     })
     this.socket.emit('init', globalFunctions.getToken())

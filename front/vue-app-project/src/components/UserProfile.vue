@@ -55,7 +55,7 @@ export default class UserProfile extends Vue {
 
     if (document.cookie.indexOf('Token=') === -1) {
       store.commit('logout')
-      router.push('/')
+      router.push('/').catch(() => {})
       return
     }
     const token = document.cookie.split('Token=')[1].split(';')[0]
@@ -112,7 +112,7 @@ export default class UserProfile extends Vue {
   public async onAvatarChange (event : Event) : Promise<void> {
     if (document.cookie.indexOf('Token=') === -1) {
       store.commit('logout')
-      router.push('/')
+      router.push('/').catch(() => {})
       return
     }
     const token = document.cookie.split('Token=')[1].split(';')[0]

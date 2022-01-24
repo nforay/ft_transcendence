@@ -21,7 +21,7 @@ export default class Enable2FA extends Vue {
   async beforeCreate () : Promise<void> {
     const token = globalFunctions.getToken()
     if (token === 'error') {
-      router.push('/login')
+      router.push('/login').catch(() => {})
       return
     }
     const response = await fetch('http://localhost:4000/user/qr2fa', {
@@ -31,7 +31,7 @@ export default class Enable2FA extends Vue {
       }
     })
     if (!response.ok) {
-      router.push('/settings')
+      router.push('/settings').catch(() => {})
       return
     }
     const data = await response.text()
@@ -59,7 +59,7 @@ export default class Enable2FA extends Vue {
       store.commit('setPopupMessage', response.statusText)
       return
     }
-    router.push('/')
+    router.push('/').catch(() => {})
   }
 }
 </script>

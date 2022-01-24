@@ -33,7 +33,7 @@ export default class Disable2FA extends Vue {
       store.commit('setPopupMessage', 'Code is invalid or expired')
       return
     }
-    router.push('/')
+    router.push('/').catch(() => {})
   }
 }
 </script>

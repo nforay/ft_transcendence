@@ -121,7 +121,7 @@ export default class UserProfile extends Vue {
     this.loading = false
     const token = globalFunctions.getToken()
     if (!this.$route.query.user && token === 'error') {
-      router.push('/')
+      router.push('/').catch(() => {})
       return
     }
 

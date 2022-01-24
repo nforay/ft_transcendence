@@ -61,23 +61,19 @@ export default class AppHeader extends Vue {
   public logout () : void {
     store.commit('logout')
     store.commit('expireToken')
-    router.push('/')
+    router.push('/').catch(() => {})
   }
 
   public redirectToSettings () : void {
-    router.push('/settings').catch(error => {
-      if (error.name !== 'NavigationDuplicated' && !error.message.includes('Avoided redundant navigation to current location')) {
-        console.log(error)
-      }
-    })
+    router.push('/settings').catch(() => {})
   }
 
   public redirectToLogin () : void {
-    router.push('/login')
+    router.push('/login').catch(() => {})
   }
 
   public redirectToProfile () : void {
-    router.push('/redirect?to=/profile')
+    router.push('/redirect?to=/profile').catch(() => {})
   }
 
   public get avatarUpdate () : string {
