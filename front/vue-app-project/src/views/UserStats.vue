@@ -13,31 +13,42 @@
       <h2>elo = {{ this.elo }}</h2>
       <h2>Games won = {{ this.win }}</h2>
       <h2>Games lost = {{ this.lose }}</h2>
-      <div id="container">
-        <div id="first">
-          <h2>Match History:</h2>
-          <div id="scrollbox">
-            <ul v-for="(res, i) in history" :key="i">
-              {{ res.format(username) }}
-            </ul>
+      <div class="md-layout md-gutter">
+        <div class="md-layout-item md-layout md-gutter">
+          <div class="md-layout-item">
+            <span class="md-title">Match History:</span>
+            <md-table v-if="history.length > 0" md-card>
+              <md-table-row v-for="(res, i) in history" :key="i">
+                <md-table-cell>{{ res.format(username) }}</md-table-cell>
+              </md-table-row>
+            </md-table>
+          </div>
+          <div class="md-layout-item">
+            <span class="md-title">Friend list:</span>
+            <md-table v-if="friends.length > 0" md-card>
+              <md-table-row>
+                <md-table-head>Avatar</md-table-head>
+                <md-table-head>Name</md-table-head>
+                <md-table-head md-numeric>Elo</md-table-head>
+                <md-table-head md-numeric>Level</md-table-head>
+              </md-table-row>
+              <md-table-row v-for="(friend, i) in friends" :key="i" @click="loadProfile(friend.username)">
+                <md-table-cell>
+                    <div style="position: relative; width: 50px;">
+                      <img class="friend-avatar" :src="friend.avatar">
+                      <div :class="friend.htmlStatusClasses" :src="friend.statusImage"></div>
+                    </div>
+                </md-table-cell>
+                <md-table-cell>{{ friend.username }}</md-table-cell>
+                <md-table-cell>{{ friend.elo }}</md-table-cell>
+                <md-table-cell>{{ Math.floor(friend.level) }}</md-table-cell>
+              </md-table-row>
+            </md-table>
           </div>
         </div>
+      </div>
+      <div id="container">
         <div id="second">
-          <div>
-            <h2>Friend list:</h2>
-            <div id="scrollbox" style="display: flex">
-              <div style="margin: auto;" v-if="friends.length === 0">
-                User doesn't have any friends
-              </div>
-              <router-link v-else :to="friend.url" v-for="(friend, i) in friends" :key="i">
-                <div style="position: relative;">
-                  <img class="friend-avatar" :src="friend.avatar">
-                  <div :class="friend.htmlStatusClasses" :src="friend.statusImage"></div>
-                </div>
-                <span> {{ friend.username }} </span>
-              </router-link>
-            </div>
-          </div>
           <div v-if="isfriend === true">
             <md-button @click="rmFriend()" class="md-accent">Remove Friend</md-button>
           </div>
@@ -127,6 +138,14 @@ export default class UserProfile extends Vue {
 
     this.thisuser = (!this.$route.query.user)
     this.username = (this.$route.query.user ? this.$route.query.user : store.state.username)
+    this.loadProfile(this.$route.query.user.toString())
+  }
+
+  async loadProfile (username: string): Promise<void> {
+    if (username !== this.$route.query.user) {
+      this.$router.push({ query: { user: username } })
+    }
+    this.username = username
 
     const response = await fetch(
       'http://localhost:4000/user/username/' + this.username, {
@@ -157,6 +176,8 @@ export default class UserProfile extends Vue {
         username: friend.name,
         url: '/redirect?to=/profile?user=' + friend.name,
         avatar: friend.avatar,
+        elo: friend.elo,
+        level: friend.level,
         htmlStatusClasses: 'status-icon status-' + friend.status
       }
     })
@@ -260,7 +281,6 @@ img.friend-avatar {
   display: block;
   width: 50px;
   height: 50px;
-  margin: 10px 10px 0px 10px;
   border-radius: 30%;
   overflow: hidden;
 }
@@ -280,7 +300,7 @@ div.status-ingame {
 div.status-icon {
   position: absolute;
   bottom: -3px;
-  right: 7px;
+  left: 40px;
   width: 15px;
   height: 15px;
   margin: 0;
