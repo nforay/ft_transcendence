@@ -1,6 +1,6 @@
 <template>
   <div class="game-canvas">
-    <canvas v-if="!isSpectator()" id="canvas" tabindex="0"
+    <canvas v-if="!isSpectator" id="canvas" tabindex="0"
     @keydown.up="leftPaddle.upPressed = true"
     @keydown.down="leftPaddle.downPressed = true"
     @keyup.up="leftPaddle.upPressed = false"
@@ -89,9 +89,7 @@ export default class GameCanvas extends Vue {
 
   ball = new Ball(0, 0, 0, 0, 0, false)
 
-  isSpectator () {
-    return this.$route.query.spectate !== undefined
-  }
+  isSpectator = false
 
   destroyed () : void {
     this.socketManager.disconnect()
@@ -99,7 +97,7 @@ export default class GameCanvas extends Vue {
   }
 
   gameLoop () : void {
-    if (this.isSpectator()) {
+    if (this.isSpectator) {
       this.draw()
       window.requestAnimationFrame(this.gameLoop)
       return
@@ -163,7 +161,7 @@ export default class GameCanvas extends Vue {
     if (this.finished) {
       this.ctx.font = '72px Arial'
       this.ctx.textAlign = 'center'
-      if (!this.isSpectator()) {
+      if (!this.isSpectator) {
         this.ctx.fillText(this.won ? 'You won!' : 'You lost!', this.canvas.width / 2, this.canvas.height / 2)
       } else {
         this.ctx.fillText('Game is over!', this.canvas.width / 2, this.canvas.height / 2)
@@ -233,10 +231,10 @@ export default class GameCanvas extends Vue {
         return
       }
       this.updateId = data.game.updateId
-      const you = store.state.userId === data.game.player1.id || this.isSpectator() ? data.game.player1 : data.game.player2
-      const opponent = store.state.userId === data.game.player1.id || this.isSpectator() ? data.game.player2 : data.game.player1
+      const you = store.state.userId === data.game.player1.id || this.isSpectator ? data.game.player1 : data.game.player2
+      const opponent = store.state.userId === data.game.player1.id || this.isSpectator ? data.game.player2 : data.game.player1
       this.leftPaddle.x = 100
-      if (!this.validatePosition(this.leftPaddle.y, you.y, you.speed) || this.isSpectator()) {
+      if (!this.validatePosition(this.leftPaddle.y, you.y, you.speed) || this.isSpectator) {
         this.leftPaddle.y = you.y
       }
       this.leftPaddle.width = you.width
@@ -268,6 +266,11 @@ export default class GameCanvas extends Vue {
       this.won = (data.winner === store.state.userId)
       this.finish()
     })
+  }
+
+  created () : void {
+    this.isSpectator = window.localStorage.getItem('spectator') === 'true'
+    window.localStorage.removeItem('spectator')
   }
 
   mounted () : void {

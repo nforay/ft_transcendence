@@ -99,7 +99,8 @@ export default class Play extends Vue {
     }
     const data = await gameJwtResponse.json()
     window.localStorage.setItem('gameJwt', data.gameJwt)
-    router.push('/game?id=' + id + '&spectate=1')
+    window.localStorage.setItem('spectator', 'true')
+    router.push('/game?id=' + id)
   }
 
   async mounted () : Promise<void> {
