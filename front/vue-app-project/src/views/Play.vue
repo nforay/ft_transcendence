@@ -1,5 +1,5 @@
 <template>
-  <div class="play">
+  <div class="play md-layout">
 
     <md-card class="md-layout-item md-size-50 md-small-size-50 md-align-center">
       <md-card-header>
@@ -22,6 +22,36 @@
         </md-card-actions>
       <md-progress-bar md-mode="indeterminate" v-if="sending" />
     </md-card>
+    <div class="md-layout-item">
+      <p class="md-headline" v-if="activeGames.length > 0" >Active Games</p>
+    </div>
+    <div class="md-layout md-gutter md-alignment-top-center" style="max-width: 95%;">
+      <div class="spectate-size md-layout-item" @click="goToGame(game.id)" v-for="(game, i) in activeGames" :key="i">
+        <md-card md-with-hover>
+          <md-card-media md-ratio="4:3">
+            <img src="../assets/game_preview.jpg" alt="preview">
+          </md-card-media>
+
+          <md-card-content>
+            <div class="md-layout md-alignment-center-center">
+              <div class="md-layout-item md-alignment-center-left">
+                <md-avatar class="md-large" style="border-radius: 5%; object-fit: cover;">
+                  <img class="leaderboard-avatar" :src="userAvatar(game.player1Id)">
+                </md-avatar>
+              </div>
+              <div class="md-layout-item md-alignment-center-center md-small-hide">
+                <p class="md-headline">{{ game.player1Score }} - {{ game.player2Score }}</p>
+              </div>
+              <div class="md-layout-item md-alignment-center-right">
+                <md-avatar class="md-large" style="border-radius: 5%; object-fit: cover;">
+                  <img class="leaderboard-avatar" :src="userAvatar(game.player2Id)">
+                </md-avatar>
+              </div>
+            </div>
+          </md-card-content>
+        </md-card>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -29,7 +59,7 @@
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import router from '../router'
-import store from '../store'
+import store, { globalFunctions } from '../store'
 
 @Component
 export default class Play extends Vue {
@@ -37,9 +67,40 @@ export default class Play extends Vue {
   public sending = false
   public elo = 100
   public wlratio = 1.0
+  public activeGames: Array<any> = []
 
-  created () : void {
+  async created () : Promise<void> {
     document.addEventListener('beforeunload', this.leaveQueue)
+
+    const activeGamesResponsse = await fetch('http://localhost:4000/game/active', {
+      method: 'GET'
+    })
+    if (!activeGamesResponsse.ok) {
+      return
+    }
+    const data = await activeGamesResponsse.json()
+    this.activeGames = data.games
+  }
+
+  async goToGame (id: string) {
+    if (globalFunctions.getToken() === 'error') {
+      store.commit('setPopupMessage', 'You must be logged in to spectate a game')
+      return
+    }
+    const gameJwtResponse = await fetch('http://localhost:4000/game/requestSpectate?id=' + id, {
+      method: 'GET',
+      headers: {
+        Authorization: 'Bearer ' + globalFunctions.getToken()
+      }
+    })
+    if (!gameJwtResponse.ok) {
+      store.commit('setPopupMessage', 'The game doesn\'t exist anymore')
+      return
+    }
+    const data = await gameJwtResponse.json()
+    window.localStorage.setItem('gameJwt', data.gameJwt)
+    window.localStorage.setItem('spectator', 'true')
+    router.push('/game?id=' + id)
   }
 
   async mounted () : Promise<void> {
@@ -121,6 +182,10 @@ export default class Play extends Vue {
     this.queueJoined = !data.left
     this.sending = !data.left
   }
+
+  userAvatar (id: string) : string {
+    return 'http://localhost:4000/user/avatar/' + id
+  }
 }
 
 </script>
@@ -135,5 +200,26 @@ export default class Play extends Vue {
     flex-direction: column;
     align-items: center;
     justify-content: center;
+  }
+
+  img.leaderboard-avatar {
+    border-radius: 5% !important;
+    object-fit: cover;
+  }
+
+  @media screen and (min-width: 1920px) {
+    .spectate-size {
+      min-width: 15vw;
+      max-width: 15vw;
+      flex: 0 1 15vw;
+    }
+  }
+
+  @media screen and (max-width: 1920px) {
+    .spectate-size {
+      min-width: 290px;
+      max-width: 290px;
+      flex: 0 1 290px;
+    }
   }
 </style>

@@ -1,10 +1,12 @@
 <template>
   <div class="game-canvas">
-    <canvas id="canvas" tabindex="0"
+    <canvas v-if="!isSpectator" id="canvas" tabindex="0"
     @keydown.up="leftPaddle.upPressed = true"
     @keydown.down="leftPaddle.downPressed = true"
     @keyup.up="leftPaddle.upPressed = false"
     @keyup.down="leftPaddle.downPressed = false"></canvas>
+
+    <canvas v-else id="canvas" tabindex="0"></canvas>
   </div>
 </template>
 
@@ -87,12 +89,20 @@ export default class GameCanvas extends Vue {
 
   ball = new Ball(0, 0, 0, 0, 0, false)
 
+  isSpectator = false
+
   destroyed () : void {
     this.socketManager.disconnect()
     window.localStorage.removeItem('gameJwt')
   }
 
   gameLoop () : void {
+    if (this.isSpectator) {
+      this.draw()
+      window.requestAnimationFrame(this.gameLoop)
+      return
+    }
+
     const dir = +this.leftPaddle.downPressed - (+this.leftPaddle.upPressed)
 
     const currentUpdate = new Date().getTime()
@@ -151,7 +161,11 @@ export default class GameCanvas extends Vue {
     if (this.finished) {
       this.ctx.font = '72px Arial'
       this.ctx.textAlign = 'center'
-      this.ctx.fillText(this.won ? 'You won!' : 'You lost!', this.canvas.width / 2, this.canvas.height / 2)
+      if (!this.isSpectator) {
+        this.ctx.fillText(this.won ? 'You won!' : 'You lost!', this.canvas.width / 2, this.canvas.height / 2)
+      } else {
+        this.ctx.fillText('Game is over!', this.canvas.width / 2, this.canvas.height / 2)
+      }
     }
   }
 
@@ -213,14 +227,14 @@ export default class GameCanvas extends Vue {
 
   setupSocket () : void {
     this.socketManager.on('broadcast', (data) => {
-      if (data.game.id !== this.gameId || data.game.updateId <= this.updateId) {
+      if (data.game.id !== this.gameId) {
         return
       }
       this.updateId = data.game.updateId
-      const you = store.state.userId === data.game.player1.id ? data.game.player1 : data.game.player2
-      const opponent = store.state.userId === data.game.player1.id ? data.game.player2 : data.game.player1
+      const you = store.state.userId === data.game.player1.id || this.isSpectator ? data.game.player1 : data.game.player2
+      const opponent = store.state.userId === data.game.player1.id || this.isSpectator ? data.game.player2 : data.game.player1
       this.leftPaddle.x = 100
-      if (!this.validatePosition(this.leftPaddle.y, you.y, you.speed)) {
+      if (!this.validatePosition(this.leftPaddle.y, you.y, you.speed) || this.isSpectator) {
         this.leftPaddle.y = you.y
       }
       this.leftPaddle.width = you.width
@@ -250,9 +264,13 @@ export default class GameCanvas extends Vue {
 
     this.socketManager.on('gameFinished', (data) => {
       this.won = (data.winner === store.state.userId)
-      this.finished = true
       this.finish()
     })
+  }
+
+  created () : void {
+    this.isSpectator = window.localStorage.getItem('spectator') === 'true'
+    window.localStorage.removeItem('spectator')
   }
 
   mounted () : void {

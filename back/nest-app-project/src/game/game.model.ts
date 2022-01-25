@@ -7,6 +7,7 @@ import { CreateGameDto } from './dto/create-game.dto'
 import { GameEntity } from './entities/game.entity'
 import { GameGateway } from './game.gateway'
 import { UserManager, UserStatus } from '../user/user.model'
+import { ResponseGame } from './dto/response-game.dto'
 
 export class GameManager {
   public static instance: GameManager = new GameManager()
@@ -42,11 +43,11 @@ export class GameManager {
   }
 
   getGameByPlayerId(playerId: string): Game {
-    return this.games.find(game => game.player1.id === playerId || game.player2.id === playerId)
+    return this.games.find(game => game.player1.id === playerId || game.player2.id === playerId || game.spectators.find(spectator => spectator.id === playerId))
   }
 
   getGameBySocketId(socketId: string): Game {
-    return this.games.find(game => game.player1.socketId === socketId || game.player2.socketId === socketId)
+    return this.games.find(game => game.player1.socketId === socketId || game.player2.socketId === socketId || game.spectators.find(spectator => spectator.socketId === socketId))
   }
 
   removeGame(gameId: string) {
@@ -60,6 +61,16 @@ export enum GameState {
   WAITING,
   IN_GAME,
   FINISHED,
+}
+
+export class Spectator {
+  id: string;
+  socketId: string;
+
+  constructor(id: string, socketId: string) {
+    this.id = id
+    this.socketId = socketId;
+  }
 }
 
 export class Player {
@@ -107,6 +118,8 @@ export class Game {
 
   updateStats: boolean;
 
+  spectators: Spectator[] = []
+
   constructor(player1Id: string, player2Id: string, updateStats: boolean) {
     this.player1 = new Player(player1Id, 100)
     this.player2 = new Player(player2Id, 1900)
@@ -130,6 +143,12 @@ export class Game {
           socket?.disconnect()
           GameGateway.clients.splice(GameGateway.clients.indexOf(socket), 1);
         }
+        this.spectators.forEach(spectator => {
+          const socket = GameGateway.clients.find(client => client.id === spectator.socketId)
+          socket?.emit('gameCanceled', {})
+          socket?.disconnect()
+          GameGateway.clients.splice(GameGateway.clients.indexOf(socket), 1);
+        });
 
         this.state = GameState.FINISHED;
         GameManager.instance.removeGame(this.id)
@@ -265,6 +284,11 @@ export class Game {
     GameGateway.clients.find(client => client.id === this.player1.socketId)?.emit('gameFinished', winner);
     GameGateway.clients.find(client => client.id === this.player2.socketId)?.emit('gameFinished', winner);
 
+    this.spectators.forEach(spectator => {
+      const socket = GameGateway.clients.find(client => client.id === spectator.socketId)
+      socket?.emit('gameFinished', winner)
+    });
+
     const createGameDto = new CreateGameDto();
     createGameDto.player1Id = this.player1.id;
     createGameDto.player2Id = this.player2.id;
@@ -389,7 +413,14 @@ export class Game {
   }
 
   cancel(socketId : string) : void {
-	  this.state = GameState.FINISHED;
+    this.state = GameState.FINISHED;
+
+    this.spectators.forEach(spectator => {
+      const socket = GameGateway.clients.find(client => client.id === spectator.socketId)
+      socket?.emit('gameCanceled', {})
+      GameGateway.clients.splice(GameGateway.clients.indexOf(socket), 1);
+    });
+
     GameManager.instance.removeGame(this.id);
     const opponent = this.player1.socketId === socketId ? this.player2 : this.player1;
     const opponentSocket = GameGateway.clients.find(c => c.id === opponent.socketId);
@@ -399,6 +430,8 @@ export class Game {
       opponentSocket.disconnect();
     }
     GameGateway.clients.splice(GameGateway.clients.indexOf(opponentSocket), 1);
+
+
     if (UserManager.instance.onlineUsersStatus.has(this.player1.id)) {
       UserManager.instance.onlineUsersStatus.get(this.player1.id).status = 'online';
       UserManager.instance.onlineUsersStatus.get(this.player1.id).lastRequestTime = new Date().getTime();
@@ -406,6 +439,16 @@ export class Game {
     if (UserManager.instance.onlineUsersStatus.has(this.player2.id)) {
       UserManager.instance.onlineUsersStatus.get(this.player2.id).status = 'online';
       UserManager.instance.onlineUsersStatus.get(this.player2.id).lastRequestTime = new Date().getTime();
+    }
+  }
+
+  toResponseGame() : Partial<ResponseGame> {
+    return {
+      id: this.id,
+      player1Id: this.player1.id,
+      player2Id: this.player2.id,
+      player1Score: this.player1.score,
+      player2Score: this.player2.score,
     }
   }
 }
