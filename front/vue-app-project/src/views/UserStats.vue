@@ -125,7 +125,7 @@ export default class UserProfile extends Vue {
     this.thisuser = false
   }
 
-  async mounted (): Promise<void> {
+  async created (): Promise<void> {
     while (!store.state.requestedLogin) {
       await new Promise(resolve => setTimeout(resolve, 10))
     }
@@ -138,7 +138,7 @@ export default class UserProfile extends Vue {
 
     this.thisuser = (!this.$route.query.user)
     this.username = (this.$route.query.user ? this.$route.query.user : store.state.username)
-    this.loadProfile(this.$route.query.user.toString())
+    this.loadProfile(this.username)
   }
 
   async loadProfile (username: string): Promise<void> {
