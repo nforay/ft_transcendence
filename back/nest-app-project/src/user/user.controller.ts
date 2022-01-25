@@ -10,7 +10,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import * as path from 'path'
 import * as jwt from 'jsonwebtoken';
-import * as FileType from 'file-type'
+import { fileTypeFromFile } from 'file-type'
 import * as fs from 'fs';
 import { AuthUser } from '../shared/auth-user.decorator';
 
@@ -100,7 +100,8 @@ export class UserController {
     if (!file)
       throw new HttpException('File must be of type png/jpeg/jpg', HttpStatus.BAD_REQUEST);
 
-    const filetype = await FileType.fromFile(file.path);
+    let fileType = await import("file-type");
+    const filetype = await fileType.fileTypeFromFile(file.path);
     const allowedMimes = [ 'image/jpg', 'image/jpeg', 'image/png' ];
     const allowedExtensions = [ 'jpg', 'jpeg', 'png' ];
 
