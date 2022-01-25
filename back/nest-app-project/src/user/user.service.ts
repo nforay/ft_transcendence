@@ -15,6 +15,7 @@ import fetch from 'cross-fetch';
 import * as FormData from 'form-data';
 import * as utf8 from 'utf8';
 import * as https from 'https';
+import { Interval } from '@nestjs/schedule';
 
 @Injectable()
 export class UserService {
@@ -34,7 +35,12 @@ export class UserService {
     if (user.friends.length === 0)
       return [];
     const where = user.friends.map(x => { return { id: x } });
-    const friends = await this.repository.find({ where });
+    const friends = await this.repository.find({
+      where,
+      order: {
+        elo: 'DESC'
+      }
+    });
     if (!friends)
       return [];
     let res = friends.map(x => {
@@ -196,15 +202,15 @@ export class UserService {
     return user.toResponseUser();
   }
 
+  async updateOnlineStatus(user: any) {
+    UserManager.instance.onlineUsersStatus.set(user.id, new UserStatus(user.id, 'online', new Date().getTime()));
+    return true;
+  }
+
   async isLogged(authorization: string) : Promise<any> {
     try {
       const token = authorization.split(' ')[1];
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-      if (UserManager.instance.onlineUsersStatus.has(decoded.id))
-        UserManager.instance.onlineUsersStatus.get(decoded.id).lastRequestTime = new Date().getTime();
-      else
-        UserManager.instance.onlineUsersStatus.set(decoded.id, new UserStatus(decoded.id, 'online', new Date().getTime()));
 
       return {
         id: decoded.id,
@@ -391,5 +397,21 @@ export class UserService {
       return user.toResponseUser(false, true);
     }
     return user.toResponseUser(true);
+  }
+
+  @Interval(2000)
+  cleanExpired2FA() {
+    UserManager.instance.twoFAlist = UserManager.instance.twoFAlist.filter(elem => !elem.expired())
+    UserManager.instance.twoFASercrets = UserManager.instance.twoFASercrets.filter(elem => !elem.expired())
+    UserManager.instance.disableTwoFAlist = UserManager.instance.disableTwoFAlist.filter(elem => !elem.expired())
+  }
+
+  @Interval(5000)
+  checkAFKUsers() {
+    const now = new Date().getTime();
+    // Converting to array and then setting the result to avoid in place deleting
+    const users = Array.from(UserManager.instance.onlineUsersStatus.values())
+    const usersNotOnline = users.filter(elem => now - elem.lastRequestTime > 1000 * 30)
+    usersNotOnline.forEach(elem => UserManager.instance.onlineUsersStatus.delete(elem.userId))
   }
 }

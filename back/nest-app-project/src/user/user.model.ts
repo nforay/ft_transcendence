@@ -53,22 +53,6 @@ export class UserManager {
   public disableTwoFAlist: TwoFAUser[] = []
   public onlineUsersStatus: Map<string, UserStatus> = new Map<string, UserStatus>()
 
-  @Interval(2000)
-  cleanExpired2FA() {
-    this.twoFAlist = this.twoFAlist.filter(elem => !elem.expired())
-    this.twoFASercrets = this.twoFASercrets.filter(elem => !elem.expired())
-    this.disableTwoFAlist = this.disableTwoFAlist.filter(elem => !elem.expired())
-  }
-
-  @Interval(5000)
-  checkAFKUsers() {
-    const now = new Date().getTime();
-    // Converting to array and then setting the result to avoid in place deleting
-    const users = Array.from(this.onlineUsersStatus.values())
-    const usersStillOnline = users.filter(elem => now - elem.lastRequestTime > 1000 * 60 * 10)
-    usersStillOnline.forEach(elem => this.onlineUsersStatus.delete(elem.userId))
-  }
-
   constructor() {
     if (UserManager.instance) {
       throw new Error('Error: Instantiation failed: Use UserManager.instance instead of new.')

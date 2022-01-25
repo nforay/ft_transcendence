@@ -65,17 +65,7 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     if (game)
     {
       if (game.spectators.find(spectator => spectator.socketId === client.id))
-      {
-        console.log('EIOGHJAZEIOUG')
-        console.log('EIOGHJAZEIOUG')
-        console.log('EIOGHJAZEIOUG')
-        console.log('EIOGHJAZEIOUG')
-        console.log('EIOGHJAZEIOUG')
-        console.log('EIOGHJAZEIOUG')
-        console.log('EIOGHJAZEIOUG')
-        console.log('EIOGHJAZEIOUG')
         game.spectators = game.spectators.filter(spectator => spectator.socketId !== client.id);
-      }
       else if (game.state !== GameState.IN_GAME)
         game.cancel(client.id);
       else

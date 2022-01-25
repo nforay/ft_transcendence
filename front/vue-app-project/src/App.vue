@@ -17,7 +17,7 @@
 import AppHeader from '@/components/AppHeader.vue'
 import Chat from './components/Chat.vue'
 import { mapGetters } from 'vuex'
-import store from '@/store'
+import { store, globalFunctions } from '@/store'
 
 export default {
   data () {
@@ -45,6 +45,28 @@ export default {
         store.commit('setPopupMessage', '')
       }
     }
+  },
+  created: async function () {
+    if (globalFunctions.getToken() !== 'error') {
+      await fetch('http://localhost:4000/user/updateOnlineStatus', {
+        method: 'POST',
+        headers: {
+          Authorization: 'Bearer ' + globalFunctions.getToken()
+        }
+      })
+    }
+
+    setInterval(async function () {
+      if (globalFunctions.getToken() === 'error') {
+        return
+      }
+      await fetch('http://localhost:4000/user/updateOnlineStatus', {
+        method: 'POST',
+        headers: {
+          Authorization: 'Bearer ' + globalFunctions.getToken()
+        }
+      })
+    }, 25000)
   }
 }
 </script>

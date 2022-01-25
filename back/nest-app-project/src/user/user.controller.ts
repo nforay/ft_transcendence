@@ -24,6 +24,11 @@ export class UserController {
     return this.userService.findAll();
   }
 
+  @Post('updateOnlineStatus')
+  updateOnlineStatus(@AuthUser() user) {
+    return this.userService.updateOnlineStatus(user);
+  }
+
   @Get('leaderboard')
   getLeaderboard(@Query('rangeMin') rangeMin: number, @Query('rangeMax') rangeMax: number) {
     return this.userService.getLeaderboard(rangeMin, rangeMax);
