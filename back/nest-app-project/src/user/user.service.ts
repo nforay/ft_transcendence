@@ -72,7 +72,7 @@ export class UserService {
       
       return {
         ...x.toResponseGame(),
-        player1Avatar: `http://localhost:4000/user/avatar/${x.player1Id}}`,
+        player1Avatar: `http://localhost:4000/user/avatar/${x.player1Id}`,
         player2Avatar: `http://localhost:4000/user/avatar/${x.player2Id}`,
         player1Name: (x.player1Id == user.id ? user.name : opponentName),
         player2Name: (x.player2Id == user.id ? user.name : opponentName),

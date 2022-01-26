@@ -10,16 +10,19 @@
       </div>
     </div>
     <div>
-      <h2>elo = {{ this.elo }}</h2>
-      <h2>Games won = {{ this.win }}</h2>
-      <h2>Games lost = {{ this.lose }}</h2>
+      <h2><md-icon>emoji_events</md-icon>elo = {{ this.elo }}</h2>
+      <h2><md-icon class="history-win">add_box</md-icon>Games won = {{ this.win }}</h2>
+      <h2><md-icon class="history-lose">indeterminate_check_box</md-icon>Games lost = {{ this.lose }}</h2>
       <div class="md-layout md-gutter">
         <div class="md-layout-item md-layout md-gutter">
           <div class="md-layout-item">
             <span class="md-title">Match History:</span>
             <md-table v-if="history.length > 0" md-card>
               <md-table-row v-for="(res, i) in history" :key="i">
-                <md-table-cell>{{ res.format(username) }}</md-table-cell>
+                <md-table-cell><span :class="getClass(res)"><md-icon :class="getClass(res)">{{ res.icon(username) }}</md-icon></span></md-table-cell>
+                <md-table-cell class="md-small-hide"><img class="friend-avatar" :src="res.avatarLeft(username)"></md-table-cell>
+                <md-table-cell><span :class="getClass(res)">{{ res.format(username) }}</span></md-table-cell>
+                <md-table-cell class="md-small-hide"><img class="friend-avatar" :src="res.avatarRight(username)"></md-table-cell>
               </md-table-row>
             </md-table>
           </div>
@@ -27,28 +30,28 @@
             <span class="md-title">Friend list:</span>
             <md-table v-if="friends.length > 0" md-card>
               <md-table-row>
-                <md-table-head>Avatar</md-table-head>
+                <md-table-head class="md-small-hide">Avatar</md-table-head>
                 <md-table-head>Name</md-table-head>
-                <md-table-head md-numeric>Elo</md-table-head>
-                <md-table-head md-numeric>Level</md-table-head>
+                <md-table-head>Elo</md-table-head>
+                <md-table-head>Level</md-table-head>
               </md-table-row>
               <md-table-row v-for="(friend, i) in friends" :key="i" @click="loadProfile(friend.username)">
-                <md-table-cell>
+                <md-table-cell class="md-small-hide">
                     <div style="position: relative; width: 50px;">
                       <img class="friend-avatar" :src="friend.avatar">
                       <div :class="friend.htmlStatusClasses" :src="friend.statusImage"></div>
                     </div>
                 </md-table-cell>
                 <md-table-cell>{{ friend.username }}</md-table-cell>
-                <md-table-cell>{{ friend.elo }}</md-table-cell>
+                <md-table-cell><md-icon>emoji_events</md-icon>{{ friend.elo }}</md-table-cell>
                 <md-table-cell>{{ Math.floor(friend.level) }}</md-table-cell>
               </md-table-row>
             </md-table>
           </div>
         </div>
       </div>
-      <div id="container">
-        <div id="second">
+      <div class="md-layout-item md-gutter">
+        <div class="md-layout-item">
           <div v-if="isfriend === true">
             <md-button @click="rmFriend()" class="md-accent">Remove Friend</md-button>
           </div>
@@ -56,7 +59,6 @@
             <md-button @click="addFriend()" class="md-raised md-primary" :disabled="loading">Add Friend</md-button>
           </div>
         </div>
-        <div id="clear"></div>
       </div>
     </div>
   </div>
@@ -97,6 +99,22 @@ class GameData {
     const userWon = (username === this.player1Name ? this.player1Won : !this.player1Won)
     const opponentName = (username === this.player1Name ? this.player2Name : this.player1Name)
     return `${username} ${userWon ? 'won' : 'lost'} ${userScore} - ${opponentScore} ${opponentName}`
+  }
+
+  icon (username: string) : string {
+    if (username === this.player1Name ? this.player1Won : !this.player1Won) {
+      return 'add_box'
+    } else {
+      return 'indeterminate_check_box'
+    }
+  }
+
+  avatarLeft (username: string) : string {
+    return `${username === this.player1Name ? this.player1Avatar : this.player2Avatar}`
+  }
+
+  avatarRight (username: string) : string {
+    return `${username === this.player1Name ? this.player2Avatar : this.player1Avatar}`
   }
 }
 
@@ -250,6 +268,13 @@ export default class UserProfile extends Vue {
       this.isfriend = false
     }
   }
+
+  getClass (item : any) : string {
+    if (this.username === item.player1Name ? item.player1Won : !item.player1Won) {
+      return 'history-win'
+    }
+    return 'history-lose'
+  }
 }
 </script>
 
@@ -329,6 +354,22 @@ p.bio {
   font-size: 18px;
   font-family: "Helvetica";
   text-align: left;
+}
+
+span.history-win {
+  color: green;
+}
+
+span.history-lose {
+  color: red;
+}
+
+.md-icon.history-win {
+  color: #00800050;
+}
+
+.md-icon.history-lose {
+  color: #ff000050;
 }
 
 #scrollbox {

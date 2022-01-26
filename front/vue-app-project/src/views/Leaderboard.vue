@@ -5,29 +5,29 @@
         <span class="md-title">Leaderboard</span>
       </md-table-toolbar>
       <md-table-row>
-        <md-table-head md-numeric>Rank</md-table-head>
+        <md-table-head>Rank</md-table-head>
         <md-table-head>Avatar</md-table-head>
         <md-table-head>Name</md-table-head>
-        <md-table-head md-numeric>Elo</md-table-head>
-        <md-table-head class="md-medium-hide" md-numeric>Play Count</md-table-head>
-        <md-table-head class="md-small-hide" md-numeric>Wins</md-table-head>
-        <md-table-head class="md-small-hide" md-numeric>Loss</md-table-head>
-        <md-table-head md-numeric>W/L Ratio</md-table-head>
+        <md-table-head>Elo</md-table-head>
+        <md-table-head class="md-medium-hide">Play Count</md-table-head>
+        <md-table-head class="md-small-hide">Wins</md-table-head>
+        <md-table-head class="md-small-hide">Loss</md-table-head>
+        <md-table-head>W/L Ratio</md-table-head>
         <md-table-head style="text-align: center;">Level</md-table-head>
       </md-table-row>
       <md-table-row v-for="(player, i) of this.leaderboard" :key="i">
-        <md-table-cell style="width: 0;" md-numeric>#{{ i + 1 }}</md-table-cell>
+        <md-table-cell style="width: 0;">#{{ i + 1 }}</md-table-cell>
         <md-table-cell style="width: 0;" class="leaderboard-avatar">
           <router-link :to="`/profile?user=${player.username}`">
             <img class="leaderboard-avatar" :src="userAvatar(player.id)">
           </router-link>
         </md-table-cell>
         <md-table-cell style="width: 30%; text-align: left"><router-link :to="`/profile?user=${player.username}`">{{ player.username }}</router-link></md-table-cell>
-        <md-table-cell md-numeric>{{ player.elo }}</md-table-cell>
-        <md-table-cell class="md-medium-hide" md-numeric>{{ player.win + player.loss }}</md-table-cell>
-        <md-table-cell class="md-small-hide" md-numeric>{{ player.win }}</md-table-cell>
-        <md-table-cell class="md-small-hide" md-numeric>{{ player.loss }}</md-table-cell>
-        <md-table-cell md-numeric>{{ Math.round(player.win / Math.max(player.loss, 1) * 100) / 100 }}</md-table-cell>
+        <md-table-cell>{{ player.elo }}</md-table-cell>
+        <md-table-cell class="md-medium-hide">{{ player.win + player.loss }}</md-table-cell>
+        <md-table-cell class="md-small-hide">{{ player.win }}</md-table-cell>
+        <md-table-cell class="md-small-hide">{{ player.loss }}</md-table-cell>
+        <md-table-cell>{{ Math.round(player.win / Math.max(player.loss, 1) * 100) / 100 }}</md-table-cell>
         <md-table-cell style="width: 17%;">
           LV {{ Math.floor(player.level) }} - {{ Math.floor(Math.floor(getXpProgress(player.level) * 100) / 100) }}%
           <md-progress-bar md-mode="determinate" :md-value="getXpProgress(player.level)"></md-progress-bar>
