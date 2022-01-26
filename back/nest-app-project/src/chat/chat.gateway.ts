@@ -5,9 +5,9 @@ import { Server, Socket } from 'socket.io';
 import { Logger } from '@nestjs/common';
 import * as jwt from 'jsonwebtoken'
 import { UserManager } from '../user/user.model';
-import { ChallengeManager } from 'src/challenge/challenge.model';
-import { GameManager } from 'src/game/game.model';
-import { PlayerPair } from 'src/matchmaking/matchmaking.service';
+import { ChallengeManager } from '../challenge/challenge.model';
+import { GameManager } from '../game/game.model';
+import { PlayerPair } from '../matchmaking/matchmaking.service';
 
 @WebSocketGateway(8082, {
 	cors: {

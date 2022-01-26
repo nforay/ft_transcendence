@@ -7,7 +7,7 @@ import { UpdateGameDto } from './dto/update-game.dto';
 import { GameEntity } from './entities/game.entity';
 import { GameManager } from './game.model';
 import * as jwt from 'jsonwebtoken'
-import { UserManager } from 'src/user/user.model';
+import { UserManager } from '../user/user.model';
 
 @Injectable()
 export class GameService {
