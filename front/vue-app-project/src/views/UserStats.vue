@@ -69,6 +69,7 @@ import Vue from 'vue'
 import Component from 'vue-class-component'
 import { store, globalFunctions } from '@/store'
 import router from '@/router'
+import { Watch } from 'vue-property-decorator'
 
 class GameData {
   public player1Id = ''
@@ -143,7 +144,7 @@ export default class UserProfile extends Vue {
     this.thisuser = false
   }
 
-  async created (): Promise<void> {
+  async mounted (): Promise<void> {
     while (!store.state.requestedLogin) {
       await new Promise(resolve => setTimeout(resolve, 10))
     }
@@ -156,13 +157,16 @@ export default class UserProfile extends Vue {
 
     this.thisuser = (!this.$route.query.user)
     this.username = (this.$route.query.user ? this.$route.query.user : store.state.username)
-    this.loadProfile(this.username)
+    this.queryProfile(this.username)
   }
 
   async loadProfile (username: string): Promise<void> {
     if (username !== this.$route.query.user) {
       this.$router.push({ query: { user: username } })
     }
+  }
+
+  async queryProfile (username: string): Promise<void> {
     this.username = username
 
     const response = await fetch(
@@ -274,6 +278,11 @@ export default class UserProfile extends Vue {
       return 'history-win'
     }
     return 'history-lose'
+  }
+
+  @Watch('$route')
+  onRouteChange (to: any, from: any) : void {
+    this.queryProfile(to.query.user)
   }
 }
 </script>
