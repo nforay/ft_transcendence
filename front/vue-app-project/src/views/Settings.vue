@@ -11,9 +11,9 @@
 <script lang="ts">
 import Vue from 'vue'
 import Component from 'vue-class-component'
-import UserProfile from '@/components/UserProfile.vue'
-import { store, globalFunctions } from '@/store'
-import router from '@/router'
+import UserProfile from '../components/UserProfile.vue'
+import store, { globalFunctions } from '../store'
+import router from '../router'
 
 @Component({
   components: {

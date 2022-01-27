@@ -125,7 +125,7 @@ export default class Chat extends Vue {
     this.socket = io.connect('ws://localhost:8082')
     this.chatMsg.token = globalFunctions.getToken()
     this.socket.on('recv_message', (data) => {
-      let lines = []
+      let lines : string[] = []
 
       if (data.isCommandResponse) {
         lines = data.msg.split('\n')
@@ -198,7 +198,7 @@ export default class Chat extends Vue {
 
   autoScrollDiv () : void {
     this.$nextTick(() => {
-      document.getElementById('chatboxdiv').scrollTop = document.getElementById('chatboxdiv').scrollHeight
+      document.getElementById('chatboxdiv')!.scrollTop = document.getElementById('chatboxdiv')!.scrollHeight
     })
   }
 

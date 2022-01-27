@@ -3,7 +3,7 @@ import { GameService } from './game.service';
 import { CreateGameDto } from './dto/create-game.dto';
 import { UpdateGameDto } from './dto/update-game.dto';
 import { AdminGuard } from '../shared/admin.guard';
-import { AuthUser } from 'src/shared/auth-user.decorator';
+import { AuthUser } from '../shared/auth-user.decorator';
 
 @Controller('game')
 export class GameController {

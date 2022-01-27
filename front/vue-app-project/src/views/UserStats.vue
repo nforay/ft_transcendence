@@ -54,8 +54,8 @@
 <script lang="ts">
 import Vue from 'vue'
 import Component from 'vue-class-component'
-import { store, globalFunctions } from '@/store'
-import router from '@/router'
+import store, { globalFunctions } from '../store'
+import router from '../router'
 
 class GameData {
   public player1Id = ''
@@ -126,7 +126,7 @@ export default class UserProfile extends Vue {
     }
 
     this.thisuser = (!this.$route.query.user)
-    this.username = (this.$route.query.user ? this.$route.query.user : store.state.username)
+    this.username = (this.$route.query.user ? this.$route.query.user.toString() : store.state.username)
 
     const response = await fetch(
       'http://localhost:4000/user/username/' + this.username, {

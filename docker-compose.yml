@@ -31,14 +31,14 @@ services:
   front:
     build:
       context: ./front
-      dockerfile: Dockerfile_Dev
-    #restart: always
-    #command: vue ui --host 0.0.0.0 --port 8000 --headless # dev purpose
-    command: npm run serve
+      dockerfile: Dockerfile_Prod
+      args:
+        - FRONTPORT=${FRONTPORT}
+        - DOMAIN=${DOMAIN}
+    restart: always
     container_name: front
     ports:
-      - "8080:8080" # use 80 on production build
-      - "8000:8000" # dev prupose
+      - "${FRONTPORT}:80"
 volumes:
   dbdata:
     driver: local

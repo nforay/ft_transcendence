@@ -14,39 +14,45 @@
 </template>
 
 <script lang="ts">
-import AppHeader from '@/components/AppHeader.vue'
+import AppHeader from './components/AppHeader.vue'
 import Chat from './components/Chat.vue'
 import { mapGetters } from 'vuex'
-import { store, globalFunctions } from '@/store'
+import store, { globalFunctions } from './store'
+import { Component, Watch } from 'vue-property-decorator'
+import Vue from 'vue'
 
-export default {
-  data () {
-    return { showSnack: false, recordedPopupMessage: '' }
-  },
+
+@Component({
   components: {
     AppHeader,
     Chat
   },
   computed: {
     ...mapGetters(['isLogged']),
-    popupMessage () {
-      return store.state.popupMessage
-    }
   },
-  watch: {
-    popupMessage: function (val) {
-      if (val.length > 0) {
-        this.showSnack = true
-        this.recordedPopupMessage = val
-        setTimeout(function () {
-          this.showSnack = false
-          this.recordedPopupMessage = ''
-        }, 100)
-        store.commit('setPopupMessage', '')
-      }
+})
+export default class App extends Vue {
+  showSnack = false
+  recordedPopupMessage = ''
+
+  get popupMessage () {
+    return store.state.popupMessage
+  }
+
+  @Watch('popupMessage')
+  onPopupMessageChange(val: string) {
+    if (val.length > 0) {
+      this.showSnack = true
+      this.recordedPopupMessage = val
+      setTimeout(() => {
+        this.showSnack = false
+        this.recordedPopupMessage = ''
+      }, 100)
+      store.commit('setPopupMessage', '')
     }
-  },
-  created: async function () {
+  }
+
+  async created() {
     if (globalFunctions.getToken() !== 'error') {
       await fetch('http://localhost:4000/user/updateOnlineStatus', {
         method: 'POST',

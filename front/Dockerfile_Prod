@@ -2,16 +2,16 @@ FROM node:lts-alpine as build-stage
 
 LABEL maintainer="Nicolas Foray <nforay@student.42.fr>"
 
-RUN mkdir /app
-ADD . /app
 WORKDIR /app
-RUN npm i -g @vue/cli
-RUN cd vue-app-project && npm run build
+COPY ./vue-app-project/package*.json ./
+RUN npm install -g @vue/cli && npm install --legacy-peer-deps
+COPY ./vue-app-project/ .
+RUN npm run build
 
 FROM nginx as production-stage
 
-EXPOSE 80
+EXPOSE ${FRONTPORT}
 
 RUN mkdir /app
-COPY --from=build-stage /app/vue-app-project/dist /app
+COPY --from=build-stage /app/dist /app
 COPY nginx.conf /etc/nginx/nginx.conf

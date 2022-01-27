@@ -10,7 +10,6 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import * as path from 'path'
 import * as jwt from 'jsonwebtoken';
-import { fileTypeFromFile } from 'file-type'
 import * as fs from 'fs';
 import { AuthUser } from '../shared/auth-user.decorator';
 

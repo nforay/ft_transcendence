@@ -49,15 +49,20 @@
 <script lang="ts">
 import Vue from 'vue'
 import Component from 'vue-class-component'
-import store from '@/store'
-import router from '@/router'
+import store from '../store'
+import router from '../router'
 import { mapGetters } from 'vuex'
 import { Watch } from 'vue-property-decorator'
 
 @Component({
-  computed: mapGetters(['username', 'isLogged', 'notificationsCount', 'avatar'])
+  computed: { ...mapGetters(['username', 'isLogged']) }
 })
 export default class AppHeader extends Vue {
+
+  public get avatar() {
+    return 'http://localhost:4000/user/avatar/' + store.state.userId + '?' + store.state.avatarUpdate
+  }
+
   public logout () : void {
     store.commit('logout')
     store.commit('expireToken')
@@ -76,14 +81,14 @@ export default class AppHeader extends Vue {
     router.push('/redirect?to=/profile').catch(() => { Function.prototype() })
   }
 
-  public get avatarUpdate () : string {
+  public get avatarUpdate () : number {
     return store.state.avatarUpdate
   }
 
-  @Watch('avatarUpdate')
+  /* @Watch('avatarUpdate')
   public onAvatarUpdate (value: string, newValue: string) : void {
-    this.avatar = this.avatar.replace(/\?.*/, '') + '?' + newValue
-  }
+    this.avatar = this.avatar.replace(/\?.*/ /* , '') + '?' + newValue
+  } */
 }
 </script>
 

@@ -43,8 +43,8 @@
 <script lang="ts">
 import Vue from 'vue'
 import Component from 'vue-class-component'
-import { store, globalFunctions } from '@/store'
-import router from '@/router'
+import store, { globalFunctions } from '../store'
+import router from '../router'
 
 @Component
 export default class UserProfile extends Vue {
@@ -53,14 +53,12 @@ export default class UserProfile extends Vue {
 
   public isadmin = false
   public adminusername = ''
-  private token: string
 
   async mounted (): Promise<void> {
     while (!store.state.requestedLogin) {
       await new Promise(resolve => setTimeout(resolve, 10))
     }
-    this.token = globalFunctions.getToken()
-    if (this.token === 'error') {
+    if (globalFunctions.getToken() === 'error') {
       router.push('/').catch(() => { Function.prototype() })
       return
     }
@@ -109,7 +107,7 @@ export default class UserProfile extends Vue {
       'http://localhost:4000/chan/', {
         method: 'GET',
         headers: {
-          Authorization: 'Bearer ' + this.token
+          Authorization: 'Bearer ' + globalFunctions.getToken()
         }
       }
     )
@@ -150,7 +148,7 @@ export default class UserProfile extends Vue {
       'http://localhost:4000/chan/', {
         method: 'GET',
         headers: {
-          Authorization: 'Bearer ' + this.token
+          Authorization: 'Bearer ' + globalFunctions.getToken()
         }
       }
     )
@@ -166,7 +164,7 @@ export default class UserProfile extends Vue {
       'http://localhost:4000/chan/' + chan, {
         method: 'DELETE',
         headers: {
-          Authorization: 'Bearer ' + this.token
+          Authorization: 'Bearer ' + globalFunctions.getToken()
         }
       }
     )
@@ -180,7 +178,7 @@ export default class UserProfile extends Vue {
       'http://localhost:4000/user/' + id, {
         method: 'DELETE',
         headers: {
-          Authorization: 'Bearer ' + this.token
+          Authorization: 'Bearer ' + globalFunctions.getToken()
         }
       }
     )
@@ -194,7 +192,7 @@ export default class UserProfile extends Vue {
       'http://localhost:4000/user/admin/' + id, {
         method: 'POST',
         headers: {
-          Authorization: 'Bearer ' + this.token
+          Authorization: 'Bearer ' + globalFunctions.getToken()
         }
       }
     )

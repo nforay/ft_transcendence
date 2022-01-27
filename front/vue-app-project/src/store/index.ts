@@ -4,7 +4,7 @@ import { StoreType } from './types'
 
 Vue.use(Vuex)
 
-export const store : StoreOptions<StoreType> = {
+const store : StoreOptions<StoreType> = {
   state: {
     isLogged: false,
     requestedLogin: false,
