@@ -64,7 +64,7 @@ export default class UserProfile extends Vue {
     }
 
     const response = await fetch(
-      'http://localhost:4000/user/' + store.state.userId, {
+      'http://' + process.env.VUE_APP_DOMAIN + ':' + process.env.VUE_APP_NEST_PORT + '/user/' + store.state.userId, {
         method: 'GET'
       }
     )
@@ -81,7 +81,7 @@ export default class UserProfile extends Vue {
     }
 
     const usersResponse = await fetch(
-      'http://localhost:4000/user/', {
+      'http://' + process.env.VUE_APP_DOMAIN + ':' + process.env.VUE_APP_NEST_PORT + '/user/', {
         method: 'GET'
       }
     )
@@ -104,7 +104,7 @@ export default class UserProfile extends Vue {
     }
 
     const chansResponse = await fetch(
-      'http://localhost:4000/chan/', {
+      'http://' + process.env.VUE_APP_DOMAIN + ':' + process.env.VUE_APP_NEST_PORT + '/chan/', {
         method: 'GET',
         headers: {
           Authorization: 'Bearer ' + globalFunctions.getToken()
@@ -120,7 +120,7 @@ export default class UserProfile extends Vue {
 
   async refreshUsers (): Promise<void> {
     const usersResponse = await fetch(
-      'http://localhost:4000/user/', {
+      'http://' + process.env.VUE_APP_DOMAIN + ':' + process.env.VUE_APP_NEST_PORT + '/user/', {
         method: 'GET'
       }
     )
@@ -145,7 +145,7 @@ export default class UserProfile extends Vue {
 
   async refreshChans (): Promise<void> {
     const chansResponse = await fetch(
-      'http://localhost:4000/chan/', {
+      'http://' + process.env.VUE_APP_DOMAIN + ':' + process.env.VUE_APP_NEST_PORT + '/chan/', {
         method: 'GET',
         headers: {
           Authorization: 'Bearer ' + globalFunctions.getToken()
@@ -161,7 +161,7 @@ export default class UserProfile extends Vue {
 
   async deletechan (chan: string): Promise<void> {
     const chanResponse = await fetch(
-      'http://localhost:4000/chan/' + chan, {
+      'http://' + process.env.VUE_APP_DOMAIN + ':' + process.env.VUE_APP_NEST_PORT + '/chan/' + chan, {
         method: 'DELETE',
         headers: {
           Authorization: 'Bearer ' + globalFunctions.getToken()
@@ -175,7 +175,7 @@ export default class UserProfile extends Vue {
 
   async deleteuser (id: string): Promise<void> {
     const userResponse = await fetch(
-      'http://localhost:4000/user/' + id, {
+      'http://' + process.env.VUE_APP_DOMAIN + ':' + process.env.VUE_APP_NEST_PORT + '/user/' + id, {
         method: 'DELETE',
         headers: {
           Authorization: 'Bearer ' + globalFunctions.getToken()
@@ -189,7 +189,7 @@ export default class UserProfile extends Vue {
 
   async opuser (id: string): Promise<void> {
     const userResponse = await fetch(
-      'http://localhost:4000/user/admin/' + id, {
+      'http://' + process.env.VUE_APP_DOMAIN + ':' + process.env.VUE_APP_NEST_PORT + '/user/admin/' + id, {
         method: 'POST',
         headers: {
           Authorization: 'Bearer ' + globalFunctions.getToken()

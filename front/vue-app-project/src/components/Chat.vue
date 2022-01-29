@@ -122,7 +122,7 @@ export default class Chat extends Vue {
   }
 
   created () : void {
-    this.socket = io.connect('ws://localhost:8082')
+    this.socket = io.connect('ws://' + process.env.VUE_APP_DOMAIN + ':' + process.env.VUE_APP_CHAT_PORT + '')
     this.chatMsg.token = globalFunctions.getToken()
     this.socket.on('recv_message', (data) => {
       let lines : string[] = []

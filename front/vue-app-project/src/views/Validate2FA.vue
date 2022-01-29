@@ -23,7 +23,7 @@ export default class Validate2FA extends Vue {
   }
 
   async validateCode () : Promise<void> {
-    const response = await fetch('http://localhost:4000/user/validate2fa', {
+    const response = await fetch('http://' + process.env.VUE_APP_DOMAIN + ':' + process.env.VUE_APP_NEST_PORT + '/user/validate2fa', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'

@@ -78,7 +78,7 @@ const store : StoreOptions<StoreType> = {
     },
 
     avatar (state : StoreType) : string {
-      return 'http://localhost:4000/user/avatar/' + state.userId + '?' + state.avatarUpdate
+      return 'http://' + process.env.VUE_APP_DOMAIN + ':' + process.env.VUE_APP_NEST_PORT + '/user/avatar/' + state.userId + '?' + state.avatarUpdate
     },
 
     avatarUpdate (state : StoreType) : number {

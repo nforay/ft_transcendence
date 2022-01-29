@@ -66,7 +66,7 @@ export default class Leaderboard extends Vue {
   public pageSize = 50
   public leaderboard: Array<LeaderboardPlayerData> = []
   async created () : Promise<void> {
-    const response = await fetch(`http://localhost:4000/user/leaderboard?rangeMin=${this.page * this.pageSize}&rangeMax=${(this.page + 1) * this.pageSize}`, {
+    const response = await fetch(`http://${process.env.VUE_APP_DOMAIN}:${process.env.VUE_APP_NEST_PORT}/user/leaderboard?rangeMin=${this.page * this.pageSize}&rangeMax=${(this.page + 1) * this.pageSize}`, {
       method: 'GET'
     })
     if (!response.ok) {
@@ -82,7 +82,7 @@ export default class Leaderboard extends Vue {
   }
 
   userAvatar (id: string) : string {
-    return 'http://localhost:4000/user/avatar/' + id
+    return 'http://' + process.env.VUE_APP_DOMAIN + ':' + process.env.VUE_APP_NEST_PORT + '/user/avatar/' + id
   }
 
   getXpProgress (level: number) : number {

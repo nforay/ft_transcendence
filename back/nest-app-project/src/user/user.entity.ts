@@ -47,7 +47,7 @@ export class UserEntity {
       win: this.win,
       lose: this.lose,
       level: this.getLevel(),
-      avatar: `http://localhost:4000/user/avatar/${this.id}`,
+      avatar: `http://${process.env.DOMAIN}:${process.env.PORT}/user/avatar/${this.id}`,
       token: (withToken) ? this.token : undefined,
       has2FA: (with2FA) ? this.has2FA : undefined,
       expiresIn: (withToken) ? this.expiresIn : undefined

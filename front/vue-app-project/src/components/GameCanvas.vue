@@ -68,7 +68,7 @@ export default class GameCanvas extends Vue {
   gameJwt = window.localStorage.getItem('gameJwt')
   @Prop({ type: String }) gameId!: string
 
-  socketManager = new SocketManager('http://localhost:4001/?gameJwt=' + this.gameJwt)
+  socketManager = new SocketManager('http://' + process.env.VUE_APP_DOMAIN + ':' + process.env.VUE_APP_GAME_PORT + '/?gameJwt=' + this.gameJwt)
 
   leftPaddle = new Paddle(0, 0, 0, 0)
   rightPaddle = new Paddle(0, 0, 0, 0)

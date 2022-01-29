@@ -14,7 +14,8 @@
     "baseUrl": ".",
     "noImplicitAny": false,
     "types": [
-      "webpack-env"
+      "webpack-env",
+      "node"
     ],
     "paths": {
       "@/*": [

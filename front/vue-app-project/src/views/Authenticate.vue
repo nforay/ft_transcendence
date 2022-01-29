@@ -16,7 +16,7 @@ export default class Authenticate extends Vue {
       router.push('/login').catch(() => { Function.prototype() })
       return
     }
-    const response = await fetch(`http://localhost:4000/user/authenticate?code=${this.$route.query.code.toString()}`, {
+    const response = await fetch(`http://${process.env.VUE_APP_DOMAIN}:${process.env.VUE_APP_NEST_PORT}/user/authenticate?code=${this.$route.query.code.toString()}`, {
       method: 'POST'
     })
     if (!response.ok) {

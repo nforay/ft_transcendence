@@ -60,7 +60,7 @@ import { Watch } from 'vue-property-decorator'
 export default class AppHeader extends Vue {
 
   public get avatar() {
-    return 'http://localhost:4000/user/avatar/' + store.state.userId + '?' + store.state.avatarUpdate
+    return 'http://' + process.env.VUE_APP_DOMAIN + ':' + process.env.VUE_APP_NEST_PORT + '/user/avatar/' + store.state.userId + '?' + store.state.avatarUpdate
   }
 
   public logout () : void {

@@ -129,7 +129,7 @@ export default class UserProfile extends Vue {
     this.username = (this.$route.query.user ? this.$route.query.user.toString() : store.state.username)
 
     const response = await fetch(
-      'http://localhost:4000/user/username/' + this.username, {
+      'http://' + process.env.VUE_APP_DOMAIN + ':' + process.env.VUE_APP_NEST_PORT + '/user/username/' + this.username, {
         method: 'GET'
       }
     )
@@ -144,7 +144,7 @@ export default class UserProfile extends Vue {
     this.lose = data.lose
 
     const friendlistResponse = await fetch(
-      'http://localhost:4000/user/friends/name/' + this.username, {
+      'http://' + process.env.VUE_APP_DOMAIN + ':' + process.env.VUE_APP_NEST_PORT + '/user/friends/name/' + this.username, {
         method: 'GET'
       }
     )
@@ -167,7 +167,7 @@ export default class UserProfile extends Vue {
         this.isloggeduser = false
       }
       const resp = await fetch(
-        'http://localhost:4000/user/friends/check/' + store.state.userId + '/' + this.username, {
+        'http://' + process.env.VUE_APP_DOMAIN + ':' + process.env.VUE_APP_NEST_PORT + '/user/friends/check/' + store.state.userId + '/' + this.username, {
           method: 'GET'
         }
       )
@@ -179,7 +179,7 @@ export default class UserProfile extends Vue {
     }
 
     const matchHistory = await fetch(
-      'http://localhost:4000/user/history/name/' + this.username, {
+      'http://' + process.env.VUE_APP_DOMAIN + ':' + process.env.VUE_APP_NEST_PORT + '/user/history/name/' + this.username, {
         method: 'GET'
       }
     )
@@ -207,7 +207,7 @@ export default class UserProfile extends Vue {
       return
     }
     const response = await fetch(
-      'http://localhost:4000/user/friends/' + store.state.userId + '/' + this.username, {
+      'http://' + process.env.VUE_APP_DOMAIN + ':' + process.env.VUE_APP_NEST_PORT + '/user/friends/' + store.state.userId + '/' + this.username, {
         method: 'POST'
       }
     )
@@ -221,7 +221,7 @@ export default class UserProfile extends Vue {
       return
     }
     const response = await fetch(
-      'http://localhost:4000/user/friends/' + store.state.userId + '/' + this.username, {
+      'http://' + process.env.VUE_APP_DOMAIN + ':' + process.env.VUE_APP_NEST_PORT + '/user/friends/' + store.state.userId + '/' + this.username, {
         method: 'DELETE'
       }
     )
