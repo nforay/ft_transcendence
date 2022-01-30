@@ -12,6 +12,7 @@ import * as path from 'path'
 import * as jwt from 'jsonwebtoken';
 import * as fs from 'fs';
 import { AuthUser } from '../shared/auth-user.decorator';
+import * as FileType from 'file-type';
 
 @Controller('user')
 export class UserController {
@@ -99,8 +100,7 @@ export class UserController {
     if (!file)
       throw new HttpException('File must be of type png/jpeg/jpg', HttpStatus.BAD_REQUEST);
 
-    let fileType = await import("file-type");
-    const filetype = await fileType.fileTypeFromFile(file.path);
+    const filetype = await FileType.fromFile(file.path)
     const allowedMimes = [ 'image/jpg', 'image/jpeg', 'image/png' ];
     const allowedExtensions = [ 'jpg', 'jpeg', 'png' ];
 

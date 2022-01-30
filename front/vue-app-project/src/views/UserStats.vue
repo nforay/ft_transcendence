@@ -67,7 +67,7 @@
 <script lang="ts">
 import Vue from 'vue'
 import Component from 'vue-class-component'
-import { store, globalFunctions } from '@/store'
+import store, { globalFunctions } from '@/store'
 import router from '@/router'
 import { Watch } from 'vue-property-decorator'
 

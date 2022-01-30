@@ -2,6 +2,11 @@ FROM node:lts-alpine as build-stage
 
 LABEL maintainer="Nicolas Foray <nforay@student.42.fr>"
 
+WORKDIR /app
+COPY ./vue-app-project/package*.json ./
+RUN npm install -g @vue/cli && npm install --legacy-peer-deps
+COPY ./vue-app-project/ .
+
 ARG VUE_APP_PORT=${VUE_APP_PORT}
 ARG VUE_APP_DOMAIN=${VUE_APP_DOMAIN}
 ARG VUE_APP_OAUTH2_UID=${VUE_APP_OAUTH2_UID}
@@ -9,10 +14,6 @@ ARG VUE_APP_NEST_PORT=${VUE_APP_NEST_PORT}
 ARG VUE_APP_GAME_PORT=${VUE_APP_GAME_PORT}
 ARG VUE_APP_CHAT_PORT=${VUE_APP_CHAT_PORT}
 
-WORKDIR /app
-COPY ./vue-app-project/package*.json ./
-RUN npm install -g @vue/cli && npm install --legacy-peer-deps
-COPY ./vue-app-project/ .
 RUN npm run build
 
 FROM nginx as production-stage
