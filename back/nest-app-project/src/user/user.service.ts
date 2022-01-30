@@ -72,8 +72,8 @@ export class UserService {
       
       return {
         ...x.toResponseGame(),
-        player1Avatar: `http://localhost:4000/user/avatar/${x.player1Id}`,
-        player2Avatar: `http://localhost:4000/user/avatar/${x.player2Id}`,
+        player1Avatar: `http://${process.env.DOMAIN}:${process.env.PORT}/user/avatar/${x.player1Id}`,
+        player2Avatar: `http://${process.env.DOMAIN}:${process.env.PORT}/user/avatar/${x.player2Id}`,
         player1Name: (x.player1Id == user.id ? user.name : opponentName),
         player2Name: (x.player2Id == user.id ? user.name : opponentName),
       }
@@ -335,7 +335,7 @@ export class UserService {
     + '&client_id=' + process.env.OAUTH2_UID
     + '&client_secret=' + process.env.OAUTH2_SECRET
     + '&code=' + code
-    + '&redirect_uri=http://localhost:8080/authenticate'
+    + '&redirect_uri=http://' + process.env.DOMAIN + ':' + process.env.VUE_PORT + '/authenticate'
 
     const genTokenResponse = await fetch('https://api.intra.42.fr/oauth/token', {
       method: 'POST',

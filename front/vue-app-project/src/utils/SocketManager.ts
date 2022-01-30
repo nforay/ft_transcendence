@@ -12,7 +12,7 @@ export class SocketMessage {
 }
 
 export class SocketManager {
-  private socket: typeof Socket
+  private socket: Socket
   private messages: SocketMessage[] = []
 
   constructor (url: string) {

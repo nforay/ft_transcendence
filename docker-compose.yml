@@ -4,6 +4,14 @@ services:
     build:
       context: ./back
       dockerfile: Dockerfile
+    environment:
+      - PORT=${NEST_PORT}
+      - DOMAIN=${DOMAIN}
+      - VUE_PORT=${VUE_PORT}
+      - OAUTH2_UID=${OAUTH2_UID}
+      - OAUTH2_SECRET=${OAUTH2_SECRET}
+      - JWT_SECRET=${JWT_SECRET}
+      - WEBSOCKET_PORT=${GAME_PORT}
     #restart: always
     command: npm run start:prod
     # command: npm run start:prod
@@ -11,11 +19,9 @@ services:
     volumes:
       - ./back/uploads:/uploads
     ports:
-      - "4000:4000"
-      - "4001:4001"
-      - "3000:3000"
-      - "8081:8081"
-      - "8082:8082"
+      - "${NEST_PORT}:4000"
+      - "${GAME_PORT}:4001"
+      - "${CHAT_PORT}:8082"
   database:
     image: postgres:latest
     # restart: always
@@ -26,19 +32,21 @@ services:
     volumes:
       - dbdata:/var/lib/postgresql/data
     container_name: database
-    ports:
-      - "5432:5432"
   front:
     build:
       context: ./front
-      dockerfile: Dockerfile_Dev
-    #restart: always
-    #command: vue ui --host 0.0.0.0 --port 8000 --headless # dev purpose
-    command: npm run serve
+      dockerfile: Dockerfile_Prod
+      args:
+        - VUE_APP_PORT=${VUE_PORT}
+        - VUE_APP_DOMAIN=${DOMAIN}
+        - VUE_APP_OAUTH2_UID=${OAUTH2_UID}
+        - VUE_APP_NEST_PORT=${NEST_PORT}
+        - VUE_APP_GAME_PORT=${GAME_PORT}
+        - VUE_APP_CHAT_PORT=${CHAT_PORT}
+    restart: always
     container_name: front
     ports:
-      - "8080:8080" # use 80 on production build
-      - "8000:8000" # dev prupose
+      - "${VUE_PORT}:80"
 volumes:
   dbdata:
     driver: local

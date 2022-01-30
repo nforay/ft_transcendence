@@ -35,7 +35,7 @@ new Vue({
       return
     }
     const token = document.cookie.split('Token=')[1].split(';')[0]
-    const response = await fetch('http://localhost:4000/user/islogged', {
+    const response = await fetch(`http://${process.env.VUE_APP_DOMAIN}:${process.env.VUE_APP_NEST_PORT}/user/islogged`, {
       method: 'POST',
       headers: {
         Authorization: 'Bearer ' + token

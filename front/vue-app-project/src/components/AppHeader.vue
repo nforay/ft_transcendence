@@ -4,7 +4,7 @@
       <md-toolbar class="md-dense" style="background: white;">
         <md-icon :md-src="require('../assets/42logo.svg')" class="md-small md-small-hide" /><span class="md-title md-small-hide" style="flex: 1">ft_transcendence</span>
         <div id="nav" style="flex: 2">
-        <md-tabs md-sync-route md-alignment="right">
+        <md-tabs md-alignment="right">
           <md-tab id="tab-home" md-label="Home" to="/" exact></md-tab>
           <md-tab id="tab-play" md-label="Play" to="/play"></md-tab>
           <md-tab id="tab-leaderboard" md-label="Leaderboard" to="/leaderboard"></md-tab>
@@ -49,15 +49,20 @@
 <script lang="ts">
 import Vue from 'vue'
 import Component from 'vue-class-component'
-import store from '@/store'
-import router from '@/router'
+import store from '../store'
+import router from '../router'
 import { mapGetters } from 'vuex'
 import { Watch } from 'vue-property-decorator'
 
 @Component({
-  computed: mapGetters(['username', 'isLogged', 'notificationsCount', 'avatar'])
+  computed: { ...mapGetters(['username', 'isLogged']) }
 })
 export default class AppHeader extends Vue {
+
+  public get avatar() {
+    return 'http://' + process.env.VUE_APP_DOMAIN + ':' + process.env.VUE_APP_NEST_PORT + '/user/avatar/' + store.state.userId + '?' + store.state.avatarUpdate
+  }
+
   public logout () : void {
     store.commit('logout')
     store.commit('expireToken')
@@ -76,14 +81,14 @@ export default class AppHeader extends Vue {
     router.push('/redirect?to=/profile').catch(() => { Function.prototype() })
   }
 
-  public get avatarUpdate () : string {
+  public get avatarUpdate () : number {
     return store.state.avatarUpdate
   }
 
-  @Watch('avatarUpdate')
+  /* @Watch('avatarUpdate')
   public onAvatarUpdate (value: string, newValue: string) : void {
-    this.avatar = this.avatar.replace(/\?.*/, '') + '?' + newValue
-  }
+    this.avatar = this.avatar.replace(/\?.*/ /* , '') + '?' + newValue
+  } */
 }
 </script>
 

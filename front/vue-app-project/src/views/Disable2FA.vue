@@ -18,7 +18,7 @@ export default class Disable2FA extends Vue {
   errors: string[] = []
 
   async sendCode () {
-    const response = await fetch('http://localhost:4000/user/disable2fa', {
+    const response = await fetch(`http://${process.env.VUE_APP_DOMAIN}:${process.env.VUE_APP_NEST_PORT}/user/disable2fa`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'

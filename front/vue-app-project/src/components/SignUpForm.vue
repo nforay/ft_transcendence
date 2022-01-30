@@ -71,7 +71,7 @@ export default class SignUpForm extends Vue {
       return
     }
     this.sending = true
-    const response = await fetch('http://localhost:4000/user/', {
+    const response = await fetch(`http://${process.env.VUE_APP_DOMAIN}:${process.env.VUE_APP_NEST_PORT}/user/`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'

@@ -11,9 +11,9 @@
 <script lang="ts">
 import Vue from 'vue'
 import Component from 'vue-class-component'
-import UserProfile from '@/components/UserProfile.vue'
-import { store, globalFunctions } from '@/store'
-import router from '@/router'
+import UserProfile from '../components/UserProfile.vue'
+import store, { globalFunctions } from '../store'
+import router from '../router'
 
 @Component({
   components: {
@@ -30,7 +30,7 @@ export default class Settings extends Vue {
       return
     }
 
-    const response = await fetch('http://localhost:4000/user/has2fa', {
+    const response = await fetch(`http://${process.env.VUE_APP_DOMAIN}:${process.env.VUE_APP_NEST_PORT}/user/has2fa`, {
       method: 'GET',
       headers: {
         Authorization: 'Bearer ' + token

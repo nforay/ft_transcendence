@@ -24,7 +24,7 @@ export default class Enable2FA extends Vue {
       router.push('/login').catch(() => { Function.prototype() })
       return
     }
-    const response = await fetch('http://localhost:4000/user/qr2fa', {
+    const response = await fetch(`http://${process.env.VUE_APP_DOMAIN}:${process.env.VUE_APP_NEST_PORT}/user/qr2fa`, {
       method: 'GET',
       headers: {
         Authorization: 'Bearer ' + token
@@ -47,7 +47,7 @@ export default class Enable2FA extends Vue {
       userId: store.state.userId,
       code: this.twoFACode
     })
-    const response = await fetch('http://localhost:4000/user/send2facode', {
+    const response = await fetch(`http://${process.env.VUE_APP_DOMAIN}:${process.env.VUE_APP_NEST_PORT}/user/send2facode`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'

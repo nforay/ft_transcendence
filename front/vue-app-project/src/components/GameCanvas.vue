@@ -16,6 +16,7 @@ import Component from 'vue-class-component'
 import { SocketManager } from '../utils/SocketManager'
 import store from '../store'
 import router from '../router'
+import { Prop } from 'vue-property-decorator'
 
 export class Paddle {
   x: number
@@ -65,8 +66,9 @@ export default class GameCanvas extends Vue {
   ctx: CanvasRenderingContext2D | undefined
 
   gameJwt = window.localStorage.getItem('gameJwt')
+  @Prop({ type: String }) gameId!: string
 
-  socketManager = new SocketManager('http://localhost:4001/?gameJwt=' + this.gameJwt)
+  socketManager = new SocketManager('http://' + process.env.VUE_APP_DOMAIN + ':' + process.env.VUE_APP_GAME_PORT + '/?gameJwt=' + this.gameJwt)
 
   leftPaddle = new Paddle(0, 0, 0, 0)
   rightPaddle = new Paddle(0, 0, 0, 0)
@@ -97,6 +99,8 @@ export default class GameCanvas extends Vue {
   }
 
   gameLoop () : void {
+    if (!this.canvas || !this.ctx)
+      return
     if (this.isSpectator) {
       this.draw()
       window.requestAnimationFrame(this.gameLoop)
@@ -133,6 +137,8 @@ export default class GameCanvas extends Vue {
   }
 
   draw () : void {
+    if (!this.canvas || !this.ctx)
+      return
     this.ctx.fillStyle = this.backgroundColor
     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height)
 
