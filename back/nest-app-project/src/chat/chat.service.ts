@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Socket } from 'socket.io';
 import { UserManager } from '../user/user.model';
-import { ChanService } from './chan.service';
+import { ChanManager, ChanService } from './chan.service';
 import { ChatCommandHandlers } from './chat.commands';
 
 export class ClientIdentifier {
@@ -120,11 +120,31 @@ export class ChatService {
 	}
 
 	async addClient(uname: string, client: Socket) {
-		this.users.set(uname, {
-			sock: client,
-			chan: "general",
-		});
-		await this.chanService.join(client, "general", uname);
+    let user = await UserManager.instance.userRepository.findOne({ where: { id: uname } });
+    if (!user) {
+      client.disconnect();
+      return;
+    }
+    if (!ChanManager.instance.chans.find(x => user.chatLastChannel == x.name)) {
+      user.chatLastChannel = "general";
+      await UserManager.instance.userRepository.save(user);
+    }
+    try {
+		  await this.chanService.join(client, user.chatLastChannel, uname, null, true);
+      this.users.set(uname, {
+        sock: client,
+        chan: user.chatLastChannel,
+      });
+		  await this.chanService.join(client, user.chatLastChannel, uname);
+    } catch (err) {
+      this.users.set(uname, {
+        sock: client,
+        chan: 'general',
+      });
+		  await this.chanService.join(client, 'general', uname);
+      user.chatLastChannel = 'general';
+      await UserManager.instance.userRepository.save(user);
+    }
 	}
 
 	rmClient(client: Socket) {

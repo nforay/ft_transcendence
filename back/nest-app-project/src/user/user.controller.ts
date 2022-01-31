@@ -24,6 +24,26 @@ export class UserController {
     return this.userService.findAll();
   }
 
+  @Post('authenticate')
+  authenticate(@Query('code') code: string) {
+    return this.userService.authenticate(code);
+  }
+
+  @Post('block')
+  block(@AuthUser() user, @Query('name') name: string) {
+    return this.userService.block(user, name);
+  }
+
+  @Post('unblock')
+  unblock(@AuthUser() user, @Query('name') name: string) {
+    return this.userService.unblock(user, name);
+  }
+
+  @Get('isBlocked')
+  isBlocked(@AuthUser() user, @Query('name') name: string) {
+    return this.userService.isBlocked(user, name);
+  }
+
   @Post('updateOnlineStatus')
   updateOnlineStatus(@AuthUser() user) {
     return this.userService.updateOnlineStatus(user);
@@ -183,10 +203,5 @@ export class UserController {
   @UseGuards(AuthGuard)
   update(@Headers() headers, @Body() data: Partial<UserDTO>) {
     return this.userService.update(headers.authorization, data);
-  }
-
-  @Post('authenticate')
-  authenticate(@Query('code') code: string) {
-    return this.userService.authenticate(code);
   }
 }

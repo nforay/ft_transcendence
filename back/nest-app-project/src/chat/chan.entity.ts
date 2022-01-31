@@ -104,8 +104,8 @@ export class ChanEntity {
 	}
 
 	async checkowner(uname: string): Promise<boolean> {
-    const user = await UserManager.instance.userRepository.findOne({ id: uname });
-    if (user == null)
+    let user = await UserManager.instance.userRepository.findOne({ id: uname });
+    if (!user)
       return false;
 		if (uname == this.owner || user.role === 'admin')
 			return true;
@@ -113,7 +113,7 @@ export class ChanEntity {
 	}
 
 	async checkadmin(uname: string): Promise<boolean> {
-    const user = await UserManager.instance.userRepository.findOne({ id: uname });
+    let user = await UserManager.instance.userRepository.findOne({ id: uname });
     if (!user)
       return false;
 		return this.admins.indexOf(uname) != -1 || user.role === 'admin' || this.checkowner(uname);

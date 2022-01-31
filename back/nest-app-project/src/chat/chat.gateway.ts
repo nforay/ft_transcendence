@@ -14,7 +14,8 @@ import { PlayerPair } from '../matchmaking/matchmaking.service';
 		credentials: true,
 		methods: ["GET", "POST"],
 		transports: ['websocket', 'polling'],
-		origin: `http://${process.env.DOMAIN}:${process.env.VUE_PORT}`
+		// origin: `http://${process.env.DOMAIN}:${process.env.VUE_PORT}`
+		origin: `http://localhost:8080`
 	},
 	allowEIO3: true
 })

@@ -1,62 +1,85 @@
 <template>
   <div>
-    <div class="user-profile-content">
-      <div class="user-avatar-content">
-        <img class="avatar" :src="avatar" alt="Avatar" />
-      </div>
-      <div class="username">
-        <h1>{{ this.username }}</h1>
-        <p class="bio">{{ this.bio }}</p>
+    <div class="md-layout md-gutter">
+      <div style="margin: 15px 0;" class="md-layout-item md-layout md-gutter md-alignment-top-center">
+        <md-card style="min-width: 300px;" class="md-layout-item md-size-50">
+          <md-card-header>
+          </md-card-header>
+          
+          <div class="md-layout md-size-100">
+            <md-card-media>
+              <img style="border-radius: 5px;" class="user-profile-avatar" :src="avatar" alt="Avatar">
+            </md-card-media>
+            
+            <div style="margin-left: 15px">
+              <p style="margin-bottom: 10px" class="md-title">{{ this.username }}'s Profile</p>
+              <p class="md-subheading" style="text-align: left;">{{ this.bio }}</p>
+            </div>
+
+            <md-card-content style="text-align: right;" class="md-layout md-layout-item md-alignment-center-right">
+              <div class="md-layout-item" style="white-space: nowrap;">
+                <span><h2><md-icon>emoji_events</md-icon>Elo - {{ this.elo }}</h2></span>
+                <span><h2><md-icon class="history-win">add_box</md-icon>Wins - {{ this.win }}</h2></span>
+                <span><h2><md-icon class="history-lose">indeterminate_check_box</md-icon>Loses - {{ this.lose }}</h2></span>
+              </div>
+            </md-card-content>
+          </div>
+
+          <md-card-actions>
+            <div v-if="isfriend === true">
+              <md-button @click="rmFriend()" class="md-accent" :disabled="loading">Remove Friend <md-icon>person_remove</md-icon></md-button>
+            </div>
+            <div v-else-if="isloggeduser === false">
+              <md-button @click="addFriend()" class="md-primary" :disabled="loading">Add Friend <md-icon>person_add</md-icon></md-button>
+            </div>
+            <div v-if="blocked === false && isloggeduser === false">
+              <md-button class="md-accent" @click="block()" :disabled="loading">Block <md-icon>person_off</md-icon></md-button>
+            </div>
+            <div v-else-if="isloggeduser === false">
+              <md-button class="md-accent" @click="unblock()" :disabled="loading">Unblock <md-icon>person</md-icon></md-button>
+            </div>
+          </md-card-actions>
+        </md-card>
       </div>
     </div>
     <div>
-      <h2><md-icon>emoji_events</md-icon>elo = {{ this.elo }}</h2>
-      <h2><md-icon class="history-win">add_box</md-icon>Games won = {{ this.win }}</h2>
-      <h2><md-icon class="history-lose">indeterminate_check_box</md-icon>Games lost = {{ this.lose }}</h2>
       <div class="md-layout md-gutter">
         <div class="md-layout-item md-layout md-gutter">
-          <div class="md-layout-item">
-            <span class="md-title">Match History:</span>
-            <md-table v-if="history.length > 0" md-card>
+          <div class="md-layout-item" style="margin: 5px 0;">
+            <span class="md-title">Match History</span>
+            <md-table style="max-height: 50vh;" v-if="history.length > 0" md-card>
               <md-table-row v-for="(res, i) in history" :key="i">
                 <md-table-cell><span :class="getClass(res)"><md-icon :class="getClass(res)">{{ res.icon(username) }}</md-icon></span></md-table-cell>
-                <md-table-cell class="md-small-hide"><img class="friend-avatar" :src="res.avatarLeft(username)"></md-table-cell>
+                <md-table-cell><img class="friend-avatar" :src="res.avatarLeft(username)"></md-table-cell>
                 <md-table-cell><span :class="getClass(res)">{{ res.format(username) }}</span></md-table-cell>
-                <md-table-cell class="md-small-hide"><img class="friend-avatar" :src="res.avatarRight(username)"></md-table-cell>
+                <md-table-cell><img class="friend-avatar" :src="res.avatarRight(username)"></md-table-cell>
               </md-table-row>
             </md-table>
           </div>
-          <div class="md-layout-item">
-            <span class="md-title">Friend list:</span>
-            <md-table v-if="friends.length > 0" md-card>
+          <div class="md-layout-item" style="margin: 5px 0;">
+            <span class="md-title">Friend list</span>
+            <md-table style="max-height: 50vh;" v-if="friends.length > 0" md-card>
               <md-table-row>
-                <md-table-head class="md-small-hide">Avatar</md-table-head>
+                <md-table-head class="md-xsmall-hide" style="position: relative; width: 50px;">Avatar</md-table-head>
                 <md-table-head>Name</md-table-head>
-                <md-table-head>Elo</md-table-head>
+                <md-table-head md-numeric>Elo</md-table-head>
                 <md-table-head>Level</md-table-head>
               </md-table-row>
-              <md-table-row v-for="(friend, i) in friends" :key="i" @click="loadProfile(friend.username)">
-                <md-table-cell class="md-small-hide">
+              <md-table-row style="cursor: pointer;" v-for="(friend, i) in friends" :key="i" @click="loadProfile(friend.username)">
+                <md-table-cell style="width: 0;" class="md-xsmall-hide">
                     <div style="position: relative; width: 50px;">
                       <img class="friend-avatar" :src="friend.avatar">
                       <div :class="friend.htmlStatusClasses" :src="friend.statusImage"></div>
                     </div>
                 </md-table-cell>
-                <md-table-cell>{{ friend.username }}</md-table-cell>
-                <md-table-cell><md-icon>emoji_events</md-icon>{{ friend.elo }}</md-table-cell>
-                <md-table-cell>{{ Math.floor(friend.level) }}</md-table-cell>
+                <md-table-cell style="width: 0;">{{ friend.username }}</md-table-cell>
+                <md-table-cell md-numeric><md-icon>emoji_events</md-icon>{{ friend.elo }}</md-table-cell>
+                <md-table-cell style="width: 25%;">
+                  LV {{ Math.floor(friend.level) }} - {{ Math.floor(Math.floor(getXpProgress(friend.level) * 100) / 100) }}%
+                  <md-progress-bar md-mode="determinate" :md-value="getXpProgress(friend.level)"></md-progress-bar>
+                </md-table-cell>
               </md-table-row>
             </md-table>
-          </div>
-        </div>
-      </div>
-      <div class="md-layout-item md-gutter">
-        <div class="md-layout-item">
-          <div v-if="isfriend === true">
-            <md-button @click="rmFriend()" class="md-accent">Remove Friend</md-button>
-          </div>
-          <div v-else-if="isloggeduser === false">
-            <md-button @click="addFriend()" class="md-raised md-primary" :disabled="loading">Add Friend</md-button>
           </div>
         </div>
       </div>
@@ -135,6 +158,7 @@ export default class UserProfile extends Vue {
   public thisuser = false
   public isfriend = false
   public isloggeduser = true
+  public blocked = false
 
   constructor () {
     super()
@@ -142,6 +166,10 @@ export default class UserProfile extends Vue {
     this.bio = 'No bio written'
     this.avatar = ''
     this.thisuser = false
+  }
+
+  getXpProgress (level: number) : number {
+    return (level - Math.floor(level)) * 100
   }
 
   async mounted (): Promise<void> {
@@ -167,7 +195,8 @@ export default class UserProfile extends Vue {
   }
 
   async queryProfile (username: string): Promise<void> {
-    this.username = username
+    this.username = (this.$route.query.user ? this.$route.query.user.toString() : store.state.username)
+    this.isloggeduser = true
 
     const response = await fetch(
       'http://' + process.env.VUE_APP_DOMAIN + ':' + process.env.VUE_APP_NEST_PORT + '/user/username/' + this.username, {
@@ -243,6 +272,20 @@ export default class UserProfile extends Vue {
         match.player1Won
       )
     })
+
+    const isBlocked = await fetch(
+      'http://' + process.env.VUE_APP_DOMAIN + ':' + process.env.VUE_APP_NEST_PORT + '/user/isBlocked?name=' + this.username, {
+        method: 'GET',
+        headers: {
+          Authorization: 'Bearer ' + globalFunctions.getToken()
+        }
+      }
+    )
+    if (!isBlocked.ok) {
+      return
+    }
+    const idBlockedData = await isBlocked.json()
+    this.blocked = idBlockedData.blocked;
   }
 
   async addFriend (): Promise<void> {
@@ -280,6 +323,46 @@ export default class UserProfile extends Vue {
     return 'history-lose'
   }
 
+  async block() {
+    if (globalFunctions.getToken() === 'error') {
+      return
+    }
+    const response = await fetch(
+      'http://' + process.env.VUE_APP_DOMAIN + ':' + process.env.VUE_APP_NEST_PORT + '/user/block?name=' + this.username, {
+        method: 'POST',
+        headers: {
+          Authorization: 'Bearer ' + globalFunctions.getToken()
+        }
+      }
+    )
+    if (!response.ok) {
+      store.commit('setPopupMessage', 'This user is already blocked or doesn\'t exist.')
+      return
+    }
+    store.commit('setPopupMessage', `${this.username} has been blocked.`)
+    this.blocked = true
+  }
+
+  async unblock() {
+    if (globalFunctions.getToken() === 'error') {
+      return
+    }
+    const response = await fetch(
+      'http://' + process.env.VUE_APP_DOMAIN + ':' + process.env.VUE_APP_NEST_PORT + '/user/unblock?name=' + this.username, {
+        method: 'POST',
+        headers: {
+          Authorization: 'Bearer ' + globalFunctions.getToken()
+        }
+      }
+    )
+    if (!response.ok) {
+      store.commit('setPopupMessage', 'This user wasn\'t blocked or doesn\'t exist.')
+      return
+    }
+    store.commit('setPopupMessage', `${this.username} has been blocked.`)
+    this.blocked = false
+  }
+
   @Watch('$route')
   onRouteChange (to: any, from: any) : void {
     this.queryProfile(to.query.user)
@@ -288,34 +371,12 @@ export default class UserProfile extends Vue {
 </script>
 
 <style scoped>
-div.user-profile-content {
-  position: relative;
-  width: 60%;
-  min-width: 700px;
-  height: 270px;
-  margin: 0 auto;
-  border: 1px solid #ccc;
-}
-
-div.user-avatar-content {
-  position: relative;
-  float: left;
-}
-
-img.avatar {
-  display: block;
-  width: 250px;
-  height: 250px;
-  margin: 10px 10px 10px 10px;
-  border-radius: 30%;
-  overflow: hidden;
-}
-
 img.friend-avatar {
   display: block;
   width: 50px;
+  min-width: 50px;
   height: 50px;
-  border-radius: 30%;
+  border-radius: 5px;
   overflow: hidden;
 }
 
@@ -342,27 +403,10 @@ div.status-icon {
   border-radius: 50%;
 }
 
-td.user-name {
-  vertical-align: top;
-}
-
-h1 {
-  font-family: "Helvetica";
-  font-size: 32px;
-  text-align: left;
-}
-
-div.username {
-  margin-left: 270px;
-}
-
-p.bio {
-  width: 100%;
-  word-wrap: break-word;
-  font-style: italic;
-  font-size: 18px;
-  font-family: "Helvetica";
-  text-align: left;
+.user-profile-avatar {
+  width: 175px;
+  height: 175px;
+  object-fit: cover;
 }
 
 span.history-win {

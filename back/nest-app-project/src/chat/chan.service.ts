@@ -174,7 +174,7 @@ export class ChanService {
 		const chan = ChanManager.instance.findByName(cname);
 		if (!chan)
 			throw "Can't find channel";
-    const user = await UserManager.instance.userRepository.findOne({ where: { id: uname }});
+    let user = await UserManager.instance.userRepository.findOne({ where: { id: uname }});
     if (!user)
       return "Unexpected error occured";
     const correctPass = await this.checkPassword(cname, pwd);
@@ -192,6 +192,9 @@ export class ChanService {
       }
       chan.addUser(uname)
       client.emit('switch_channel', { channel: cname });
+
+      user.chatLastChannel = cname;
+      await UserManager.instance.userRepository.save(user);
     }
 		return "Moved to channel " + cname;
 	}
@@ -255,25 +258,31 @@ export class ChanService {
 		return ret;
 	}
 
-	async ban(cname: string, uname: string, banMode: boolean, reason?: string, duration?: number): Promise<string> {
+	async ban(cname: string, uname: string, target: string, banMode: boolean, reason?: string, duration?: number): Promise<string> {
 		const chan = ChanManager.instance.findByName(cname);
 		if (!chan)
 			 throw "Can't find channel";
 
-    const user = await UserManager.instance.userRepository.findOne({ where: { name: uname }})
+    const user = await UserManager.instance.userRepository.findOne({ where: { name: target }})
     if (!user)
       throw "User doesn't exists"
 
-    const isAdmin = await this.checkadmin(cname, user.id);
-    if (isAdmin)
+    const targetIsAdmin = (await this.checkadmin(cname, user.id));
+    const senderIsOwner = (await this.checkowner(cname, uname));
+    const canBeBanned = senderIsOwner || !targetIsAdmin;
+    if (!canBeBanned)
       throw "You cannot ban or mute an operator user"
 
     if (banMode) {
 		  const banData = await chan.banUser(user.id, reason, duration);
-      return "Banned user " + uname + " from channel " + cname + " " + banData.getFormattedTime();
+      if (targetIsAdmin)
+        await chan.op(chan.owner, user.id);
+      return "Banned user " + target + " from channel " + cname + " " + banData.getFormattedTime();
     }
     const muteData = await chan.muteUser(user.id, reason, duration);
-  	return "Muted user " + uname + " from channel " + cname + " " + muteData.getFormattedTime();
+    if (targetIsAdmin)
+      await chan.op(chan.owner, user.id);
+  	return "Muted user " + target + " from channel " + cname + " " + muteData.getFormattedTime();
 	}
 
 	async unban(cname: string, uname: string): Promise<string> {
@@ -295,6 +304,6 @@ export class ChanService {
     if (!user)
       throw "User doesn't exists"
 		chan.unmuteUser(user.id);
-		return "Unbanned user " + uname + " from channel " + cname;
+		return "Unmuted user " + uname + " from channel " + cname;
 	}
 }

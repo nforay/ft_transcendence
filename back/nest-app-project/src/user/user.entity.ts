@@ -28,6 +28,8 @@ export class UserEntity {
 
   @Column({ type: 'text', array: true, default: [] }) chatBan: string[];
   @Column({ type: 'text', array: true, default: [] }) chatMute: string[];
+  @Column({ type: 'text', default: 'general' }) chatLastChannel: string;
+
 
 
   @BeforeInsert()

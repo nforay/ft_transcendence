@@ -414,4 +414,46 @@ export class UserService {
     const usersNotOnline = users.filter(elem => now - elem.lastRequestTime > 1000 * 30)
     usersNotOnline.forEach(elem => UserManager.instance.onlineUsersStatus.delete(elem.userId))
   }
+
+  async block(jwtUser: any, name: string) {
+    const sender = await UserManager.instance.userRepository.findOne({ where: { id: jwtUser.id } });
+    const toBlock = await UserManager.instance.userRepository.findOne({ where: { name: name } });
+    if (!sender || !toBlock)
+      throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+
+    if (sender.id == toBlock.id)
+      throw new HttpException('You cannot block yourself', HttpStatus.BAD_REQUEST);
+
+    if (!sender.block(toBlock.id))
+      throw new HttpException('User is already blocked', HttpStatus.CONFLICT);
+
+    await UserManager.instance.userRepository.save(sender)
+  }
+
+  async unblock(jwtUser: any, name: string) {
+    const sender = await UserManager.instance.userRepository.findOne({ where: { id: jwtUser.id } });
+    const toBlock = await UserManager.instance.userRepository.findOne({ where: { name: name } });
+    if (!sender || !toBlock)
+      throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+
+    if (sender.id == toBlock.id)
+    throw new HttpException('You cannot unblock yourself', HttpStatus.BAD_REQUEST);
+
+    if (!sender.unblock(toBlock.id))
+      throw new HttpException('User is not blocked', HttpStatus.CONFLICT);
+
+    await UserManager.instance.userRepository.save(sender)
+  }
+
+  async isBlocked(jwtUser: any, name: string) {
+    const sender = await UserManager.instance.userRepository.findOne({ where: { id: jwtUser.id } });
+    const toBlock = await UserManager.instance.userRepository.findOne({ where: { name: name } });
+    if (!sender || !toBlock)
+      throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+
+    if (sender.id == toBlock.id)
+      return false;
+
+    return { blocked: sender.blocked.indexOf(toBlock.id) !== -1 }
+  }
 }

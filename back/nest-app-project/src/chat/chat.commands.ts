@@ -27,8 +27,6 @@ export class ChatCommandHandlers {
     msg += "\n/pm (user) (message) Send a private message to some user";
     msg += "\n/block (user) Block messages from some user or list blocked user if no argument is provided";
     msg += "\n/unblock (user) Unblock messages from some user";
-    // msg += "\n/challenge <user> Challenge user to a pong game";
-    // msg += "\n/y (<user>) Accept the last challenge or a challenge from a specific user";
     msg += "\n/cchan (name) [public | private] Create a new channel";
     msg += "\n/dchan (name) Delete a channel";
     msg += "\n/op (user) Toggle operator permissions for a user, prints a list of channel operators if no argument is provided";
@@ -144,6 +142,11 @@ export class ChatCommandHandlers {
       return {name, msg}
     }
 
+    if (user.id == sender.id) {
+      msg = "Don't hate yourself like that :(";
+      return {name, msg}
+    }
+
     if (!sender.block(user.id)) {
       msg = "User " + args[1] + " is already blocked";
       return {name, msg}
@@ -165,10 +168,16 @@ export class ChatCommandHandlers {
 
     const user = await UserManager.instance.userRepository.findOne({ where: { name: args[1] } });
     let sender = await UserManager.instance.userRepository.findOne({ where: { id: uname } });
-    if (!user) {
+    if (!sender || !user) {
       msg = "User not found";
       return {name, msg}
     }
+
+    if (user.id == sender.id) {
+      msg = "You cannot unblock yourself";
+      return {name, msg}
+    }
+
     if (!sender.unblock(user.id)) {
       msg = "User " + args[1] + " isn't blocked";
       return {name, msg}
@@ -332,21 +341,32 @@ export class ChatCommandHandlers {
     }
     else {
       try {
-        const isadmin = await chanService.checkadmin(users.get(uname).chan, uname);
-        if (!isadmin) {
+        
+        const senderIsAdmin = await chanService.checkadmin(users.get(uname).chan, uname);
+        if (!senderIsAdmin) {
           msg = "You are not operator of this channel";
           return {name, msg}
         }
-        if (users.has(args[1]) == false) {
-          msg = "can't find user " + args[1];
+        const target = await UserManager.instance.userRepository.findOne({ where: { name: args[1] } });
+        if (!target || !users.has(target.id)) {
+          msg = "Can't find user " + args[1];
           return {name, msg}
         }
-        await chanService.leave(users.get(args[1]).chan, args[1]);
-        await chanService.join(client, "general", args[1]);
-        users.get(args[1]).chan = "general";
+
+        const targetIsAdmin = (await chanService.checkadmin(users.get(target.id).chan, target.id));
+        const senderIsOwner = (await chanService.checkowner(users.get(target.id).chan, uname));
+        const canBeKicked = senderIsOwner || !targetIsAdmin;
+        if (!canBeKicked) {
+          msg = "You can't kick an operator";
+          return {name, msg}
+        }
+
+        await chanService.leave(users.get(target.id).chan, target.id);
+        await chanService.join(users.get(target.id).sock, "general", target.id);
+        users.get(target.id).chan = "general";
         msg = "You've been kicked";
-        users.get(args[1]).sock.emit('recv_message', { name, msg, isCommandResponse: true });
-        msg = "kicked user " + args[1];
+        users.get(target.id).sock.emit('recv_message', { name, msg, isCommandResponse: true });
+        msg = "Kicked user " + args[1];
       } catch(err) {
         msg = "Can't find channel"
       }
@@ -368,22 +388,30 @@ export class ChatCommandHandlers {
       if (!users.get(uname) || !users.get(uname).chan)
         throw "Unexpected error";
 
-      const isAdmin = await chanService.checkadmin(users.get(uname).chan, uname)
-      if (isAdmin == false)
+      const senderIsAdmin = await chanService.checkadmin(users.get(uname).chan, uname)
+      if (!senderIsAdmin)
         throw "You are not operator of this channel";
 
       let reason = undefined;
       let dur = undefined;
       // Permanent ban
       if (args.length < 3) {
-        const res = await chanService.ban(users.get(uname).chan, args[1], args[0] === '/ban')
+        const res = await chanService.ban(users.get(uname).chan, uname, args[1], args[0] === '/ban')
         msg = res;
         return {name, msg}
       }
 
       dur = parseInt(args[2], 10);
-      if (dur === NaN) {
+      if (Number.isNaN(dur)) {
         reason = args.slice(2).join(" ");
+        console.log('REASON: ' +reason)
+        console.log('REASON: ' +reason)
+        console.log('REASON: ' +reason)
+        console.log('REASON: ' +reason)
+        console.log('REASON: ' +reason)
+        console.log('REASON: ' +reason)
+        console.log('REASON: ' +reason)
+        console.log('REASON: ' +reason)
         dur = undefined;
       }
       else if (dur <= 0) {
@@ -392,7 +420,7 @@ export class ChatCommandHandlers {
         reason = args.slice(3).join(" ");
       }
 
-      const res = await chanService.ban(users.get(uname).chan, args[1], args[0] === '/ban', reason, dur);
+      const res = await chanService.ban(users.get(uname).chan, uname, args[1], args[0] === '/ban', reason, dur);
       msg = res;
 
     } catch (err) {
