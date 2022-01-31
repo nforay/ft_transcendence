@@ -12,7 +12,8 @@ import { Interval } from '@nestjs/schedule'
     credentials: true,
     methods: ["GET", "POST"],
     transports: ['websocket', 'polling'],
-    origin: `http://${process.env.DOMAIN}:${process.env.VUE_PORT}`
+    //origin: `http://${process.env.DOMAIN}:${process.env.VUE_PORT}`
+    origin: `http://localhost:8080`
   },
   allowEIO3: true
 })
@@ -57,7 +58,6 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     } catch (err) {
       return
     }
-    this.logger.log(`User connected !! ${client.id}`)
   }
 
   handleDisconnect(client: Socket, ...args: any[]) {

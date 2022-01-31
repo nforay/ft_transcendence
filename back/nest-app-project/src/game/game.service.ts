@@ -66,4 +66,15 @@ export class GameService {
     await this.gameRepository.remove(game);
     return game.toResponseGame();
   }
+
+  async getByPlayer(name: string) {
+    const user = await UserManager.instance.userRepository.findOne({ where: { name } });
+    if (!user)
+      throw new HttpException(`User not found`, HttpStatus.NOT_FOUND);
+
+    const game = GameManager.instance.getGames().find(game => game.player1.id === user.id || game.player2.id === user.id);
+    if (!game)
+      throw new HttpException(`Game not found`, HttpStatus.NOT_FOUND);
+    return game.toResponseGame();
+  }
 }

@@ -404,14 +404,6 @@ export class ChatCommandHandlers {
       dur = parseInt(args[2], 10);
       if (Number.isNaN(dur)) {
         reason = args.slice(2).join(" ");
-        console.log('REASON: ' +reason)
-        console.log('REASON: ' +reason)
-        console.log('REASON: ' +reason)
-        console.log('REASON: ' +reason)
-        console.log('REASON: ' +reason)
-        console.log('REASON: ' +reason)
-        console.log('REASON: ' +reason)
-        console.log('REASON: ' +reason)
         dur = undefined;
       }
       else if (dur <= 0) {

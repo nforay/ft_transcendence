@@ -47,7 +47,7 @@ export default class App extends Vue {
       setTimeout(() => {
         this.showSnack = false
         this.recordedPopupMessage = ''
-      }, 100)
+      }, 5000)
       store.commit('setPopupMessage', '')
     }
   }

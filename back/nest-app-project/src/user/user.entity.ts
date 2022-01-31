@@ -4,6 +4,7 @@ import * as jwt from 'jsonwebtoken'
 import { UserResponseObject } from './user.dto';
 import { HttpException, HttpStatus } from '@nestjs/common';
 import { BanData } from '../chat/chan.entity';
+import { UserManager } from './user.model';
 
 @Entity('user')
 export class UserEntity {
@@ -50,6 +51,7 @@ export class UserEntity {
       lose: this.lose,
       level: this.getLevel(),
       avatar: `http://${process.env.DOMAIN}:${process.env.PORT}/user/avatar/${this.id}`,
+      status: UserManager.instance.onlineUsersStatus.has(this.id) ? UserManager.instance.onlineUsersStatus.get(this.id).status : 'offline',
       token: (withToken) ? this.token : undefined,
       has2FA: (with2FA) ? this.has2FA : undefined,
       expiresIn: (withToken) ? this.expiresIn : undefined

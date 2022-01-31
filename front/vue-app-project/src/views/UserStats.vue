@@ -26,6 +26,9 @@
           </div>
 
           <md-card-actions>
+            <div v-if="ingame && isloggeduser === false">
+              <md-button class="md-primary" @click="spectate()" :disabled="loading">Spectate <md-icon>visibility</md-icon></md-button>
+            </div>
             <div v-if="isfriend === true">
               <md-button @click="rmFriend()" class="md-accent" :disabled="loading">Remove Friend <md-icon>person_remove</md-icon></md-button>
             </div>
@@ -67,10 +70,10 @@
               </md-table-row>
               <md-table-row style="cursor: pointer;" v-for="(friend, i) in friends" :key="i" @click="loadProfile(friend.username)">
                 <md-table-cell style="width: 0;" class="md-xsmall-hide">
-                    <div style="position: relative; width: 50px;">
-                      <img class="friend-avatar" :src="friend.avatar">
-                      <div :class="friend.htmlStatusClasses" :src="friend.statusImage"></div>
-                    </div>
+                  <div style="position: relative; width: 50px;">
+                    <img class="friend-avatar" :src="friend.avatar">
+                    <div :class="friend.htmlStatusClasses" :src="friend.statusImage"></div>
+                  </div>
                 </md-table-cell>
                 <md-table-cell style="width: 0;">{{ friend.username }}</md-table-cell>
                 <md-table-cell md-numeric><md-icon>emoji_events</md-icon>{{ friend.elo }}</md-table-cell>
@@ -159,6 +162,7 @@ export default class UserProfile extends Vue {
   public isfriend = false
   public isloggeduser = true
   public blocked = false
+  public ingame = false
 
   constructor () {
     super()
@@ -194,6 +198,40 @@ export default class UserProfile extends Vue {
     }
   }
 
+  async spectate () {
+    if (globalFunctions.getToken() === 'error') {
+      store.commit('setPopupMessage', 'You must be logged in to spectate a game')
+      return
+    }
+
+    const userGameIdResponse = await fetch(`http://${process.env.VUE_APP_DOMAIN}:${process.env.VUE_APP_NEST_PORT}/game/player?name=${this.username}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${globalFunctions.getToken()}`
+      }
+    })
+    if (!userGameIdResponse.ok) {
+      store.commit('setPopupMessage', 'The game doesn\'t exist anymore')
+      return
+    }
+    const id = (await userGameIdResponse.json()).id
+
+    const gameJwtResponse = await fetch(`http://${process.env.VUE_APP_DOMAIN}:${process.env.VUE_APP_NEST_PORT}/game/requestSpectate?id=${id}`, {
+      method: 'GET',
+      headers: {
+        Authorization: 'Bearer ' + globalFunctions.getToken()
+      }
+    })
+    if (!gameJwtResponse.ok) {
+      store.commit('setPopupMessage', 'The game doesn\'t exist anymore')
+      return
+    }
+    const data = await gameJwtResponse.json()
+    window.localStorage.setItem('gameJwt', data.gameJwt)
+    window.localStorage.setItem('spectator', 'true')
+    router.push('/game?id=' + id)
+  }
+
   async queryProfile (username: string): Promise<void> {
     this.username = (this.$route.query.user ? this.$route.query.user.toString() : store.state.username)
     this.isloggeduser = true
@@ -212,6 +250,8 @@ export default class UserProfile extends Vue {
     this.elo = data.elo
     this.win = data.win
     this.lose = data.lose
+    if (data.status === 'ingame')
+      this.ingame = true
 
     const friendlistResponse = await fetch(
       'http://' + process.env.VUE_APP_DOMAIN + ':' + process.env.VUE_APP_NEST_PORT + '/user/friends/name/' + this.username, {

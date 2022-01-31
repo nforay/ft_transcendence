@@ -4,6 +4,7 @@ import { CreateGameDto } from './dto/create-game.dto';
 import { UpdateGameDto } from './dto/update-game.dto';
 import { AdminGuard } from '../shared/admin.guard';
 import { AuthUser } from '../shared/auth-user.decorator';
+import { AuthGuard } from 'src/shared/auth.guard';
 
 @Controller('game')
 export class GameController {
@@ -27,6 +28,12 @@ export class GameController {
   @Get('requestSpectate')
   requestSpectate(@AuthUser() user, @Query('id') id: string) {
     return this.gameService.requestSpectator(user, id);
+  }
+
+  @Get('player')
+  @UseGuards(AuthGuard)
+  getByPlayer(@Query('name') name: string) {
+    return this.gameService.getByPlayer(name);
   }
 
   @Get(':id')

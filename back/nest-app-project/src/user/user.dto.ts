@@ -55,6 +55,7 @@ export class UserResponseObject {
   win: number;
   lose: number;
   level: number;
+  status: string;
   has2FA?: boolean;
   token?: string;
   expiresIn?: number;
