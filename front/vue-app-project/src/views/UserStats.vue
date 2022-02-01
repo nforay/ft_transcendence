@@ -2,7 +2,7 @@
   <div>
     <div class="md-layout md-gutter">
       <div style="margin: 15px 0;" class="md-layout-item md-layout md-gutter md-alignment-top-center">
-        <md-card style="min-width: 300px;" class="md-layout-item md-size-50">
+        <md-card style="min-width: 300px;" class="md-layout-item md-size-65">
           <md-card-header>
           </md-card-header>
           
@@ -10,19 +10,33 @@
             <md-card-media>
               <img style="border-radius: 5px;" class="user-profile-avatar" :src="avatar" alt="Avatar">
             </md-card-media>
-            
-            <div style="margin-left: 15px">
-              <p style="margin-bottom: 10px" class="md-title">{{ this.username }}'s Profile</p>
-              <p class="md-subheading" style="text-align: left;">{{ this.bio }}</p>
-            </div>
 
-            <md-card-content style="text-align: right;" class="md-layout md-layout-item md-alignment-center-right">
+            <md-card-content style="text-align: right; position: relative;" class="md-layout md-layout-item md-alignment-center-right">
+              <div style="position: absolute; top: 0; left: 0; margin-left: 15px; width: 65%; text-align: left;">
+                <p style="margin-bottom: 10px;" class="md-title md-small-hide">{{ this.username }}</p>
+                <p class="md-small-hide md-subheading" style="text-align: left;">{{ this.bio }}</p>
+              </div>
               <div class="md-layout-item" style="white-space: nowrap;">
+                <img :title="this.rank" :src="getRankLogo(this.rank)" alt="Rank">
                 <span><h2><md-icon>emoji_events</md-icon>Elo - {{ this.elo }}</h2></span>
-                <span><h2><md-icon class="history-win">add_box</md-icon>Wins - {{ this.win }}</h2></span>
-                <span><h2><md-icon class="history-lose">indeterminate_check_box</md-icon>Loses - {{ this.lose }}</h2></span>
               </div>
             </md-card-content>
+          </div>
+
+          <!--<div style="width: 30%;">
+              Level {{ Math.floor(this.level) }}
+              <md-progress-bar md-mode="determinate" :md-value="getXpProgress(this.level)"></md-progress-bar>
+          </div>-->
+          <div style="display: flex; justify-content: space-around;">
+            <span><h2><md-icon class="history-win">add_box</md-icon>Wins - {{ this.win }}</h2></span>
+            <span><h2><md-icon class="history-lose">indeterminate_check_box</md-icon>Loses - {{ this.lose }}</h2></span>
+          </div>
+          <div style="margin: 15px 0;">
+            <p class="md-title">Achievements</p>
+            <img :class="getAchievementClass('playcount_1')" title="Play 5 Games" src="../assets/achievement_playcount_1.png" alt="Playcount Medal">
+            <img :class="getAchievementClass('playcount_2')" title="Play 10 Games" src="../assets/achievement_playcount_2.png" alt="Playcount Medal">
+            <img :class="getAchievementClass('spectate')" title="Spectate a Game" src="../assets/achievement_spectate.png" alt="Spectate Medal">
+            <img :class="getAchievementClass('42')" title="Log in with 42" src="../assets/achievement_42.png" alt="Spectate Medal">
           </div>
 
           <md-card-actions>
@@ -42,6 +56,7 @@
               <md-button class="md-accent" @click="unblock()" :disabled="loading">Unblock <md-icon>person</md-icon></md-button>
             </div>
           </md-card-actions>
+
         </md-card>
       </div>
     </div>
@@ -123,9 +138,8 @@ class GameData {
   format (username: string) : string {
     const userScore = (username === this.player1Name ? this.player1Score : this.player2Score)
     const opponentScore = (username === this.player1Name ? this.player2Score : this.player1Score)
-    const userWon = (username === this.player1Name ? this.player1Won : !this.player1Won)
     const opponentName = (username === this.player1Name ? this.player2Name : this.player1Name)
-    return `${username} ${userWon ? 'won' : 'lost'} ${userScore} - ${opponentScore} ${opponentName}`
+    return `${username} ${userScore} - ${opponentScore} ${opponentName}`
   }
 
   icon (username: string) : string {
@@ -153,6 +167,7 @@ export default class UserProfile extends Vue {
   public elo = 100
   public win = 0
   public lose = 0
+  public level = 0
   public loading = true
   public history: GameData[] = []
 
@@ -163,6 +178,9 @@ export default class UserProfile extends Vue {
   public isloggeduser = true
   public blocked = false
   public ingame = false
+  public rank = 'Silver 1'
+
+  public achievements: Array<string> = []
 
   constructor () {
     super()
@@ -170,6 +188,15 @@ export default class UserProfile extends Vue {
     this.bio = 'No bio written'
     this.avatar = ''
     this.thisuser = false
+  }
+
+  getRankLogo(name: string) {
+    const rank = name.replace(/\s/g, '_').toLowerCase()
+    return '/' + rank + '.png'
+  }
+  
+  getAchievementClass(name: string) {
+    return 'achievement-medal ' + (this.achievements.indexOf(name) === -1 ? 'locked-achievement' : '')
   }
 
   getXpProgress (level: number) : number {
@@ -250,8 +277,11 @@ export default class UserProfile extends Vue {
     this.elo = data.elo
     this.win = data.win
     this.lose = data.lose
+    this.level = data.level;
     if (data.status === 'ingame')
       this.ingame = true
+    this.achievements = data.achievements;
+    this.rank = data.rank;
 
     const friendlistResponse = await fetch(
       'http://' + process.env.VUE_APP_DOMAIN + ':' + process.env.VUE_APP_NEST_PORT + '/user/friends/name/' + this.username, {
@@ -411,6 +441,17 @@ export default class UserProfile extends Vue {
 </script>
 
 <style scoped>
+
+img.locked-achievement {
+  filter: saturate(0) brightness(80%);
+  opacity: 0.8;
+}
+
+img.achievement-medal {
+  width: auto;
+  height: 100px;
+}
+
 img.friend-avatar {
   display: block;
   width: 50px;

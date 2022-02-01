@@ -29,7 +29,7 @@ export class UserDTO {
   role: string;
 
   @IsString()
-  @Length(0, 400)
+  @Length(0, 200)
   bio: string;
 }
 
@@ -56,6 +56,8 @@ export class UserResponseObject {
   lose: number;
   level: number;
   status: string;
+  achievements: string[];
+  rank: string;
   has2FA?: boolean;
   token?: string;
   expiresIn?: number;
