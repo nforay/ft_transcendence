@@ -13,7 +13,7 @@
         <textarea v-else rows="1" cols="16" class="username-edit" v-model="username" @blur="toggleEditUsername" maxlength="16"></textarea>
         <p class="bio" v-if="this.bio !== '' && !this.editBio" @click="toggleEditBio">{{ this.bio }}</p>
         <p class="bio" v-else-if="!this.editBio" @click="toggleEditBio">Add a bio</p>
-        <textarea rows="8" cols="50" v-if="this.editBio" class="edit-bio" v-model="bio" @blur="toggleEditBio" maxlength="400"></textarea>
+        <textarea rows="8" cols="50" v-if="this.editBio" class="edit-bio" v-model="bio" @blur="toggleEditBio" maxlength="200"></textarea>
       </div>
     </div>
     <button class="apply" v-if="!this.editBio && !this.editUsername && this.changed" @click="applyChanges">Apply Changes</button>

@@ -82,6 +82,14 @@ export default class Play extends Vue {
     this.activeGames = data.games
   }
 
+  async destroyed () {
+    if (this.queueJoined) {
+      const success = await this.leaveQueue()
+      if (success)
+        store.commit('setPopupMessage', 'You left the queue')
+    }
+  }
+
   async goToGame (id: string) {
     if (globalFunctions.getToken() === 'error') {
       store.commit('setPopupMessage', 'You must be logged in to spectate a game')
@@ -163,10 +171,10 @@ export default class Play extends Vue {
     this.sending = data.accepted
   }
 
-  async leaveQueue () : Promise<void> {
+  async leaveQueue () : Promise<boolean> {
     if (document.cookie.indexOf('Token') === -1) {
       store.commit('setPopupMessage', 'You must be logged in to leave the queue')
-      return
+      return false;
     }
     const token = document.cookie.split('Token=')[1].split(';')[0]
     const response = await fetch(`http://${process.env.VUE_APP_DOMAIN}:${process.env.VUE_APP_NEST_PORT}/matchmaking/leave`, {
@@ -176,11 +184,13 @@ export default class Play extends Vue {
       }
     })
     if (!response.ok) {
-      return
+      store.commit('setPopupMessage', 'Could not leave the queue')
+      return false;
     }
     const data = await response.json()
     this.queueJoined = !data.left
     this.sending = !data.left
+    return true;
   }
 
   userAvatar (id: string) : string {
