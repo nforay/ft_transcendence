@@ -17,6 +17,7 @@ import { SocketManager } from '../utils/SocketManager'
 import store from '../store'
 import router from '../router'
 import { Prop } from 'vue-property-decorator'
+import { Watch } from 'vue-property-decorator'
 
 export class Paddle {
   x: number
@@ -96,6 +97,17 @@ export default class GameCanvas extends Vue {
   destroyed () : void {
     this.socketManager.disconnect()
     window.localStorage.removeItem('gameJwt')
+  }
+
+  switchgame (queryid : string) : void {
+    this.gameJwt = window.localStorage.getItem('gameJwt')
+    this.gameId = queryid
+    this.socketManager.disconnect()
+    this.socketManager = new SocketManager('http://' + process.env.VUE_APP_DOMAIN + ':' + process.env.VUE_APP_GAME_PORT + '/?gameJwt=' + this.gameJwt)
+    this.finished = false
+    this.initCanvas()
+    this.retrievePositions()
+    this.setupSocket()
   }
 
   gameLoop () : void {
@@ -283,6 +295,11 @@ export default class GameCanvas extends Vue {
     this.initCanvas()
     this.retrievePositions()
     this.setupSocket()
+  }
+
+  @Watch('$route')
+  onRouteChange (to: any, from: any) : void {
+    this.switchgame(to.query.id)
   }
 }
 </script>
