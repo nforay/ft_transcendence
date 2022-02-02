@@ -44,11 +44,11 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       let game = GameManager.instance.getGame(decoded.gameId)
       if (!game)
         return
-      if (game.player1.id === decoded.playerId) {
+      if (game.player1.id === decoded.playerId && !decoded.spectator) {
         game.player1.socketId = client.id;
         game.startIfBothConnected();
       }
-      else if (game.player2.id === decoded.playerId) {
+      else if (game.player2.id === decoded.playerId && !decoded.spectator) {
         game.player2.socketId = client.id;
         game.startIfBothConnected();
       }
@@ -101,6 +101,22 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       let game = GameManager.instance.getGame(decoded.gameId);
       if (game && game.state === GameState.IN_GAME) {
         game.move(decoded.playerId, data.yPosition, data.packetId);
+        return game
+      }
+    } catch (err) {
+      return null;
+    }
+  }
+
+  @SubscribeMessage("usePowerup")
+  async usePowerup(@MessageBody() data: { gameJwt: string }) {
+    try {
+      const decoded = await jwt.verify(data.gameJwt, process.env.JWT_SECRET);
+      if (decoded.spectator === true)
+        return null;
+      let game = GameManager.instance.getGame(decoded.gameId);
+      if (game && game.state === GameState.IN_GAME) {
+        game.usePowerup(decoded.playerId);
         return game
       }
     } catch (err) {

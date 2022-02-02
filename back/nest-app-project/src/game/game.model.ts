@@ -8,6 +8,7 @@ import { GameEntity } from './entities/game.entity'
 import { GameGateway } from './game.gateway'
 import { UserManager, UserStatus } from '../user/user.model'
 import { ResponseGame } from './dto/response-game.dto'
+import { GameSettingsDto } from 'src/matchmaking/matchmaking.dto'
 
 export class GameManager {
   public static instance: GameManager = new GameManager()
@@ -21,7 +22,7 @@ export class GameManager {
     GameManager.instance = this
   }
 
-  createGame(player1Id: string, player2Id: string, updateStats: boolean = true): Game {
+  createGame(player1Id: string, player2Id: string, player1Powerup: string, player2Powerup: string, updateStats: boolean = true): Game {
     let alreadyExistingGame = this.getGameByPlayerId(player1Id);
     if (alreadyExistingGame)
       GameManager.instance.removeGame(alreadyExistingGame.id);
@@ -29,7 +30,7 @@ export class GameManager {
     if (alreadyExistingGame)
       GameManager.instance.removeGame(alreadyExistingGame.id);
 
-    const game = new Game(player1Id, player2Id, updateStats)
+    const game = new Game(player1Id, player2Id, player1Powerup, player2Powerup, updateStats)
     this.games.push(game)
     return game
   }
@@ -84,6 +85,9 @@ export class Player {
   height: number = 250
   socketId: string = null
   speed: number = 0
+  powerupEnabled = false;
+  powerupAlreadyUsed = false;
+  powerup: string;
 
   constructor(id: string, x: number) {
     this.id = id
@@ -120,15 +124,17 @@ export class Game {
 
   spectators: Spectator[] = []
 
-  constructor(player1Id: string, player2Id: string, updateStats: boolean) {
+  constructor(player1Id: string, player2Id: string, player1Powerup: string, player2Powerup: string, updateStats: boolean) {
     this.player1 = new Player(player1Id, 100)
     this.player2 = new Player(player2Id, 1900)
 
     this.ballLastX = this.ballX;
     this.ballLastY = this.ballY;
 
-    this.updateStats = updateStats
-
+    this.player1.powerup = player1Powerup;
+    this.player2.powerup = player2Powerup;
+    this.updateStats = updateStats;
+    
     setTimeout(() => {
       if (!this.player1.socketId || !this.player2.socketId) {
         if (this.player1.socketId) {
@@ -189,6 +195,48 @@ export class Game {
       if (dist > this.player2.speed * delta + 200)
         return;
       this.player2.y = yPosition;
+    }
+  }
+
+  usePowerFistPowerup(playerId: string) {
+    if (playerId === this.player1.id) {
+      if (this.player1.powerupAlreadyUsed)
+        return;
+      this.player1.powerupEnabled = true;
+      this.player1.powerupAlreadyUsed = true;
+    } else {
+      if (this.player2.powerupAlreadyUsed)
+        return;
+      this.player2.powerupEnabled = true;
+      this.player2.powerupAlreadyUsed = true;
+    }
+  }
+
+  useDashPowerup(playerId: string) {
+    if (playerId === this.player1.id) {
+      if (this.player1.powerupAlreadyUsed)
+        return;
+      this.player1.speed = this.player1.speed * 1.4;
+      this.player1.powerupEnabled = true;
+      this.player1.powerupAlreadyUsed = true;
+    } else {
+      if (this.player2.powerupAlreadyUsed)
+        return;
+      this.player2.speed = this.player2.speed * 1.4;
+      this.player2.powerupEnabled = true;
+      this.player2.powerupAlreadyUsed = true;
+    }
+  }
+
+  usePowerup(playerId: string) {
+    const powerUp = (playerId === this.player1.id ? this.player1.powerup : this.player2.powerup)
+    switch (powerUp) {
+      case 'powerup_powerfist':
+        this.usePowerFistPowerup(playerId)
+        break;
+      case 'powerup_dash':
+        this.useDashPowerup(playerId)
+        break;
     }
   }
 
@@ -266,9 +314,24 @@ export class Game {
         const normalizedRelativeIntersectionY = (relativeIntersectY/(player.height/2));
         const bounceX = normalizedRelativeIntersectionY * (500);
         const bounceY = normalizedRelativeIntersectionY * (-1500);
-        this.speedBoost = Math.abs(bounceX);
+        let powerFistBoost = 0;
+        if ((xDir < 0 && collide1 && this.player1.powerupEnabled && this.player1.powerup === 'powerup_powerfist')
+            || (xDir > 0 && collide2 && this.player2.powerupEnabled && this.player2.powerup === 'powerup_powerfist'))
+          powerFistBoost = 650;
+
+        if (xDir < 0 && collide1 && this.player1.powerupEnabled && this.player1.powerup === 'powerup_dash')
+          this.player1.speed = this.player1.speed / 1.4;
+        if (xDir > 0 && collide2 && this.player2.powerupEnabled && this.player2.powerup === 'powerup_dash')
+          this.player2.speed = this.player1.speed / 1.4;
+
+        this.speedBoost = Math.abs(bounceX) + powerFistBoost;
         this.ballYSpeed = bounceY;
         this.ballXSpeed *= -1;
+
+        if (xDir < 0 && collide1)
+          this.player1.powerupEnabled = false;
+        if (xDir > 0 && collide2)
+          this.player2.powerupEnabled = false;
     }
     
     this.lastUpdate = time;
@@ -391,6 +454,10 @@ export class Game {
     this.player2.speed = 0;
     this.player1.y = 1000;
     this.player2.y = 1000;
+    this.player1.powerupEnabled = false;
+    this.player2.powerupEnabled = false;
+    this.player1.powerupAlreadyUsed = true;
+    this.player2.powerupAlreadyUsed = true;
     this.speedBoost = 0;
     this.engage = true;
     setTimeout(() => {
@@ -401,6 +468,8 @@ export class Game {
       const time = new Date().getTime();
       this.player1.positionTime = time;
       this.player2.positionTime = time;
+      this.player1.powerupAlreadyUsed = false;
+      this.player2.powerupAlreadyUsed = false;
     }, 3000)
   }
 

@@ -7,7 +7,7 @@ import * as jwt from 'jsonwebtoken'
 import { UserManager } from '../user/user.model';
 import { ChallengeManager } from '../challenge/challenge.model';
 import { GameManager } from '../game/game.model';
-import { PlayerPair } from '../matchmaking/matchmaking.service';
+import { GameSettingsDto } from '../matchmaking/matchmaking.dto';
 
 @WebSocketGateway(8082, {
 	cors: {
@@ -162,7 +162,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect, On
       client.emit('challengeGameStarting', { success: false });
       return;
     }
-    const game = GameManager.instance.createGame(user.id, sender.id, false);
+    const game = GameManager.instance.createGame(user.id, sender.id, 'no_powerup', 'no_powerup', false);
     const player1Jwt = await jwt.sign({ gameId: game.id, playerId: user.id }, process.env.JWT_SECRET, {expiresIn: '1y'});
     const player2Jwt = await jwt.sign({ gameId: game.id, playerId: sender.id }, process.env.JWT_SECRET, {expiresIn: '1y'});
     client.emit('challengeGameStarting', { success: true, gameId: game.id, gameJwt: player1Jwt });

@@ -45,7 +45,7 @@ services:
         - VUE_APP_NEST_PORT=${NEST_PORT}
         - VUE_APP_GAME_PORT=${GAME_PORT}
         - VUE_APP_CHAT_PORT=${CHAT_PORT}
-    restart: always
+    # restart: always
     container_name: front
     ports:
       - "${VUE_PORT}:80"

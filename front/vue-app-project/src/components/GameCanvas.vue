@@ -3,8 +3,10 @@
     <canvas v-if="!isSpectator" id="canvas" tabindex="0"
     @keydown.up="leftPaddle.upPressed = true"
     @keydown.down="leftPaddle.downPressed = true"
+    @keydown.space="usePowerup = true"
     @keyup.up="leftPaddle.upPressed = false"
-    @keyup.down="leftPaddle.downPressed = false"></canvas>
+    @keyup.down="leftPaddle.downPressed = false"
+    @keyup.space="usePowerup = false"></canvas>
 
     <canvas v-else id="canvas" tabindex="0"></canvas>
   </div>
@@ -28,6 +30,8 @@ export class Paddle {
   downPressed = false
   speed = 0
   score = 0
+  colorize = false
+  powerupColor = '#fff'
 
   constructor (x: number, y: number, width: number, height: number) {
     this.x = x
@@ -78,6 +82,7 @@ export default class GameCanvas extends Vue {
   ballColor = '#fff'
   pixel = 50
   invertX = false
+  usePowerup = false
 
   finished = false
   won = true
@@ -132,6 +137,12 @@ export default class GameCanvas extends Vue {
         yPosition: this.leftPaddle.y,
         packetId: this.packetId
       })
+      if (this.usePowerup) {
+        this.socketManager.sendMessage('usePowerup', {
+          gameJwt: this.gameJwt,
+          packetId: this.packetId
+        })
+      }
       this.timeBeforeServerSync = this.serverSyncFrequency
       this.packetId++
     }
@@ -161,8 +172,16 @@ export default class GameCanvas extends Vue {
       this.ctx.fillRect(this.canvas.width / 2 - this.pixel / 4 * scalingFactor, i, this.pixel / 2 * scalingFactor, this.pixel * scalingFactor) // middle line
     }
 
-    this.ctx.fillStyle = this.paddleColor
+    if (!this.leftPaddle.colorize)
+      this.ctx.fillStyle = this.paddleColor
+    else
+      this.ctx.fillStyle = this.leftPaddle.powerupColor;
     this.ctx.fillRect((this.leftPaddle.x - this.leftPaddle.width / 2) * scalingFactor, (this.leftPaddle.y - this.leftPaddle.height / 2) * scalingFactor, this.leftPaddle.width * scalingFactor, this.leftPaddle.height * scalingFactor) // left paddle
+
+    if (!this.rightPaddle.colorize)
+      this.ctx.fillStyle = this.paddleColor
+    else
+      this.ctx.fillStyle = this.rightPaddle.powerupColor;
     this.ctx.fillRect((this.rightPaddle.x - this.rightPaddle.width / 2) * scalingFactor, (this.rightPaddle.y - this.rightPaddle.height / 2) * scalingFactor, this.rightPaddle.width * scalingFactor, this.rightPaddle.height * scalingFactor) // right paddle
 
     this.ctx.fillStyle = this.ballColor
@@ -259,6 +278,12 @@ export default class GameCanvas extends Vue {
       this.leftPaddle.height = you.height
       this.leftPaddle.speed = you.speed
       this.leftPaddle.score = you.score
+      if (you.powerup === 'powerup_powerfist')
+        this.leftPaddle.powerupColor = '#e8cf2c'
+      else if (you.powerup === 'powerup_dash')
+        this.leftPaddle.powerupColor = '#429feb'
+
+      this.leftPaddle.colorize = you.powerupEnabled
 
       this.rightPaddle.x = 1900
       this.rightPaddle.y = opponent.y
@@ -266,12 +291,18 @@ export default class GameCanvas extends Vue {
       this.rightPaddle.height = opponent.height
       this.rightPaddle.speed = opponent.speed
       this.rightPaddle.score = opponent.score
+      this.rightPaddle.colorize = opponent.powerupEnabled
+      if (opponent.powerup === 'powerup_powerfist')
+        this.rightPaddle.powerupColor = '#e8cf2c'
+      else if (opponent.powerup === 'powerup_dash')
+        this.rightPaddle.powerupColor = '#429feb'
 
       this.ball.x = data.game.ballX
       this.ball.y = data.game.ballY
       this.ball.speedX = data.game.ballXSpeed
       this.ball.speedY = data.game.ballYSpeed
       this.ball.engage = data.game.engage
+
     })
 
     this.socketManager.on('gameCanceled', () => {
