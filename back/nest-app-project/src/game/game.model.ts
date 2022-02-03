@@ -22,7 +22,7 @@ export class GameManager {
     GameManager.instance = this
   }
 
-  createGame(player1Id: string, player2Id: string, player1Powerup: string, player2Powerup: string, updateStats: boolean = true): Game {
+  createGame(player1Id: string, player2Id: string, player1Powerup: string, player2Powerup: string, map: string, updateStats: boolean = true): Game {
     let alreadyExistingGame = this.getGameByPlayerId(player1Id);
     if (alreadyExistingGame)
       GameManager.instance.removeGame(alreadyExistingGame.id);
@@ -30,7 +30,7 @@ export class GameManager {
     if (alreadyExistingGame)
       GameManager.instance.removeGame(alreadyExistingGame.id);
 
-    const game = new Game(player1Id, player2Id, player1Powerup, player2Powerup, updateStats)
+    const game = new Game(player1Id, player2Id, player1Powerup, player2Powerup, map, updateStats)
     this.games.push(game)
     return game
   }
@@ -95,6 +95,20 @@ export class Player {
   }
 }
 
+class Obstacle {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+
+  constructor(x: number, y: number, width: number, height: number) {
+    this.x = x;
+    this.y = y;
+    this.width = width;
+    this.height = height;
+  }
+}
+
 // Assume 2000x2000 canvas
 // Speed in units/second
 export class Game {
@@ -122,9 +136,13 @@ export class Game {
 
   updateStats: boolean;
 
+  map: string;
+
   spectators: Spectator[] = []
 
-  constructor(player1Id: string, player2Id: string, player1Powerup: string, player2Powerup: string, updateStats: boolean) {
+  obstacles: Obstacle[] = []
+
+  constructor(player1Id: string, player2Id: string, player1Powerup: string, player2Powerup: string, map: string, updateStats: boolean) {
     this.player1 = new Player(player1Id, 100)
     this.player2 = new Player(player2Id, 1900)
 
@@ -133,6 +151,12 @@ export class Game {
 
     this.player1.powerup = player1Powerup;
     this.player2.powerup = player2Powerup;
+    this.map = map;
+    if (map === 'obstacles') {
+      this.obstacles.push(new Obstacle(1000 - 50, 200, 100, 300))
+      this.obstacles.push(new Obstacle(1000 - 50, 1800 - 300, 100, 300))
+      this.obstacles.push(new Obstacle(1000 - 50, 1000 - 100, 100, 200))
+    }
     this.updateStats = updateStats;
     
     setTimeout(() => {
@@ -332,6 +356,35 @@ export class Game {
           this.player1.powerupEnabled = false;
         if (xDir > 0 && collide2)
           this.player2.powerupEnabled = false;
+    }
+
+    for (const obstacle of this.obstacles) {
+      const left = this.ballX - this.ballRadius < obstacle.x + obstacle.width;
+      const right = this.ballX + this.ballRadius > obstacle.x;
+      const top = this.ballY - this.ballRadius < obstacle.y + obstacle.height;
+      const bottom = this.ballY + this.ballRadius > obstacle.y;
+      if (!right || !left || !top || !bottom)
+        continue;
+      
+      const lastLeft = this.ballLastX - this.ballRadius < obstacle.x + obstacle.width;
+      const lastRight = this.ballLastX + this.ballRadius > obstacle.x;
+      const lastTop = this.ballLastY - this.ballRadius < obstacle.y + obstacle.height;
+      const lastBottom = this.ballLastY + this.ballRadius > obstacle.y;
+
+      if (!lastLeft && left) {
+        this.ballX = obstacle.x + obstacle.width + this.ballRadius;
+        this.ballXSpeed *= -1;
+      } else if (!lastRight && right) {
+        this.ballX = obstacle.x - this.ballRadius;
+        this.ballXSpeed *= -1;
+      } else if (!lastTop && top) {
+        this.ballY = obstacle.y + obstacle.height + this.ballRadius;
+        this.ballYSpeed *= -1;
+      } else if (!lastBottom && bottom) {
+        this.ballY = obstacle.y - this.ballRadius;
+        this.ballYSpeed *= -1;
+      }
+      break;
     }
     
     this.lastUpdate = time;

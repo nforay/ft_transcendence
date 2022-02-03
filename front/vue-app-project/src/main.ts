@@ -2,7 +2,7 @@ import Vue from 'vue'
 import App from './App.vue'
 import router from './router'
 import store from './store'
-import { MdButton, MdList, MdToolbar, MdIcon, MdMenu, MdBadge, MdAvatar, MdTooltip, MdField, MdSnackbar, MdCard, MdProgress, MdTabs, MdTable, MdContent, MdRadio } from 'vue-material/dist/components'
+import { MdButton, MdList, MdToolbar, MdIcon, MdMenu, MdBadge, MdAvatar, MdTooltip, MdField, MdSnackbar, MdCard, MdProgress, MdTabs, MdTable, MdContent, MdRadio, MdRipple } from 'vue-material/dist/components'
 import 'vue-material/dist/vue-material.min.css'
 import 'vue-material/dist/theme/default.css'
 
@@ -22,6 +22,7 @@ Vue.use(MdTabs)
 Vue.use(MdTable)
 Vue.use(MdContent)
 Vue.use(MdRadio)
+Vue.use(MdRipple)
 
 Vue.config.productionTip = false
 

@@ -7,8 +7,14 @@ export class GameSettingsDto
   @IsIn(['no_powerup', 'powerup_powerfist', 'powerup_dash'])
   powerup: string;
 
-  constructor(powerup: string)
+  @IsString()
+  @IsNotEmpty()
+  @IsIn(['classic', 'obstacles'])
+  map: string;
+
+  constructor(powerup: string, map: string)
   {
     this.powerup = powerup;
+    this.map = map;
   }
 }

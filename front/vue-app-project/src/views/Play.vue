@@ -1,16 +1,22 @@
 <template>
   <div>
-    <UserCard v-if="username.length > 0" :username="username" />
+    <UserCard v-if="username.length > 0" :username="username" :displayAchievements="false" />
     <div class="play md-layout">
       <md-card class="md-layout-item md-size-65 md-align-center">
         <md-card-header>
           <div class="md-title md-layout-item md-small-size-100">Matchmaking</div>
         </md-card-header>
         <md-card-content>
+          <p class="md-title">Power Ups</p>
           <div style="display: flex; justify-content: space-around; margin-left: 15%; margin-right: 15%;" class="md-layout-item">
             <md-radio v-model="powerup" value="no_powerup" class="md-primary">No Power Up</md-radio>
             <md-radio v-model="powerup" value="powerup_powerfist" class="md-primary">Power Fist</md-radio>
-            <md-radio v-model="powerup" value="powerup_dash" class="md-primary">Dash</md-radio>
+            <md-radio v-model="powerup" value="powerup_dash" class="md-primary">Sprint</md-radio>
+          </div>
+          <p style="margin-top: 15px" class="md-title">Map</p>
+          <div style="display: flex; justify-content: space-around; flex-wrap: wrap; margin-left: 15%; margin-right: 15%;">
+            <md-radio v-model="map" value="classic" class="md-primary">Classic</md-radio>
+            <md-radio v-model="map" value="obstacles" class="md-primary">Obstacles</md-radio>
           </div>
         </md-card-content>
           <md-card-actions>
@@ -73,6 +79,7 @@ export default class Play extends Vue {
   public activeGames: Array<any> = []
 
   public powerup: string = 'no_powerup'
+  public map: string = 'classic'
 
   get username() {
     return store.state.username
@@ -173,7 +180,8 @@ export default class Play extends Vue {
         'Content-type': 'application/json'
       },
       body: JSON.stringify({
-        powerup: this.powerup
+        powerup: this.powerup,
+        map: this.map
       })
     })
     if (!response.ok) {
@@ -216,6 +224,12 @@ export default class Play extends Vue {
 <style lang="scss" scoped>
   .md-card {
     margin-top: 16px;
+  }
+
+  .map-chooser {
+    min-width: 70px;
+    width: 25%;
+    height: auto;
   }
 
   .play {

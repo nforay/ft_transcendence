@@ -52,16 +52,9 @@ export class MatchmakingService {
 
     // Search match
     const relevantQueue = this.queue.filter(inQueuePlayer => {
-      console.log(settings.powerup + '  ' + inQueuePlayer.settings.powerup);
-      console.log(settings.powerup + '  ' + inQueuePlayer.settings.powerup);
-      console.log(settings.powerup + '  ' + inQueuePlayer.settings.powerup);
-      console.log(settings.powerup + '  ' + inQueuePlayer.settings.powerup);
-      console.log(settings.powerup + '  ' + inQueuePlayer.settings.powerup);
-      console.log(settings.powerup + '  ' + inQueuePlayer.settings.powerup);
-      console.log(settings.powerup + '  ' + inQueuePlayer.settings.powerup);
       if (settings.powerup === 'no_powerup')
-        return inQueuePlayer.settings.powerup === 'no_powerup'
-      return inQueuePlayer.settings.powerup !== 'no_powerup'
+        return inQueuePlayer.settings.powerup === 'no_powerup' && inQueuePlayer.settings.map === settings.map;
+      return inQueuePlayer.settings.powerup !== 'no_powerup' && inQueuePlayer.settings.map === settings.map;
     })
 
     if (relevantQueue.length >= 2) {
@@ -69,7 +62,7 @@ export class MatchmakingService {
       this.paired.push(new PlayerPair(user.id, inQueueOpponent.id, settings, inQueueOpponent.settings));
       this.queue.splice(this.queue.findIndex(inQueuePlayer => { return inQueuePlayer.id === user.id }), 1);
       this.queue.splice(this.queue.findIndex(inQueuePlayer => { return inQueuePlayer.id === inQueueOpponent.id }), 1);
-      const game = GameManager.instance.createGame(user.id, inQueueOpponent.id, settings.powerup, inQueueOpponent.settings.powerup);
+      const game = GameManager.instance.createGame(user.id, inQueueOpponent.id, settings.powerup, inQueueOpponent.settings.powerup, settings.map);
       return { accepted: true, gameId: game.id };
     }
     return { accepted: true };

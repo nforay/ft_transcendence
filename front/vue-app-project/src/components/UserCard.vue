@@ -26,7 +26,7 @@
           <span><h2><md-icon class="history-win">add_box</md-icon>Wins - {{ this.win }}</h2></span>
           <span><h2><md-icon class="history-lose">indeterminate_check_box</md-icon>Loses - {{ this.lose }}</h2></span>
         </div>
-        <div style="margin: 15px 0;">
+        <div v-if="displayAchievements" style="margin: 15px 0;">
           <p class="md-title">Achievements</p>
           <img :class="getAchievementClass('playcount_1')" title="Play 5 Games" src="../assets/achievement_playcount_1.png" alt="Playcount Medal">
           <img :class="getAchievementClass('playcount_2')" title="Play 10 Games" src="../assets/achievement_playcount_2.png" alt="Playcount Medal">
@@ -81,6 +81,7 @@ export default class UserCard extends Vue {
   public ingame = false
 
   @Prop({ default: store.state.username }) private username!: string;
+  @Prop({ default: true }) private displayAchievements!: boolean;
 
   async mounted () {
     this.queryProfile()
