@@ -119,7 +119,7 @@ export class Game {
   player2: Player;
 
   ballX: number = 1000;
-  ballY: number = Math.random() * (1750 - 250) + 250;
+  ballY: number;
   ballRadius: number = 22
   ballXSpeed: number = 0;
   ballYSpeed: number = 0;
@@ -157,6 +157,8 @@ export class Game {
       this.obstacles.push(new Obstacle(1000 - 50, 1800 - 300, 100, 300))
       this.obstacles.push(new Obstacle(1000 - 50, 1000 - 100, 100, 200))
     }
+    this.ballY = this.getRandomBallPosition();
+
     this.updateStats = updateStats;
     
     setTimeout(() => {
@@ -496,9 +498,31 @@ export class Game {
     return ((r >= 0 && r <= 1) && (s >= 0 && s <= 1));
   }
 
+  getRandomBallPosition()
+  {
+    do {
+      let pos = Math.random() * (1750 - 250) + 250;
+      let collide = false;
+      for (const obstacle of this.obstacles) {
+        const left = 1000 - this.ballRadius < obstacle.x + obstacle.width;
+        const right = 1000 + this.ballRadius > obstacle.x;
+        const top = pos - this.ballRadius < obstacle.y + obstacle.height;
+        const bottom = pos + this.ballRadius > obstacle.y;
+        if (left && right && top && bottom) {
+          console.log('collide');
+          collide = true;
+          break;
+        }
+      }
+      if (collide)
+        continue;
+      return pos;
+    } while (true);
+  }
+
   reset() : void {
     this.ballX = 1000;
-    this.ballY = Math.random() * (1750 - 250) + 250;
+    this.ballY = this.getRandomBallPosition()
     this.ballLastX = this.ballX
     this.ballLastY = this.ballY
     this.ballXSpeed = 0;

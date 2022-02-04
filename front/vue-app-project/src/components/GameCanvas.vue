@@ -9,8 +9,70 @@
     @keyup.space="usePowerup = false"></canvas>
 
     <canvas v-else id="canvas" tabindex="0"></canvas>
+
+    <div class="game-data-flex">
+      <img v-if="leftPaddle.avatar" class="player-card-avatar" :src="leftPaddle.avatar" alt="Avatar">
+      <img v-else class="player-card-avatar" src="../assets/avatar.jpg" alt="Avatar">
+
+      <span v-if="leftPaddle.name" style="flex-basis: 33%; text-align: left;" class="game-data-versus game-data-username">{{ leftPaddle.name }}</span>
+      <span v-else class="game-data-versus game-data-username" style="flex-basis: 33%; text-align: left;">Player 1</span>
+
+      <span class="game-data-versus">VS</span>
+
+      <span v-if="rightPaddle.name" style="flex-basis: 33%; text-align: right;" class="game-data-versus game-data-username">{{ rightPaddle.name }}</span>
+      <span v-else class="game-data-versus game-data-username" style="flex-basis: 33%; text-align: right;">22222222Player 2</span>
+
+      <img v-if="rightPaddle.avatar" class="player-card-avatar" :src="rightPaddle.avatar" alt="Avatar">
+      <img v-else class="player-card-avatar" src="../assets/avatar.jpg" alt="Avatar">
+    </div>
   </div>
 </template>
+
+<style lang="scss" scoped>
+#canvas {
+  margin-top: 30px;
+}
+
+.player-card-avatar {
+  width: 70px;
+  height: 70px;
+  border-radius: 5%;
+  object-fit: cover;
+}
+
+@font-face {
+  font-family: 'Bit5x3';
+  src: url('../assets/subset-Bit5x3.woff2') format('woff2'),
+      url('../assets/subset-Bit5x3.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+.game-data-flex {
+  display: flex;
+  justify-content: space-between;
+  width: min(80vh, 80vw);
+  margin: 15px auto;
+}
+
+.game-data-versus {
+  font-size: 1.9em;
+  margin: auto;
+}
+
+@media screen and (max-width: 850px) {
+  .game-data-versus, .game-data-username {
+    font-size: 1.5em;
+  }
+}
+
+@media screen and (max-width: 700px) {
+  .game-data-username {
+    display: none;
+  }
+}
+</style>
 
 <script lang="ts">
 import Vue from 'vue'
@@ -32,6 +94,8 @@ export class Paddle {
   score = 0
   colorize = false
   powerupColor = '#fff'
+  avatar?: string
+  name?: string
 
   constructor (x: number, y: number, width: number, height: number) {
     this.x = x
@@ -116,6 +180,7 @@ export default class GameCanvas extends Vue {
 
   destroyed () : void {
     this.socketManager.disconnect()
+    window.removeEventListener("resize", this.resizeCanvas);
     window.localStorage.removeItem('gameJwt')
   }
 
@@ -230,7 +295,17 @@ export default class GameCanvas extends Vue {
     }
   }
 
+  resizeCanvas () {
+    const reference = Math.min(window.innerWidth, window.innerHeight)
+
+    this.canvas!.width = reference * 0.8 // 80% of the reference
+    this.canvas!.height = reference * 0.8 // 1:1 aspect ratio
+
+    this.draw()
+  }
+
   initCanvas () : void {
+    window.addEventListener("resize", this.resizeCanvas)
     this.canvas = document.getElementById('canvas') as HTMLCanvasElement
     this.ctx = this.canvas.getContext('2d') as CanvasRenderingContext2D
 
@@ -259,6 +334,9 @@ export default class GameCanvas extends Vue {
       this.leftPaddle.height = you.height
       this.leftPaddle.speed = you.speed
       this.leftPaddle.score = you.score
+      this.leftPaddle.avatar = data.isPlayer1 ? data.player1.avatar : data.player2.avatar
+      console.log(data.player1.avatar)
+      this.leftPaddle.name = data.isPlayer1 ? data.player1.name : data.player2.name
 
       this.rightPaddle.x = 1900
       this.rightPaddle.y = opponent.y
@@ -266,6 +344,8 @@ export default class GameCanvas extends Vue {
       this.rightPaddle.height = opponent.height
       this.rightPaddle.speed = opponent.speed
       this.rightPaddle.score = opponent.score
+      this.rightPaddle.avatar = !data.isPlayer1 ? data.player1.avatar : data.player2.avatar
+      this.rightPaddle.name = !data.isPlayer1 ? data.player1.name : data.player2.name
 
       this.ball.x = data.game.ballX
       this.ball.y = data.game.ballY
@@ -360,14 +440,3 @@ export default class GameCanvas extends Vue {
   }
 }
 </script>
-
-<style lang="scss" scoped>
-@font-face {
-    font-family: 'Bit5x3';
-    src: url('../assets/subset-Bit5x3.woff2') format('woff2'),
-        url('../assets/subset-Bit5x3.woff') format('woff');
-    font-weight: normal;
-    font-style: normal;
-    font-display: swap;
-}
-</style>
