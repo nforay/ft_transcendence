@@ -36,7 +36,7 @@
       </md-dialog-content>
       <md-dialog-actions>
         <md-button @click="showRecievedDialog = false">Close</md-button>
-        <md-button class="md-primary" @click="acceptChallenge">Challenge</md-button>
+        <md-button class="md-primary" @click="acceptChallenge">Accept</md-button>
       </md-dialog-actions>
     </md-dialog>
     <header class="chat-header">
@@ -158,7 +158,7 @@ export default class Chat extends Vue {
       return
     }
     this.listenSendChallengeResponse = true
-    this.socket.emit('sendChallengeRequest', { token: globalFunctions.getToken(), to: name })
+    this.socket.emit('sendChallengeRequest', { token: globalFunctions.getToken(), to: name, powerup: this.powerup, map: this.map })
   }
 
   updateReceivedChallenges () : void {
@@ -274,6 +274,10 @@ export default class Chat extends Vue {
   }
 
   showRecievedChallengeDialog () : void {
+    if (!this.recievedChallenges[0].powerup) {
+      this.acceptChallenge()
+      return
+    }
     this.showRecievedDialog = true
     this.powerup = this.recievedChallenges[0].powerup ? 'powerup_powerfist' : 'no_powerup'
     this.map = this.recievedChallenges[0].map

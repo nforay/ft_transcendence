@@ -99,7 +99,6 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect, On
     }
     ChallengeManager.instance.addChallenge(user.id, target.id, new GameSettingsDto(request.powerup, request.map));
     const challenge = ChallengeManager.instance.pendingRequests.get(user.id)
-    Logger.log('DEBUG: challenge settings: ' + request.powerup + ' ' + request.map, "Chat");
     client.emit('sendChallengeResponse', { from: user.name, to: target.name, success: true });
     targetSocket.sock.emit('recieveChallengeRequest', { from: user.name, to: target.name, expiresIn: challenge.expireDate - new Date().getTime(), powerup: request.powerup !== 'no_powerup', map: request.map });
   }
@@ -164,7 +163,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect, On
       return;
     }
     const challenge = ChallengeManager.instance.pendingRequests.get(sender.id);
-    if (challenge.settings.powerup === 'no_powerup' || request.powerup === 'no_powerup' && challenge.settings.powerup !== request.powerup) {
+    if ((challenge.settings.powerup == 'no_powerup' || request.powerup == 'no_powerup') && challenge.settings.powerup !== request.powerup) {
       client.emit('challengeGameStarting', { success: false });
       return;
     }
