@@ -1,9 +1,13 @@
+import { GameSettingsDto } from '../matchmaking/matchmaking.dto';
+
 export class ChallengeData {
   public to: string = "";
   public expireDate: number;
+  public settings: GameSettingsDto;
 
-  constructor(to: string) {
+  constructor(to: string, settings: GameSettingsDto) {
     this.to = to;
+    this.settings = settings;
     this.expireDate = new Date().getTime() + (1000 * 60);
   }
 
@@ -22,8 +26,8 @@ export class ChallengeManager {
       throw new Error("Error: Instantiation failed: Use ChallengeManager.instance instead of new.")
   }
 
-  public addChallenge(from: string, to: string) {
-    this.pendingRequests.set(from, new ChallengeData(to))
+  public addChallenge(from: string, to: string, settings: GameSettingsDto) {
+    this.pendingRequests.set(from, new ChallengeData(to, settings))
   }
 
   public removeChallenge(from: string) {
