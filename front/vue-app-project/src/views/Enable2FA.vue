@@ -1,9 +1,29 @@
 <template>
   <div class="enable2fa-content">
-    <img width="300px" :src="qrCodeData"><br>
-    <label for="2fa">Enter your code:</label>
-    <input for="2fa" type="text" v-model="twoFACode">
-    <button @click="send2FACode">Submit</button>
+    <div class="md-layout md-gutter">
+      <div style="margin: 15px 0;" class="md-layout-item md-layout md-gutter md-alignment-top-center">
+        <md-card style="min-width: 300px;" class="md-layout-item md-size-65">
+          <md-card-header>
+            <span class="md-title">Enable 2FA</span>
+          </md-card-header>
+          
+          <div class="md-layout md-size-100">
+            <md-card-content class="md-layout md-layout-item md-alignment-center-center">
+              <div class="md-layout-item md-alignment-center-center md-size-35">
+                <img width="100%" :src="qrCodeData">
+                <md-field md-clearable>
+                  <label>Your code</label>
+                  <md-input for="2fa" type="text" v-model="twoFACode"></md-input>
+                </md-field>
+              </div>
+            </md-card-content>
+          </div>
+          <md-card-actions>
+            <md-button class="md-primary" @click="send2FACode">Submit <md-icon>send</md-icon></md-button>
+          </md-card-actions>
+        </md-card>
+      </div>
+    </div>
   </div>
 </template>
 

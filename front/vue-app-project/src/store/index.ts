@@ -13,7 +13,7 @@ const store : StoreOptions<StoreType> = {
     userId: '',
     errors: [],
     avatarUpdate: 0,
-    popupMessage: ''
+    popupMessage: '',
   },
   mutations: {
     setLogged (state : StoreType, value : boolean) : void {
@@ -54,7 +54,7 @@ const store : StoreOptions<StoreType> = {
 
     setPopupMessage (state : StoreType, data : any) : void {
       state.popupMessage = data
-    }
+    },
   },
   getters: {
     username (state : StoreType) : string {

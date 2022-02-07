@@ -1,11 +1,11 @@
 <template>
   <div id="app">
-    <app-header />
+    <app-header :isLogged="storeIsLogged" />
     <div style="height: calc(100vh - 49px);" class="md-layout">
       <div class="md-layout-item md-gutter">
         <router-view/>
       </div>
-      <div style="background-color: #fff; box-shadow: 0 3px 1px -2px rgb(0 0 0 / 20%), 0 2px 2px 0 rgb(0 0 0 / 14%), 0 1px 5px 0 rgb(0 0 0 / 12%);" class="md-layout-item md-size-20 md-medium-hide"  v-if="this.isLogged">
+      <div style="background-color: #fff; box-shadow: 0 3px 1px -2px rgb(0 0 0 / 20%), 0 2px 2px 0 rgb(0 0 0 / 14%), 0 1px 5px 0 rgb(0 0 0 / 12%);" class="md-layout-item md-size-20 md-medium-hide"  v-if="storeIsLogged">
         <Chat />
       </div>
     </div>
@@ -27,13 +27,14 @@ import Vue from 'vue'
     AppHeader,
     Chat
   },
-  computed: {
-    ...mapGetters(['isLogged']),
-  },
 })
 export default class App extends Vue {
   showSnack = false
   recordedPopupMessage = ''
+
+  get storeIsLogged() {
+    return store.state.isLogged
+  }
 
   get popupMessage () {
     return store.state.popupMessage

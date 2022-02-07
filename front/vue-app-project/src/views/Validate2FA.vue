@@ -1,15 +1,35 @@
 <template>
-  <div class="validate2fa-container">
-    <label for="twofacode">Enter the code on your authenticator :</label><br>
-    <input for="twofacode" type="text" v-model="code" /><br>
-    <button @click="validateCode">Validate</button>
+  <div class="validate2fa-container" style="position: relative; margin: 15px;">
+    <div class="md-layout md-gutter md-alignment-center-center">
+      <div class="md-layout-item md-gutter md-layout md-size-50">
+        <md-card class="md-layout-item md-gutter">
+          <md-card-header>
+            <span class="md-title">Validate 2FA</span>
+          </md-card-header>
+          
+          <div class="md-layout">
+            <md-card-content class="md-layout md-layout-item">
+              <div class="md-layout-item">
+                <md-field md-clearable>
+                  <label>Your authenticator's code</label>
+                  <md-input for="2fa" type="text" v-model="code"></md-input>
+                </md-field>
+              </div>
+            </md-card-content>
+          </div>
+          <md-card-actions>
+            <md-button class="md-primary" @click="validateCode">Submit <md-icon>send</md-icon></md-button>
+          </md-card-actions>
+        </md-card>
+      </div>
+    </div>
   </div>
 </template>
 
 <script lang="ts">
 import Vue from 'vue'
 import Component from 'vue-class-component'
-import store from '../store'
+import store, { globalFunctions } from '../store'
 import router from '../router'
 
 @Component
@@ -17,9 +37,8 @@ export default class Validate2FA extends Vue {
   code = ''
 
   beforeCreate () : void {
-    if (!this.$route.query.userId) {
-      router.push('/login').catch(() => { Function.prototype() })
-    }
+    if (globalFunctions.getToken() !== 'error')
+      router.push('/').catch(() => { Function.prototype() })
   }
 
   async validateCode () : Promise<void> {

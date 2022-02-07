@@ -69,6 +69,15 @@ export default class Play extends Vue {
   public wlratio = 1.0
   public activeGames: Array<any> = []
 
+  async beforeCreate() {
+    while (!store.state.requestedLogin) {
+      await new Promise(resolve => setTimeout(resolve, 10))
+    }
+    if (!store.state.isLogged) {
+      this.$router.push('/login')
+    }
+  }
+
   async created () : Promise<void> {
     document.addEventListener('beforeunload', this.leaveQueue)
 
