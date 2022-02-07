@@ -8,6 +8,7 @@ import { GameEntity } from './entities/game.entity'
 import { GameGateway } from './game.gateway'
 import { UserManager, UserStatus } from '../user/user.model'
 import { ResponseGame } from './dto/response-game.dto'
+import { GameSettingsDto } from 'src/matchmaking/matchmaking.dto'
 
 export class GameManager {
   public static instance: GameManager = new GameManager()
@@ -21,7 +22,7 @@ export class GameManager {
     GameManager.instance = this
   }
 
-  createGame(player1Id: string, player2Id: string, updateStats: boolean = true): Game {
+  createGame(player1Id: string, player2Id: string, player1Powerup: string, player2Powerup: string, map: string, updateStats: boolean = true): Game {
     let alreadyExistingGame = this.getGameByPlayerId(player1Id);
     if (alreadyExistingGame)
       GameManager.instance.removeGame(alreadyExistingGame.id);
@@ -29,7 +30,7 @@ export class GameManager {
     if (alreadyExistingGame)
       GameManager.instance.removeGame(alreadyExistingGame.id);
 
-    const game = new Game(player1Id, player2Id, updateStats)
+    const game = new Game(player1Id, player2Id, player1Powerup, player2Powerup, map, updateStats)
     this.games.push(game)
     return game
   }
@@ -84,10 +85,27 @@ export class Player {
   height: number = 250
   socketId: string = null
   speed: number = 0
+  powerupEnabled = false;
+  powerupAlreadyUsed = false;
+  powerup: string;
 
   constructor(id: string, x: number) {
     this.id = id
     this.x = x;
+  }
+}
+
+class Obstacle {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+
+  constructor(x: number, y: number, width: number, height: number) {
+    this.x = x;
+    this.y = y;
+    this.width = width;
+    this.height = height;
   }
 }
 
@@ -101,7 +119,7 @@ export class Game {
   player2: Player;
 
   ballX: number = 1000;
-  ballY: number = Math.random() * (1750 - 250) + 250;
+  ballY: number;
   ballRadius: number = 22
   ballXSpeed: number = 0;
   ballYSpeed: number = 0;
@@ -118,17 +136,31 @@ export class Game {
 
   updateStats: boolean;
 
+  map: string;
+
   spectators: Spectator[] = []
 
-  constructor(player1Id: string, player2Id: string, updateStats: boolean) {
+  obstacles: Obstacle[] = []
+
+  constructor(player1Id: string, player2Id: string, player1Powerup: string, player2Powerup: string, map: string, updateStats: boolean) {
     this.player1 = new Player(player1Id, 100)
     this.player2 = new Player(player2Id, 1900)
 
     this.ballLastX = this.ballX;
     this.ballLastY = this.ballY;
 
-    this.updateStats = updateStats
+    this.player1.powerup = player1Powerup;
+    this.player2.powerup = player2Powerup;
+    this.map = map;
+    if (map === 'obstacles') {
+      this.obstacles.push(new Obstacle(1000 - 50, 200, 100, 300))
+      this.obstacles.push(new Obstacle(1000 - 50, 1800 - 300, 100, 300))
+      this.obstacles.push(new Obstacle(1000 - 50, 1000 - 100, 100, 200))
+    }
+    this.ballY = this.getRandomBallPosition();
 
+    this.updateStats = updateStats;
+    
     setTimeout(() => {
       if (!this.player1.socketId || !this.player2.socketId) {
         if (this.player1.socketId) {
@@ -189,6 +221,48 @@ export class Game {
       if (dist > this.player2.speed * delta + 200)
         return;
       this.player2.y = yPosition;
+    }
+  }
+
+  usePowerFistPowerup(playerId: string) {
+    if (playerId === this.player1.id) {
+      if (this.player1.powerupAlreadyUsed)
+        return;
+      this.player1.powerupEnabled = true;
+      this.player1.powerupAlreadyUsed = true;
+    } else {
+      if (this.player2.powerupAlreadyUsed)
+        return;
+      this.player2.powerupEnabled = true;
+      this.player2.powerupAlreadyUsed = true;
+    }
+  }
+
+  useDashPowerup(playerId: string) {
+    if (playerId === this.player1.id) {
+      if (this.player1.powerupAlreadyUsed)
+        return;
+      this.player1.speed = this.player1.speed * 1.4;
+      this.player1.powerupEnabled = true;
+      this.player1.powerupAlreadyUsed = true;
+    } else {
+      if (this.player2.powerupAlreadyUsed)
+        return;
+      this.player2.speed = this.player2.speed * 1.4;
+      this.player2.powerupEnabled = true;
+      this.player2.powerupAlreadyUsed = true;
+    }
+  }
+
+  usePowerup(playerId: string) {
+    const powerUp = (playerId === this.player1.id ? this.player1.powerup : this.player2.powerup)
+    switch (powerUp) {
+      case 'powerup_powerfist':
+        this.usePowerFistPowerup(playerId)
+        break;
+      case 'powerup_dash':
+        this.useDashPowerup(playerId)
+        break;
     }
   }
 
@@ -266,9 +340,53 @@ export class Game {
         const normalizedRelativeIntersectionY = (relativeIntersectY/(player.height/2));
         const bounceX = normalizedRelativeIntersectionY * (500);
         const bounceY = normalizedRelativeIntersectionY * (-1500);
-        this.speedBoost = Math.abs(bounceX);
+        let powerFistBoost = 0;
+        if ((xDir < 0 && collide1 && this.player1.powerupEnabled && this.player1.powerup === 'powerup_powerfist')
+            || (xDir > 0 && collide2 && this.player2.powerupEnabled && this.player2.powerup === 'powerup_powerfist'))
+          powerFistBoost = 650;
+
+        if (xDir < 0 && collide1 && this.player1.powerupEnabled && this.player1.powerup === 'powerup_dash')
+          this.player1.speed = this.player1.speed / 1.4;
+        if (xDir > 0 && collide2 && this.player2.powerupEnabled && this.player2.powerup === 'powerup_dash')
+          this.player2.speed = this.player1.speed / 1.4;
+
+        this.speedBoost = Math.abs(bounceX) + powerFistBoost;
         this.ballYSpeed = bounceY;
         this.ballXSpeed *= -1;
+
+        if (xDir < 0 && collide1)
+          this.player1.powerupEnabled = false;
+        if (xDir > 0 && collide2)
+          this.player2.powerupEnabled = false;
+    }
+
+    for (const obstacle of this.obstacles) {
+      const left = this.ballX - this.ballRadius < obstacle.x + obstacle.width;
+      const right = this.ballX + this.ballRadius > obstacle.x;
+      const top = this.ballY - this.ballRadius < obstacle.y + obstacle.height;
+      const bottom = this.ballY + this.ballRadius > obstacle.y;
+      if (!right || !left || !top || !bottom)
+        continue;
+      
+      const lastLeft = this.ballLastX - this.ballRadius < obstacle.x + obstacle.width;
+      const lastRight = this.ballLastX + this.ballRadius > obstacle.x;
+      const lastTop = this.ballLastY - this.ballRadius < obstacle.y + obstacle.height;
+      const lastBottom = this.ballLastY + this.ballRadius > obstacle.y;
+
+      if (!lastLeft && left) {
+        this.ballX = obstacle.x + obstacle.width + this.ballRadius;
+        this.ballXSpeed *= -1;
+      } else if (!lastRight && right) {
+        this.ballX = obstacle.x - this.ballRadius;
+        this.ballXSpeed *= -1;
+      } else if (!lastTop && top) {
+        this.ballY = obstacle.y + obstacle.height + this.ballRadius;
+        this.ballYSpeed *= -1;
+      } else if (!lastBottom && bottom) {
+        this.ballY = obstacle.y - this.ballRadius;
+        this.ballYSpeed *= -1;
+      }
+      break;
     }
     
     this.lastUpdate = time;
@@ -380,9 +498,31 @@ export class Game {
     return ((r >= 0 && r <= 1) && (s >= 0 && s <= 1));
   }
 
+  getRandomBallPosition()
+  {
+    do {
+      let pos = Math.random() * (1750 - 250) + 250;
+      let collide = false;
+      for (const obstacle of this.obstacles) {
+        const left = 1000 - this.ballRadius < obstacle.x + obstacle.width;
+        const right = 1000 + this.ballRadius > obstacle.x;
+        const top = pos - this.ballRadius < obstacle.y + obstacle.height;
+        const bottom = pos + this.ballRadius > obstacle.y;
+        if (left && right && top && bottom) {
+          console.log('collide');
+          collide = true;
+          break;
+        }
+      }
+      if (collide)
+        continue;
+      return pos;
+    } while (true);
+  }
+
   reset() : void {
     this.ballX = 1000;
-    this.ballY = Math.random() * (1750 - 250) + 250;
+    this.ballY = this.getRandomBallPosition()
     this.ballLastX = this.ballX
     this.ballLastY = this.ballY
     this.ballXSpeed = 0;
@@ -391,6 +531,10 @@ export class Game {
     this.player2.speed = 0;
     this.player1.y = 1000;
     this.player2.y = 1000;
+    this.player1.powerupEnabled = false;
+    this.player2.powerupEnabled = false;
+    this.player1.powerupAlreadyUsed = true;
+    this.player2.powerupAlreadyUsed = true;
     this.speedBoost = 0;
     this.engage = true;
     setTimeout(() => {
@@ -401,6 +545,8 @@ export class Game {
       const time = new Date().getTime();
       this.player1.positionTime = time;
       this.player2.positionTime = time;
+      this.player1.powerupAlreadyUsed = false;
+      this.player2.powerupAlreadyUsed = false;
     }, 3000)
   }
 

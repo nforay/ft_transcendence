@@ -2,14 +2,16 @@
   <header style="position: sticky; top: 1px; z-index: 2;">
     <div class="md-layout">
       <md-toolbar class="md-dense" style="background: white;">
-        <md-icon :md-src="require('../assets/42logo.svg')" class="md-small md-small-hide" /><span class="md-title md-small-hide" style="flex: 1">ft_transcendence</span>
-        <div id="nav" style="display: flex; justify-content: space-between;">
-          <md-button class="navbar-button" to="/" exact><md-icon class="navbar-icon">home</md-icon>Home</md-button>
-          <md-button v-if="isLogged" to="/play"><md-icon class="navbar-icon">sports_tennis</md-icon>Play</md-button>
-          <md-button v-if="isLogged" class="navbar-button" to="/leaderboard"><md-icon class="navbar-icon">leaderboard</md-icon>Leaderboard</md-button>
-          <md-button to="/about"><md-icon class="navbar-icon">help</md-icon>About</md-button>
-          <md-button v-if="!isLogged" class="navbar-button" to="/login"><md-icon class="navbar-icon">login</md-icon>Login</md-button>
-        </div>
+        <md-icon :md-src="require('../assets/42logo.svg')" class="md-small md-small-hide" />
+        <span class="md-title md-small-hide" style="flex: 1">ft_transcendence</span>
+        <span class="md-title md-small-show" style="flex: 1"></span>
+          <div id="nav" style="display: flex; justify-content: space-between;">
+            <md-button class="navbar-button" to="/" exact><md-icon class="navbar-icon">home</md-icon>Home</md-button>
+            <md-button v-if="isLogged" to="/play"><md-icon class="navbar-icon">sports_tennis</md-icon>Play</md-button>
+            <md-button v-if="isLogged" class="navbar-button" to="/leaderboard"><md-icon class="navbar-icon">leaderboard</md-icon>Leaderboard</md-button>
+            <md-button to="/about"><md-icon class="navbar-icon">help</md-icon>About</md-button>
+            <md-button v-if="!isLogged" class="navbar-button" to="/login"><md-icon class="navbar-icon">login</md-icon>Login</md-button>
+          </div>
         <md-menu md-size="auto">
           <md-avatar md-menu-trigger>
             <img class="avatar" :src="avatar" alt="Avatar">
@@ -36,7 +38,6 @@
               <md-icon>login</md-icon>
               <span>Log In</span>
             </md-menu-item>
-
           </md-menu-content>
         </md-menu>
       </md-toolbar>

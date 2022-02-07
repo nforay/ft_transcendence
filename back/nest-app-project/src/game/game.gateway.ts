@@ -6,6 +6,7 @@ import { MoveGameModelDto } from "./dto/move-game-model.dto";
 import { GameManager, GameState, Player, Spectator } from "./game.model";
 import * as jwt from 'jsonwebtoken'
 import { Interval } from '@nestjs/schedule'
+import { UserManager } from "src/user/user.model";
 
 @WebSocketGateway(4001, {
   cors: {
@@ -44,11 +45,11 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       let game = GameManager.instance.getGame(decoded.gameId)
       if (!game)
         return
-      if (game.player1.id === decoded.playerId) {
+      if (game.player1.id === decoded.playerId && !decoded.spectator) {
         game.player1.socketId = client.id;
         game.startIfBothConnected();
       }
-      else if (game.player2.id === decoded.playerId) {
+      else if (game.player2.id === decoded.playerId && !decoded.spectator) {
         game.player2.socketId = client.id;
         game.startIfBothConnected();
       }
@@ -86,7 +87,19 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       let game = GameManager.instance.getGame(decoded.gameId);
       if (!game)
         return null;
-      return { event: 'init', data: { game, isPlayer1: (decoded.playerId == game.player1.id || decoded.spectator === true) } };
+
+      const players = await UserManager.instance.userRepository.find({
+        where: [{ id: game.player1.id }, { id: game.player2.id }]
+      })
+
+      let responseData = {
+        game,
+        isPlayer1: (decoded.playerId == game.player1.id || decoded.spectator === true),
+        player1: (players[0].id === game.player1.id ? players[0] : players[1]).toResponseUser(),
+        player2: (players[0].id === game.player1.id ? players[1] : players[0]).toResponseUser(),
+      }
+
+      return { event: 'init', data: responseData };
     } catch (err) {
       return null;
     }
@@ -101,6 +114,22 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       let game = GameManager.instance.getGame(decoded.gameId);
       if (game && game.state === GameState.IN_GAME) {
         game.move(decoded.playerId, data.yPosition, data.packetId);
+        return game
+      }
+    } catch (err) {
+      return null;
+    }
+  }
+
+  @SubscribeMessage("usePowerup")
+  async usePowerup(@MessageBody() data: { gameJwt: string }) {
+    try {
+      const decoded = await jwt.verify(data.gameJwt, process.env.JWT_SECRET);
+      if (decoded.spectator === true)
+        return null;
+      let game = GameManager.instance.getGame(decoded.gameId);
+      if (game && game.state === GameState.IN_GAME) {
+        game.usePowerup(decoded.playerId);
         return game
       }
     } catch (err) {

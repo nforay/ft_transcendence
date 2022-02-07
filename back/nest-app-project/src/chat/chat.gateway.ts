@@ -7,7 +7,7 @@ import * as jwt from 'jsonwebtoken'
 import { UserManager } from '../user/user.model';
 import { ChallengeManager } from '../challenge/challenge.model';
 import { GameManager } from '../game/game.model';
-import { PlayerPair } from '../matchmaking/matchmaking.service';
+import { GameSettingsDto } from '../matchmaking/matchmaking.dto';
 
 @WebSocketGateway(8082, {
 	cors: {
@@ -97,10 +97,10 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect, On
       client.emit('sendChallengeResponse', { success: false });
       return;
     }
-    ChallengeManager.instance.addChallenge(user.id, target.id);
+    ChallengeManager.instance.addChallenge(user.id, target.id, new GameSettingsDto(request.powerup, request.map));
     const challenge = ChallengeManager.instance.pendingRequests.get(user.id)
     client.emit('sendChallengeResponse', { from: user.name, to: target.name, success: true });
-    targetSocket.sock.emit('recieveChallengeRequest', { from: user.name, to: target.name, expiresIn: challenge.expireDate - new Date().getTime() });
+    targetSocket.sock.emit('recieveChallengeRequest', { from: user.name, to: target.name, expiresIn: challenge.expireDate - new Date().getTime(), powerup: request.powerup !== 'no_powerup', map: request.map });
   }
 
 	handleConnection(client: Socket, ...args: any[]) {
@@ -162,7 +162,12 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect, On
       client.emit('challengeGameStarting', { success: false });
       return;
     }
-    const game = GameManager.instance.createGame(user.id, sender.id, false);
+    const challenge = ChallengeManager.instance.pendingRequests.get(sender.id);
+    if ((challenge.settings.powerup == 'no_powerup' || request.powerup == 'no_powerup') && challenge.settings.powerup !== request.powerup) {
+      client.emit('challengeGameStarting', { success: false });
+      return;
+    }
+    const game = GameManager.instance.createGame(user.id, sender.id, request.powerup, challenge.settings.powerup, challenge.settings.map, false);
     const player1Jwt = await jwt.sign({ gameId: game.id, playerId: user.id }, process.env.JWT_SECRET, {expiresIn: '1y'});
     const player2Jwt = await jwt.sign({ gameId: game.id, playerId: sender.id }, process.env.JWT_SECRET, {expiresIn: '1y'});
     client.emit('challengeGameStarting', { success: true, gameId: game.id, gameJwt: player1Jwt });
