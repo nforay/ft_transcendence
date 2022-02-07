@@ -1,4 +1,5 @@
 import { IsNotEmpty } from 'class-validator';
+import { GameSettingsDto } from '../matchmaking/matchmaking.dto';
 
 export class ChatMessage {
 	@IsNotEmpty()
@@ -10,7 +11,7 @@ export class ChatMessage {
   isCommandResponse: boolean = false;
 }
 
-export class RequestMessage {
+export class RequestMessage extends GameSettingsDto {
 	@IsNotEmpty()
 	token: string;
 
@@ -18,7 +19,7 @@ export class RequestMessage {
 	to: string;
 }
 
-export class DeclineMessage {
+export class DeclineMessage extends GameSettingsDto {
 	@IsNotEmpty()
 	token: string;
 

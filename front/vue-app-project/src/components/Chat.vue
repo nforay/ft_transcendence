@@ -1,5 +1,44 @@
 <template>
   <div class="chat-pos">
+    <md-dialog :md-active.sync="showDialog">
+      <md-dialog-title>Custom Rules</md-dialog-title>
+      <md-dialog-content>
+        <p class="md-subtitle">Power Ups:</p>
+        <div style="display: flex; justify-content: space-around; margin-left: 15%; margin-right: 15%;" class="md-layout-item">
+          <md-radio v-model="powerup" value="no_powerup" class="md-primary">None</md-radio>
+          <md-radio v-model="powerup" value="powerup_powerfist" class="md-primary">Power Fist</md-radio>
+          <md-radio v-model="powerup" value="powerup_dash" class="md-primary">Sprint</md-radio>
+        </div>
+        <p style="margin-top: 15px" class="md-subtitle">Map:</p>
+        <div style="display: flex; justify-content: space-around; flex-wrap: wrap; margin-left: 15%; margin-right: 15%;">
+          <md-radio v-model="map" value="classic" class="md-primary">Classic</md-radio>
+          <md-radio v-model="map" value="obstacles" class="md-primary">Obstacles</md-radio>
+        </div>
+      </md-dialog-content>
+      <md-dialog-actions>
+        <md-button @click="showDialog = false">Close</md-button>
+        <md-button class="md-primary" @click="challenge(usernameDialog)">Challenge</md-button>
+      </md-dialog-actions>
+    </md-dialog>
+    <md-dialog :md-active.sync="showRecievedDialog">
+      <md-dialog-title>Custom Rules</md-dialog-title>
+      <md-dialog-content>
+        <p class="md-subtitle">Power Ups:</p>
+        <div style="display: flex; justify-content: space-around; margin-left: 15%; margin-right: 15%;" class="md-layout-item">
+          <md-radio v-model="powerup" value="no_powerup" class="md-primary" :disabled="powerup !== 'no_powerup'">None</md-radio>
+          <md-radio v-model="powerup" value="powerup_powerfist" class="md-primary" :disabled="powerup === 'no_powerup'">Power Fist</md-radio>
+          <md-radio v-model="powerup" value="powerup_dash" class="md-primary" :disabled="powerup === 'no_powerup'">Sprint</md-radio>
+        </div>
+        <p style="margin-top: 15px" class="md-subtitle">Map:</p>
+        <div style="display: flex; justify-content: space-around; flex-wrap: wrap; margin-left: 15%; margin-right: 15%;">
+          <md-radio v-model="map" value="classic" class="md-primary" disabled>{{ map }}</md-radio>
+        </div>
+      </md-dialog-content>
+      <md-dialog-actions>
+        <md-button @click="showRecievedDialog = false">Close</md-button>
+        <md-button class="md-primary" @click="acceptChallenge">Accept</md-button>
+      </md-dialog-actions>
+    </md-dialog>
     <header class="chat-header">
       #{{ channel }}
     </header>
@@ -11,7 +50,7 @@
               <p style="margin-left: 5px;" class="md-subheading">{{ recievedChallenges[0].sender }} is challenging you</p>
             </div>
             <div class="md-alignment-center-right">
-                <md-button class="md-icon-button md-mini" @click="acceptChallenge"><md-icon>done</md-icon></md-button>
+                <md-button class="md-icon-button md-mini" @click="showRecievedChallengeDialog"><md-icon>done</md-icon></md-button>
                 <md-button class="md-icon-button md-mini" @click="declineChallenge"><md-icon>close</md-icon></md-button>
             </div>
           </div>
@@ -28,7 +67,7 @@
               <md-menu-item @click="redirectTo(`/profile?user=${message.message.name}`)">
                 <md-icon>person</md-icon><span>{{ message.message.name }}'s Profile</span>
               </md-menu-item>
-              <md-menu-item @click="challenge(message.message.name)"><md-icon>supervisor_account</md-icon><span>Challenge {{ message.message.name }}</span></md-menu-item>
+              <md-menu-item @click="showChallengeDialog(message.message.name)"><md-icon>supervisor_account</md-icon><span>Challenge {{ message.message.name }}</span></md-menu-item>
             </md-menu-content>
           </md-menu>
           <span v-if="message.message.isCommandResponse" v-html="message.message.msg"></span>
@@ -61,10 +100,14 @@ class RecievedChallengeData {
   public expireDate: number
   public originExpiresIn: number
   public expirePercentage = 100
+  public powerup: boolean
+  public map: string
 
-  constructor (sender: string, expireDate: number) {
+  constructor (sender: string, expireDate: number, powerup: boolean, map: string) {
     this.sender = sender
     this.expireDate = expireDate
+    this.powerup = powerup
+    this.map = map
     this.originExpiresIn = expireDate - new Date().getTime()
   }
 
@@ -86,6 +129,12 @@ export default class Chat extends Vue {
   canAutoScroll = true
   channel = 'general'
   listenSendChallengeResponse = false
+  showDialog = false
+  usernameDialog = ''
+  showRecievedDialog = false
+
+  public powerup: string = 'no_powerup'
+  public map: string = 'classic'
 
   recievedChallenges: RecievedChallengeData[] = []
 
@@ -93,14 +142,23 @@ export default class Chat extends Vue {
     router.push(url).catch(() => { Function.prototype() })
   }
 
+  public showChallengeDialog (username: string) : void {
+    this.usernameDialog = username
+    this.showDialog = true
+  }
+
   public async challenge (name: string) : Promise<void> {
+    this.showDialog = false
+    if (name === '') {
+      return
+    }
     if (globalFunctions.getToken() === 'error') {
       store.commit('logout')
       store.commit('expireToken')
       return
     }
     this.listenSendChallengeResponse = true
-    this.socket.emit('sendChallengeRequest', { token: globalFunctions.getToken(), to: name })
+    this.socket.emit('sendChallengeRequest', { token: globalFunctions.getToken(), to: name, powerup: this.powerup, map: this.map })
   }
 
   updateReceivedChallenges () : void {
@@ -169,7 +227,7 @@ export default class Chat extends Vue {
     })
     this.socket.on('recieveChallengeRequest', (data) => {
       store.commit('setPopupMessage', 'Duel request from ' + data.from + '.')
-      this.recievedChallenges.push(new RecievedChallengeData(data.from, new Date().getTime() + data.expiresIn))
+      this.recievedChallenges.push(new RecievedChallengeData(data.from, new Date().getTime() + data.expiresIn, data.powerup, data.map))
     })
     this.socket.on('challengeGameStarting', (data) => {
       if (!data.success) {
@@ -215,14 +273,25 @@ export default class Chat extends Vue {
     }
   }
 
+  showRecievedChallengeDialog () : void {
+    if (!this.recievedChallenges[0].powerup) {
+      this.acceptChallenge()
+      return
+    }
+    this.showRecievedDialog = true
+    this.powerup = this.recievedChallenges[0].powerup ? 'powerup_powerfist' : 'no_powerup'
+    this.map = this.recievedChallenges[0].map
+  }
+
   acceptChallenge () : void {
+    this.showRecievedDialog = false
     if (globalFunctions.getToken() === 'error') {
       store.commit('logout')
       store.commit('expireToken')
       return
     }
 
-    this.socket.emit('acceptChallengeRequest', { token: globalFunctions.getToken(), sender: this.recievedChallenges[0].sender })
+    this.socket.emit('acceptChallengeRequest', { token: globalFunctions.getToken(), sender: this.recievedChallenges[0].sender, powerup: this.powerup })
   }
 
   declineChallenge () : void {
