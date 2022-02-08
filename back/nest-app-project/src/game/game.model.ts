@@ -509,7 +509,6 @@ export class Game {
         const top = pos - this.ballRadius < obstacle.y + obstacle.height;
         const bottom = pos + this.ballRadius > obstacle.y;
         if (left && right && top && bottom) {
-          console.log('collide');
           collide = true;
           break;
         }

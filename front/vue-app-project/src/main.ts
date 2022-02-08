@@ -27,6 +27,8 @@ Vue.use(MdDialog)
 
 Vue.config.productionTip = false
 
+export const eventBus = new Vue();
+
 new Vue({
   router,
   store,

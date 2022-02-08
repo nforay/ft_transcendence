@@ -1,7 +1,6 @@
 import { Repository } from "typeorm"
 import { UserEntity } from "./user.entity"
 import * as speakeasy from "speakeasy"
-import { Interval } from "@nestjs/schedule";
 
 export class SecretPair {
   userId: string;

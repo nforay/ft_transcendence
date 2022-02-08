@@ -34,7 +34,7 @@
               <span>Logout</span>
             </md-menu-item>
 
-            <md-menu-item v-else to="/login)">
+            <md-menu-item v-else to="/login">
               <md-icon>login</md-icon>
               <span>Log In</span>
             </md-menu-item>
@@ -59,10 +59,6 @@ import { Watch, Prop } from 'vue-property-decorator'
 export default class AppHeader extends Vue {
 
   @Prop() isLogged!: boolean;
-
-  created() {
-    console.log(this.isLogged)
-  }
 
   public get avatar() {
     return 'http://' + process.env.VUE_APP_DOMAIN + ':' + process.env.VUE_APP_NEST_PORT + '/user/avatar/' + store.state.userId + '?' + store.state.avatarUpdate

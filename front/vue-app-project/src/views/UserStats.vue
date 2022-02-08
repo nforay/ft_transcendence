@@ -49,8 +49,8 @@
 <script lang="ts">
 import Vue from 'vue'
 import Component from 'vue-class-component'
-import store, { globalFunctions } from '@/store'
-import router from '@/router'
+import store, { globalFunctions } from '../store'
+import router from '../router'
 import { Watch } from 'vue-property-decorator'
 import UserCard from '../components/UserCard.vue'
 

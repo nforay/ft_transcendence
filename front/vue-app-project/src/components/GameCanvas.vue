@@ -20,7 +20,7 @@
       <span class="game-data-versus">VS</span>
 
       <span v-if="rightPaddle.name" style="flex-basis: 33%; text-align: right;" class="game-data-versus game-data-username">{{ rightPaddle.name }}</span>
-      <span v-else class="game-data-versus game-data-username" style="flex-basis: 33%; text-align: right;">22222222Player 2</span>
+      <span v-else class="game-data-versus game-data-username" style="flex-basis: 33%; text-align: right;">Player 2</span>
 
       <img v-if="rightPaddle.avatar" class="player-card-avatar" :src="rightPaddle.avatar" alt="Avatar">
       <img v-else class="player-card-avatar" src="../assets/avatar.jpg" alt="Avatar">
@@ -335,7 +335,6 @@ export default class GameCanvas extends Vue {
       this.leftPaddle.speed = you.speed
       this.leftPaddle.score = you.score
       this.leftPaddle.avatar = data.isPlayer1 ? data.player1.avatar : data.player2.avatar
-      console.log(data.player1.avatar)
       this.leftPaddle.name = data.isPlayer1 ? data.player1.name : data.player2.name
 
       this.rightPaddle.x = 1900

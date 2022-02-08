@@ -45,7 +45,7 @@ export class MatchmakingService {
     const user = await this.userRepository.findOne({ where: { id: authUser.id } });
     if (!user)
       throw new HttpException('User not found', HttpStatus.NOT_FOUND);
-    if (this.queue.find(inQueuePlayer => { return user.id == inQueuePlayer.id }) || user.banned) {
+    if (this.queue.find(inQueuePlayer => { return user.id == inQueuePlayer.id }) || user.banned || GameManager.instance.getGameByPlayerId(user.id)) {
       return { accepted: false };
     }
     this.queue.push(new InQueuePlayer(user.id, settings));

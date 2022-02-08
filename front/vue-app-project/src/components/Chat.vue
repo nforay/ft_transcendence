@@ -89,6 +89,7 @@ import Vue from 'vue'
 import Component from 'vue-class-component'
 import router from '../router'
 import store, { globalFunctions } from '../store'
+import { eventBus } from '../main'
 
 class ChatMessage {
   token = ''
@@ -124,7 +125,6 @@ class RecievedChallengeData {
 export default class Chat extends Vue {
   chatMsg = new ChatMessage()
   messages: any[] = []
-  socket: any
   autoScrollInterval: any = null
   canAutoScroll = true
   channel = 'general'
@@ -132,6 +132,7 @@ export default class Chat extends Vue {
   showDialog = false
   usernameDialog = ''
   showRecievedDialog = false
+  socket: any
 
   public powerup: string = 'no_powerup'
   public map: string = 'classic'
@@ -147,7 +148,7 @@ export default class Chat extends Vue {
     this.showDialog = true
   }
 
-  public async challenge (name: string) : Promise<void> {
+  public challenge (name: string) : void {
     this.showDialog = false
     if (name === '') {
       return
@@ -180,6 +181,9 @@ export default class Chat extends Vue {
   }
 
   created () : void {
+    eventBus.$on('sendChallengeEvent', (target: string) => {
+      this.showChallengeDialog(target);
+    })
     this.socket = io.connect('ws://' + process.env.VUE_APP_DOMAIN + ':' + process.env.VUE_APP_CHAT_PORT + '')
     this.chatMsg.token = globalFunctions.getToken()
     this.socket.on('recv_message', (data) => {

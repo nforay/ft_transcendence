@@ -21,7 +21,7 @@
               <div class="md-layout md-layout-item md-alignment-center-left">
                 <md-field :class="messageClass">
                   <label>Username</label>
-                  <md-input v-model="username" maxlength="16" required></md-input>
+                  <md-input v-model="username" maxlength="16" disabled required></md-input>
                   <span class="md-error">Username can't be empty</span>
                 </md-field>
                 <md-field md-clearable>
@@ -137,8 +137,10 @@ export default class Settings extends Vue {
       const data = await response.json()
       store.commit('setToken', { token: data.token, expiresIn: data.expiresIn })
       store.commit('setUsername', this.username)
+      store.commit('setPopupMessage', 'Changes applied successfully')
+
     } else {
-      store.commit('setPopupMessage', response.statusText)
+      store.commit('setPopupMessage', 'Could not update the informations')
     }
   }
 

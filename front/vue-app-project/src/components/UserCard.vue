@@ -35,20 +35,23 @@
         </div>
 
         <md-card-actions>
-          <div v-if="ingame && isloggeduser === false">
+          <div v-if="ingame && !isloggeduser">
             <md-button class="md-primary" @click="spectate()" :disabled="loading">Spectate <md-icon>visibility</md-icon></md-button>
           </div>
-          <div v-if="isfriend === true">
+          <div v-if="isfriend">
             <md-button @click="rmFriend()" class="md-accent" :disabled="loading">Remove Friend <md-icon>person_remove</md-icon></md-button>
           </div>
-          <div v-else-if="isloggeduser === false">
+          <div v-else-if="!isloggeduser">
             <md-button @click="addFriend()" class="md-primary" :disabled="loading">Add Friend <md-icon>person_add</md-icon></md-button>
           </div>
-          <div v-if="blocked === false && isloggeduser === false">
+          <div v-if="!blocked && !isloggeduser">
             <md-button class="md-accent" @click="block()" :disabled="loading">Block <md-icon>person_off</md-icon></md-button>
           </div>
-          <div v-else-if="isloggeduser === false">
+          <div v-else-if="!isloggeduser">
             <md-button class="md-accent" @click="unblock()" :disabled="loading">Unblock <md-icon>person</md-icon></md-button>
+          </div>
+          <div v-if="!ingame && online && !isloggeduser">
+            <md-button class="md-primary" @click="sendChallenge(username)" :disabled="loading">Duel <md-icon>supervisor_account</md-icon></md-button>
           </div>
         </md-card-actions>
       </md-card>
@@ -62,6 +65,7 @@ import Component from "vue-class-component";
 import { Prop, Watch } from "vue-property-decorator";
 import store, { globalFunctions } from "../store";
 import router from '../router'
+import { eventBus } from '../main'
 
 
 @Component
@@ -79,6 +83,7 @@ export default class UserCard extends Vue {
   public isloggeduser = true
   public blocked = false
   public ingame = false
+  public online = false
 
   @Prop({ default: store.state.username }) private username!: string;
   @Prop({ default: true }) private displayAchievements!: boolean;
@@ -90,6 +95,10 @@ export default class UserCard extends Vue {
   @Watch('username')
   async onUsernameChange () {
     this.queryProfile()
+  }
+
+  sendChallenge() {
+    eventBus.$emit('sendChallengeEvent', this.username)
   }
 
 	async queryProfile (): Promise<void> {
@@ -114,6 +123,8 @@ export default class UserCard extends Vue {
     this.level = data.level;
     if (data.status === 'ingame')
       this.ingame = true
+    if (data.status === 'online')
+      this.online = true
     this.achievements = data.achievements;
     this.rank = data.rank;
 
