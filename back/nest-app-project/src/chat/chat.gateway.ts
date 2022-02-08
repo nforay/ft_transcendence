@@ -93,7 +93,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect, On
       client.emit('sendChallengeResponse', { success: false });
       return;
     }
-    if (ChallengeManager.instance.pendingRequests.has(user.id) && ChallengeManager.instance.pendingRequests.get(user.id).to === target.id) {
+    if (ChallengeManager.instance.pendingRequests.has(user.id) && ChallengeManager.instance.pendingRequests.get(user.id).to === target.id && !ChallengeManager.instance.pendingRequests.get(user.id).expired()) {
       client.emit('sendChallengeResponse', { success: false });
       return;
     }

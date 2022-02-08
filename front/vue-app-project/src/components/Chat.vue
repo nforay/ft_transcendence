@@ -39,28 +39,32 @@
         <md-button class="md-primary" @click="acceptChallenge">Accept</md-button>
       </md-dialog-actions>
     </md-dialog>
-    <header class="chat-header">
-      #{{ channel }}
-    </header>
-    <div class="chat" id="chatboxdiv" @wheel="checkCanScroll">
-      <div v-if="recievedChallenges.length > 0" class="md-elevation-4" style="position: fixed; width: 20%; background-color: white;">
-        <div class="md-layout md-size-100">
-          <div class="md-layout md-alignment-center-left md-size-100">
-            <div class="md-layout-item">
-              <p style="margin-left: 5px;" class="md-subheading">{{ recievedChallenges[0].sender }} is challenging you</p>
-            </div>
-            <div class="md-alignment-center-right">
-                <md-button class="md-icon-button md-mini" @click="showRecievedChallengeDialog"><md-icon>done</md-icon></md-button>
-                <md-button class="md-icon-button md-mini" @click="declineChallenge"><md-icon>close</md-icon></md-button>
-            </div>
+
+    <div class="channel-name">
+      <span>#general</span>
+      <hr>
+    </div>
+
+    <div v-if="recievedChallenges.length > 0" class="md-elevation-4" style="position: absolute; width: 100%; top: 40px; background-color: white; z-index: 1">
+      <div class="md-layout md-size-100">
+        <div class="md-layout md-alignment-center-left md-size-100">
+          <div class="md-layout-item">
+            <p style="margin-left: 5px;" class="md-subheading">{{ recievedChallenges[0].sender }} is challenging you</p>
           </div>
-          <div class="md-layout-item md-size-100">
-            <md-progress-bar :md-value="recievedChallenges[0].expirePercentage" />
+          <div class="md-alignment-center-right">
+              <md-button class="md-icon-button md-mini" @click="showRecievedChallengeDialog"><md-icon>done</md-icon></md-button>
+              <md-button class="md-icon-button md-mini" @click="declineChallenge"><md-icon>close</md-icon></md-button>
           </div>
         </div>
+        <div class="md-layout-item md-size-100">
+          <md-progress-bar :md-value="recievedChallenges[0].expirePercentage" />
+        </div>
       </div>
-      <div style="display: flex; min-height: 100%; justify-content: flex-end; flex-direction: column;">
-        <ul v-for="message in messages" :key="message.id" style="margin: 0 10px 7px; padding: 0;">
+    </div>
+
+    <div style="position: relative; height: 100%; ">
+      <div ref="chatContent" class="chat-content">
+        <ul v-for="message in messages" :key="message.id" class="message">
           <md-menu md-direction="bottom-start" md-size="small">
             <span md-menu-trigger style="color: #478ee6; cursor: pointer;" v-if="!message.message.isCommandResponse">{{ message.message.name + ':'}}&nbsp;</span>
             <md-menu-content>
@@ -75,6 +79,7 @@
         </ul>
       </div>
     </div>
+
     <md-field class="chat-input">
       <md-icon>question_answer</md-icon>
       <label>Send a message</label>
@@ -125,8 +130,6 @@ class RecievedChallengeData {
 export default class Chat extends Vue {
   chatMsg = new ChatMessage()
   messages: any[] = []
-  autoScrollInterval: any = null
-  canAutoScroll = true
   channel = 'general'
   listenSendChallengeResponse = false
   showDialog = false
@@ -211,7 +214,7 @@ export default class Chat extends Vue {
           this.messages.shift()
         }
       }
-      if (this.canAutoScroll) {
+      if (this.checkCanScroll()) {
         this.autoScrollDiv()
       }
     })
@@ -260,21 +263,18 @@ export default class Chat extends Vue {
 
   autoScrollDiv () : void {
     this.$nextTick(() => {
-      document.getElementById('chatboxdiv')!.scrollTop = document.getElementById('chatboxdiv')!.scrollHeight
+      let chatContent = this.$refs.chatContent as HTMLElement
+      if (!chatContent)
+        return
+      chatContent.scrollTop = chatContent.scrollHeight
     })
   }
 
-  checkCanScroll () : void {
-    const element = document.getElementById('chatboxdiv')
-    if (!element) {
-      return
-    }
-
-    if (element.scrollTop === (element.scrollHeight - element.clientHeight)) {
-      this.canAutoScroll = true
-    } else {
-      this.canAutoScroll = false
-    }
+  checkCanScroll () : boolean {
+    const element = this.$refs.chatContent as HTMLElement
+    if (!element)
+      return false
+    return element.scrollTop === (element.scrollHeight - element.clientHeight)
   }
 
   showRecievedChallengeDialog () : void {
@@ -312,48 +312,43 @@ export default class Chat extends Vue {
 </script>
 
 <style lang="scss">
-// #440054 fond violet
-// #2D0033 surligné violet
-
-.chat-pos .chat {
-  position: fixed;
-  top: calc(49px + 36px);
-  right: 0;
+.chat-pos {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  padding: 0;
+  margin: 0;
 }
 
-.chat-header {
-  height: 36px;
+.channel-name {
   font-size: 22px;
-  padding: 7px;
-  position: fixed;
-  width: 20%;
-  border-bottom: 1px solid #777;
-  background-color: #fff;
-  top: calc(49px);
-  right: 0;
+  padding: 7px 0 0 0;
+  height: 40px;
 }
 
-.chat {
-  width: 20%;
-  height: calc(100% - 49px - 36px - 70px);
-
+.chat-content {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  max-height: 100%;
+  display: flex;
+  flex-direction: column;
   overflow-y: scroll;
-  overflow-x: hidden;
-  overflow-wrap: break-word;
-  text-align: left;
-  background-color: #fff;
-  color: #000000;
-
-  a {
-    color:rgb(255, 217, 0);
-  }
-
 }
 
-.chat-input {
-  position: fixed !important;
-  top: calc(100% - 75px);
-  background-color: #fff;
-  width: 20% !important;
+.chat-content > :first-child {
+  margin-top: auto;
+}
+
+.message {
+  margin: 0 10px 7px;
+  padding: 0;
+  text-align: left;
+}
+
+hr {
+  margin-bottom: 0;
 }
 </style>
