@@ -53,6 +53,7 @@ new Vue({
       const data = await response.json()
       store.commit('setLogged', data.isLogged)
       store.commit('setUsername', data.name)
+      store.commit('setRole', data.role)
       store.commit('setUserId', data.id)
       store.commit('setRequestedLogin', true)
     }

@@ -1,11 +1,11 @@
 <template>
   <div id="app">
-    <app-header :isLogged="storeIsLogged" />
+    <app-header :isLogged="storeIsLogged" :role="storeRole" />
     <div style="height: calc(100vh - 49px);" class="md-layout">
       <div class="md-layout-item md-gutter">
         <router-view/>
       </div>
-      <div class="md-layout-item md-size-20 md-medium-hide"  v-if="storeIsLogged">
+      <div class="md-layout-item md-size-20 md-medium-hide" v-if="storeIsLogged">
         <div style="position: fixed; width: 19.9%; background-color: #fff; box-shadow: 0 3px 1px -2px rgb(0 0 0 / 20%), 0 2px 2px 0 rgb(0 0 0 / 14%), 0 1px 5px 0 rgb(0 0 0 / 12%); height: calc(100vh - 48px);">
           <Chat />
         </div>
@@ -36,6 +36,10 @@ export default class App extends Vue {
 
   get storeIsLogged() {
     return store.state.isLogged
+  }
+
+  get storeRole() {
+    return store.state.role
   }
 
   get popupMessage () {

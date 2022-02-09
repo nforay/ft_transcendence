@@ -92,6 +92,7 @@ export default class SignUpForm extends Vue {
       store.commit('setLogged', true)
       store.commit('setUsername', data.name)
       store.commit('setUserId', data.id)
+      store.commit('setRole', data.role)
       router.push('/').catch(() => { Function.prototype() })
     }
   }

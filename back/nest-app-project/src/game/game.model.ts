@@ -453,10 +453,10 @@ export class Game {
     const scoreWinner = 1;
     const scoreLoser = 0;
 
-    const k = 32;
+    const k = 50;
 
-    winner.elo = Math.max(Math.round(winner.elo + k * (scoreWinner - expectedWinner)), 100);
-    loser.elo = Math.max(Math.round(loser.elo + k * (scoreLoser - expectedLoser)), 100);
+    winner.elo = Math.min(Math.max(Math.round(winner.elo + k * (scoreWinner - expectedWinner)), 100), 5000);
+    loser.elo = Math.min(Math.max(Math.round(loser.elo + k * (scoreLoser - expectedLoser)), 100), 5000);
 
     UserManager.instance.userRepository.save(winner);
     UserManager.instance.userRepository.save(loser);

@@ -1,40 +1,44 @@
 <template>
   <div>
     <div v-if="this.isadmin">
-      <h1>Admin View</h1>
-      <div id="container">
-        <div id="first">
-          <h2>Users List:</h2>
-          <span style="color: green;" @click="refreshUsers()">refresh</span>
-          <div id="scrollbox" style="display: flex">
-            <span v-for="(user, i) in users" :key="i">
-              <a :href="user.url">
-                <div style="position: relative;">
-                  <img class="user-avatar" :src="user.avatar">
-                  <div :class="user.htmlStatusClasses" :src="user.statusImage"></div>
-                </div>
-                <a> {{ user.username }} </a>
-              </a>
-              <div v-if="user.username !== adminusername">
-                <span style="color: red;" @click="deleteuser(user.id)">x</span>
-                &nbsp;
-                <span v-if="user.role !== 'admin'" style="color: orange;" @click="opuser(user.id)">o</span>
-                <span v-else style="color: darkgreen;" @click="opuser(user.id)">o</span>
-              </div>
-            </span>
+      <div class="md-layout">
+        <div class="md-layout-item" style="margin: 20px 10px 0px 20px;">
+            <span class="md-title">Users list<md-button class="md-icon-button md-dense" @click="refreshUsers()"><md-icon>refresh</md-icon></md-button></span>
+            <md-table style="max-height: 50vh;" md-card>
+              <md-table-row>
+                <md-table-head class="md-xsmall-hide" style="position: relative; width: 50px;">Avatar</md-table-head>
+                <md-table-head>Name</md-table-head>
+                <md-table-head>Actions</md-table-head>
+              </md-table-row>
+              <md-table-row style="cursor: pointer;" v-for="(user, i) in users" :key="i">
+                <md-table-cell style="width: 0;" class="md-xsmall-hide">
+                  <div style="position: relative; width: 50px;">
+                    <img class="user-avatar" :src="user.avatar">
+                  </div>
+                </md-table-cell>
+                <md-table-cell style="width: 0;">{{ user.username }}</md-table-cell>
+                <md-table-cell>
+                  <md-button v-if="user.role !== 'admin'" class="md-primary" @click="opuser(user.id)"><md-icon>supervised_user_circle</md-icon>Promote</md-button>
+                  <md-button v-else class="md-accent" @click="opuser(user.id)"><md-icon>account_circle</md-icon>Demote</md-button>
+                </md-table-cell>
+              </md-table-row>
+            </md-table>
           </div>
-        </div>
-        <div id="second">
-          <h2>Channels List:</h2>
-          <span style="color: green;" @click="refreshChans()">refresh</span>
-          <div id="scrollbox">
-            <ul v-for="(chan, i) in chans" :key="i">
-              {{ chan }}
-              <span v-if="chan !== 'general'" style="color: red;" @click="deletechan(chan)">x</span>
-            </ul>
+          <div class="md-layout-item" style="margin: 20px 20px 0px 10px;">
+          <span class="md-title">Channels list<md-button class="md-icon-button md-dense" @click="refreshChans()"><md-icon>refresh</md-icon></md-button></span>
+            <md-table style="max-height: 50vh;" md-card>
+              <md-table-row>
+                <md-table-head>Name</md-table-head>
+                <md-table-head>Actions</md-table-head>
+              </md-table-row>
+              <md-table-row style="cursor: pointer;" v-for="(chan, i) in chans" :key="i">
+                <md-table-cell style="width: 0;">{{ chan }}</md-table-cell>
+                <md-table-cell>
+                  <md-button class="md-accent" @click="deletechan(chan)" :disabled="chan === 'general'"><md-icon>delete</md-icon>Delete</md-button>
+                </md-table-cell>
+              </md-table-row>
+            </md-table>
           </div>
-        </div>
-        <div id="clear"></div>
       </div>
     </div>
   </div>
@@ -47,8 +51,8 @@ import store, { globalFunctions } from '../store'
 import router from '../router'
 
 @Component
-export default class UserProfile extends Vue {
-  public users: string[] = []
+export default class AdminView extends Vue {
+  public users: any[] = []
   public chans: string[] = []
 
   public isadmin = false
@@ -102,6 +106,7 @@ export default class UserProfile extends Vue {
     if (this.users.length === 0) {
       this.users.push('No user is registered')
     }
+    this.users.sort((a, b) => { return (a.username < b.username ? -1 : 1)})
 
     const chansResponse = await fetch(
       'http://' + process.env.VUE_APP_DOMAIN + ':' + process.env.VUE_APP_NEST_PORT + '/chan/', {
@@ -141,6 +146,7 @@ export default class UserProfile extends Vue {
     if (this.users.length === 0) {
       this.users.push('No user is registered')
     }
+    this.users.sort((a, b) => { return (a.username < b.username ? -1 : 1)})
   }
 
   async refreshChans (): Promise<void> {
@@ -173,20 +179,6 @@ export default class UserProfile extends Vue {
     }
   }
 
-  async deleteuser (id: string): Promise<void> {
-    const userResponse = await fetch(
-      'http://' + process.env.VUE_APP_DOMAIN + ':' + process.env.VUE_APP_NEST_PORT + '/user/' + id, {
-        method: 'DELETE',
-        headers: {
-          Authorization: 'Bearer ' + globalFunctions.getToken()
-        }
-      }
-    )
-    if (userResponse.ok) {
-      await this.refreshUsers()
-    }
-  }
-
   async opuser (id: string): Promise<void> {
     const userResponse = await fetch(
       'http://' + process.env.VUE_APP_DOMAIN + ':' + process.env.VUE_APP_NEST_PORT + '/user/admin/' + id, {
@@ -204,51 +196,14 @@ export default class UserProfile extends Vue {
 </script>
 
 <style scoped>
+.user-avatar {
+  max-width: 50px;
+}
+
 img.user-avatar {
-  display: block;
   width: 50px;
   height: 50px;
-  margin: 10px 10px 10px 10px;
-  border-radius: 30%;
-  overflow: hidden;
-}
-
-h1 {
-  font-family: "Helvetica";
-  font-size: 32px;
-}
-
-h2 {
-  font-family: "Helvetica";
-  text-align: left;
-}
-
-#scrollbox {
-  overflow-y: scroll;
-  overflow-x: hidden;
-  overflow-wrap: break-word;
-  height: 200px;
-  width: 200px;
-}
-
-#container {
-  width: 400px;
-  margin: auto;
-}
-
-#first {
-  width: 200px;
-  float: left;
-  height: 200px;
-}
-
-#second {
-  width: 200px;
-  float: left;
-  height: 200px;
-}
-
-#clear {
-  clear: both;
+  border-radius: 5%;
+  object-fit: cover;
 }
 </style>

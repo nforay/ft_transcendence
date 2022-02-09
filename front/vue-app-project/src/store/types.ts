@@ -7,4 +7,5 @@ export interface StoreType {
   errors: string[]
   avatarUpdate: number
   popupMessage: string
+  role: string
 }

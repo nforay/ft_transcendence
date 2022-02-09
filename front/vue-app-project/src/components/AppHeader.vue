@@ -24,6 +24,11 @@
               <span>Profile</span>
             </md-menu-item>
 
+            <md-menu-item v-if="role === 'admin'" to="/admin">
+              <md-icon>supervisor_account</md-icon>
+              <span>Admin</span>
+            </md-menu-item>
+
             <md-menu-item v-if="isLogged" to="/settings">
               <md-icon>settings</md-icon>
               <span>Settings</span>
@@ -48,10 +53,10 @@
 <script lang="ts">
 import Vue from 'vue'
 import Component from 'vue-class-component'
-import store, { globalFunctions } from '../store'
+import store from '../store'
 import router from '../router'
 import { mapGetters } from 'vuex'
-import { Watch, Prop } from 'vue-property-decorator'
+import { Prop } from 'vue-property-decorator'
 
 @Component({
   computed: { ...mapGetters(['username']) }
@@ -59,6 +64,7 @@ import { Watch, Prop } from 'vue-property-decorator'
 export default class AppHeader extends Vue {
 
   @Prop() isLogged!: boolean;
+  @Prop() role!: string;
 
   public get avatar() {
     return 'http://' + process.env.VUE_APP_DOMAIN + ':' + process.env.VUE_APP_NEST_PORT + '/user/avatar/' + store.state.userId + '?' + store.state.avatarUpdate
@@ -73,11 +79,6 @@ export default class AppHeader extends Vue {
   public get avatarUpdate () : number {
     return store.state.avatarUpdate
   }
-
-  /* @Watch('avatarUpdate')
-  public onAvatarUpdate (value: string, newValue: string) : void {
-    this.avatar = this.avatar.replace(/\?.*/ /* , '') + '?' + newValue
-  } */
 }
 </script>
 

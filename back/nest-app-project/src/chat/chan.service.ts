@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { Interval } from '@nestjs/schedule';
 import { channel } from 'diagnostics_channel';
 import { Socket } from 'socket.io';
@@ -27,11 +27,11 @@ export class ChanManager
     return chan
   }
 
-	delete(name : string) {
+	delete(name: string) {
     const chan = this.findByName(name)
-		if (chan === undefined)
+		if (!chan)
       throw "Channel doesn't exists"
-		if (chan.name == "general")
+		if (chan.name === "general")
 			throw "You cannot delete this channel"
 		this.chans.splice(this.chans.indexOf(chan), 1)
 	}

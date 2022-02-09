@@ -75,22 +75,22 @@ export default class LoginForm extends Vue {
     })
 
     if (!response.ok) {
-      const data = await response.json()
       store.commit('expireToken')
-      store.commit('setLogged', false)
+      store.commit('logout')
       store.commit('setPopupMessage', 'Incorrect username or password')
       this.sending = false
     } else {
       const data = await response.json()
       if (data.has2FA) {
         store.commit('expireToken')
-        store.commit('setLogged', false)
+        store.commit('logout')
         router.push('/validate2fa?userId=' + data.id).catch(() => { Function.prototype() })
       } else {
         store.commit('setToken', { token: data.token, expiresIn: data.expiresIn })
         store.commit('setLogged', true)
         store.commit('setUsername', data.name)
         store.commit('setUserId', data.id)
+        store.commit('setRole', data.role)
         router.push('/').catch(() => { Function.prototype() })
       }
     }

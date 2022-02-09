@@ -14,10 +14,15 @@ const store : StoreOptions<StoreType> = {
     errors: [],
     avatarUpdate: 0,
     popupMessage: '',
+    role: 'user',
   },
   mutations: {
     setLogged (state : StoreType, value : boolean) : void {
       state.isLogged = value
+    },
+
+    setRole (state : StoreType, value : string) : void {
+      state.role = value
     },
 
     setUsername (state : StoreType, value : string) : void {
@@ -33,6 +38,7 @@ const store : StoreOptions<StoreType> = {
       state.username = ''
       state.notifications = []
       state.userId = ''
+      state.role = 'user'
     },
 
     setToken (state : StoreType, data : any) : void {
@@ -59,6 +65,10 @@ const store : StoreOptions<StoreType> = {
   getters: {
     username (state : StoreType) : string {
       return state.username
+    },
+
+    role (state : StoreType) : string {
+      return state.role
     },
 
     notifications (state : StoreType) : string[] {
@@ -91,7 +101,7 @@ const store : StoreOptions<StoreType> = {
 
     popupMessage (state : StoreType) : string {
       return state.popupMessage
-    }
+    },
   }
 }
 

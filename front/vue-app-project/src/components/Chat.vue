@@ -336,6 +336,8 @@ export default class Chat extends Vue {
   display: flex;
   flex-direction: column;
   overflow-y: scroll;
+  overflow: wrap;
+  word-wrap: break-word;
 }
 
 .chat-content > :first-child {

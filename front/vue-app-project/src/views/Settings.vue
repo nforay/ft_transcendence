@@ -34,7 +34,7 @@
           <md-card-actions>
             <md-button class="md-primary" v-if="!twoFAIsEnabled" @click="reditectTo2FA" >Enable 2FA <md-icon>qr_code_2</md-icon></md-button>
             <md-button class="md-accent" v-else @click="reditectToCodePage" >Disable 2FA <md-icon>qr_code_2</md-icon></md-button>
-            <md-button class="md-primary" @click="applyChanges" :disabled="username.length == 0">Update <md-icon>edit</md-icon></md-button>
+            <md-button class="md-primary" @click="applyChanges" :disabled="username.length === 0 || bio === startBio">Update <md-icon>edit</md-icon></md-button>
           </md-card-actions>
         </md-card>
       </div>
@@ -52,6 +52,7 @@ import router from '../router'
 export default class Settings extends Vue {
   public twoFAEnabled = false
   public startUsername = ''
+  public startBio = ''
   public username = ''
   public bio = ''
   public avatar = ''
@@ -92,6 +93,7 @@ export default class Settings extends Vue {
       const data = await response.json()
       this.username = data.name
       this.startUsername = data.name
+      this.startBio = data.bio
       this.bio = data.bio
       this.avatar = data.avatar + '?' + Date.now()
       this.loaded = true
@@ -138,6 +140,8 @@ export default class Settings extends Vue {
       store.commit('setToken', { token: data.token, expiresIn: data.expiresIn })
       store.commit('setUsername', this.username)
       store.commit('setPopupMessage', 'Changes applied successfully')
+      this.startUsername = this.bio
+      this.startBio = this.bio
 
     } else {
       store.commit('setPopupMessage', 'Could not update the informations')

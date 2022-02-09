@@ -22,7 +22,7 @@ export class ChanController {
 		if (user.role !== 'admin') {
 			throw new HttpException('User is not admin', HttpStatus.FORBIDDEN);
 		}
-		const ret = await this.chatCommandHandlers.dchanCommand(null, ['', cname], user.name, ChatUsersManager.users, this.chanService);
+		const ret = await this.chatCommandHandlers.dchanCommand(null, ['/dchan', cname], user.id, ChatUsersManager.users, this.chanService);
 		return { msg: ret };
 	}
 }

@@ -1,5 +1,6 @@
 <template>
   <div class="game-canvas">
+    <md-progress-bar md-mode="determinate" v-if="finished" />
     <canvas v-if="!isSpectator" id="canvas" tabindex="0"
     @keydown.up="leftPaddle.upPressed = true"
     @keydown.down="leftPaddle.downPressed = true"
@@ -365,6 +366,11 @@ export default class GameCanvas extends Vue {
 
   finish () : void {
     this.finished = true
+    setTimeout(() => {
+      if (this.$route.path === '/game') {
+        router.push('/play').catch(() => {})
+      }
+    }, 3000)
   }
 
   setupSocket () : void {

@@ -33,6 +33,12 @@ export class UserDTO {
   bio: string;
 }
 
+export class UserUpdateDTO {
+  @IsString()
+  @Length(0, 200)
+  bio: string;
+}
+
 export class SecretCodeDTO {
   @IsString()
   @IsNotEmpty()

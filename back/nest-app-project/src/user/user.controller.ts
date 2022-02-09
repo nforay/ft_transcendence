@@ -1,6 +1,6 @@
 import { Get, Post, Put, Delete, Param, Controller, Headers, Query, UploadedFile, HttpStatus, HttpException, Res, Header } from '@nestjs/common';
 import { UserService } from './user.service';
-import { SecretCodeDTO, UserDTO, UserPassDTO } from './user.dto'
+import { SecretCodeDTO, UserDTO, UserUpdateDTO } from './user.dto'
 import { Body } from '@nestjs/common';
 import { ParseUUIDPipe } from '@nestjs/common';
 import { UseGuards } from '@nestjs/common';
@@ -157,13 +157,13 @@ export class UserController {
     return this.userService.findOne(id);
   }
 
-  @Delete(':id')
+  /*@Delete(':id')
   remove(@Param('id', ParseUUIDPipe) id: string, @AuthUser() user) {
 		if (user.role !== 'admin') {
 			throw new HttpException('User is not admin', HttpStatus.FORBIDDEN);
 		}
     return this.userService.remove(id);
-  }
+  }*/
 
   @Get('friends/name/:name')
 	getFriendsByName(@Param('name') name: string) {
@@ -201,7 +201,7 @@ export class UserController {
   @Put('update')
   @Header('Content-Type', 'application/json')
   @UseGuards(AuthGuard)
-  update(@Headers() headers, @Body() data: Partial<UserDTO>) {
+  update(@Headers() headers, @Body() data: UserUpdateDTO) {
     return this.userService.update(headers.authorization, data);
   }
 }

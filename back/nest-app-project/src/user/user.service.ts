@@ -8,12 +8,10 @@ import * as qrcode from 'qrcode';
 import * as speakeasy from 'speakeasy';
 import { GameManager } from '../game/game.model';
 import { Repository } from 'typeorm';
-import { SecretCodeDTO, UserDTO, UserPassDTO, UserResponseObject } from './user.dto';
+import { SecretCodeDTO, UserDTO, UserResponseObject, UserUpdateDTO } from './user.dto';
 import { UserEntity } from './user.entity';
 import { TwoFAUser, UserManager, UserStatus } from './user.model';
 import fetch from 'cross-fetch';
-import * as FormData from 'form-data';
-import * as utf8 from 'utf8';
 import * as https from 'https';
 import { Interval } from '@nestjs/schedule';
 
@@ -156,13 +154,18 @@ export class UserService {
     return user.toResponseUser();
   }
 
-  async update(authorization: string, data: Partial<UserDTO>) : Promise<UserResponseObject> {
+  async update(authorization: string, data: UserUpdateDTO) : Promise<UserResponseObject> {
     const { id, isLogged } = await this.isLogged(authorization);
     if (!isLogged)
       throw new HttpException('Invalid Token', HttpStatus.UNAUTHORIZED);
-    await this.repository.update({ id }, data);
-    const newUser = await this.repository.findOne({ where: { id } });
-    return newUser.toResponseUser(true);
+    let user = await this.repository.findOne({ where: { id } });
+    if (!user)
+      throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+    if (data.bio === user.bio)
+      throw new HttpException('There was nothing to change', HttpStatus.BAD_REQUEST);
+    user.bio = data.bio;
+    await this.repository.save(user);
+    return user.toResponseUser(true);
   }
 
   async remove(id: string) : Promise<UserResponseObject> {
@@ -215,6 +218,7 @@ export class UserService {
       return {
         id: decoded.id,
         isLogged: true,
+        role: decoded.role,
         name: decoded.name
       };
     }
@@ -222,6 +226,7 @@ export class UserService {
       return {
         id: '',
         isLogged: false,
+        role: 'user',
         name: ''
       };
     }
