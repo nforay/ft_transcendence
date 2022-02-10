@@ -7,9 +7,9 @@
         <span class="md-title md-small-show" style="flex: 1"></span>
           <div id="nav" style="display: flex; justify-content: space-between;">
             <md-button class="navbar-button" to="/" exact><md-icon class="navbar-icon">home</md-icon>Home</md-button>
-            <md-button v-if="isLogged" to="/play"><md-icon class="navbar-icon">sports_tennis</md-icon>Play</md-button>
+            <md-button v-if="isLogged" class="navbar-button" to="/play"><md-icon class="navbar-icon">sports_tennis</md-icon>Play</md-button>
             <md-button v-if="isLogged" class="navbar-button" to="/leaderboard"><md-icon class="navbar-icon">leaderboard</md-icon>Leaderboard</md-button>
-            <md-button to="/about"><md-icon class="navbar-icon">help</md-icon>About</md-button>
+            <md-button to="/about" class="navbar-button"><md-icon class="navbar-icon">help</md-icon>About</md-button>
             <md-button v-if="!isLogged" class="navbar-button" to="/login"><md-icon class="navbar-icon">login</md-icon>Login</md-button>
           </div>
         <md-menu md-size="auto">
@@ -114,5 +114,11 @@ export default class AppHeader extends Vue {
 
 .md-toolbar + .md-toolbar {
     margin-top: 16px;
+}
+
+@media screen and (max-width: 700px){
+  .navbar-button {
+    font-size: 0;
+  }
 }
 </style>
