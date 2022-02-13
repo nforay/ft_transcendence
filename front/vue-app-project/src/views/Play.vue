@@ -96,7 +96,7 @@ export default class Play extends Vue {
   async created () : Promise<void> {
     document.addEventListener('beforeunload', this.leaveQueue)
 
-    const activeGamesResponsse = await fetch(`http://${process.env.VUE_APP_DOMAIN}:${process.env.VUE_APP_NEST_PORT}/game/active`, {
+    const activeGamesResponsse = await fetch(`${process.env.VUE_APP_URL}:${process.env.VUE_APP_NEST_PORT}/game/active`, {
       method: 'GET'
     })
     if (!activeGamesResponsse.ok) {
@@ -119,7 +119,7 @@ export default class Play extends Vue {
       store.commit('setPopupMessage', 'You must be logged in to spectate a game')
       return
     }
-    const gameJwtResponse = await fetch(`http://${process.env.VUE_APP_DOMAIN}:${process.env.VUE_APP_NEST_PORT}/game/requestSpectate?id=${id}`, {
+    const gameJwtResponse = await fetch(`${process.env.VUE_APP_URL}:${process.env.VUE_APP_NEST_PORT}/game/requestSpectate?id=${id}`, {
       method: 'GET',
       headers: {
         Authorization: 'Bearer ' + globalFunctions.getToken()
@@ -142,7 +142,7 @@ export default class Play extends Vue {
     while (!store.state.requestedLogin) {
       await new Promise(resolve => setTimeout(resolve, 100))
     }
-    const resp = await fetch(`http://${process.env.VUE_APP_DOMAIN}:${process.env.VUE_APP_NEST_PORT}/user/${store.state.userId}`, {
+    const resp = await fetch(`${process.env.VUE_APP_URL}:${process.env.VUE_APP_NEST_PORT}/user/${store.state.userId}`, {
       method: 'GET'
     })
     if (!resp.ok) {
@@ -158,7 +158,7 @@ export default class Play extends Vue {
       return
     }
     const token = document.cookie.split('Token=')[1].split(';')[0]
-    const response = await fetch(`http://${process.env.VUE_APP_DOMAIN}:${process.env.VUE_APP_NEST_PORT}/matchmaking/poll`, {
+    const response = await fetch(`${process.env.VUE_APP_URL}:${process.env.VUE_APP_NEST_PORT}/matchmaking/poll`, {
       method: 'GET',
       headers: {
         Authorization: 'Bearer ' + token
@@ -181,7 +181,7 @@ export default class Play extends Vue {
       return
     }
     const token = document.cookie.split('Token=')[1].split(';')[0]
-    const response = await fetch(`http://${process.env.VUE_APP_DOMAIN}:${process.env.VUE_APP_NEST_PORT}/matchmaking/join`, {
+    const response = await fetch(`${process.env.VUE_APP_URL}:${process.env.VUE_APP_NEST_PORT}/matchmaking/join`, {
       method: 'POST',
       headers: {
         Authorization: 'Bearer ' + token,
@@ -206,7 +206,7 @@ export default class Play extends Vue {
       return false;
     }
     const token = document.cookie.split('Token=')[1].split(';')[0]
-    const response = await fetch(`http://${process.env.VUE_APP_DOMAIN}:${process.env.VUE_APP_NEST_PORT}/matchmaking/leave`, {
+    const response = await fetch(`${process.env.VUE_APP_URL}:${process.env.VUE_APP_NEST_PORT}/matchmaking/leave`, {
       method: 'POST',
       headers: {
         Authorization: 'Bearer ' + token
@@ -223,7 +223,7 @@ export default class Play extends Vue {
   }
 
   userAvatar (id: string) : string {
-    return `http://${process.env.VUE_APP_DOMAIN}:${process.env.VUE_APP_NEST_PORT}/user/avatar/${id}`
+    return `${process.env.VUE_APP_URL}:${process.env.VUE_APP_NEST_PORT}/user/avatar/${id}`
   }
 }
 

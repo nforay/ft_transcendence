@@ -61,7 +61,7 @@ export default class App extends Vue {
 
   async created() {
     if (globalFunctions.getToken() !== 'error') {
-      await fetch(`http://${process.env.VUE_APP_DOMAIN}:${process.env.VUE_APP_NEST_PORT}/user/updateOnlineStatus`, {
+      await fetch(`${process.env.VUE_APP_URL}:${process.env.VUE_APP_NEST_PORT}/user/updateOnlineStatus`, {
         method: 'POST',
         headers: {
           Authorization: 'Bearer ' + globalFunctions.getToken()
@@ -73,7 +73,7 @@ export default class App extends Vue {
       if (globalFunctions.getToken() === 'error') {
         return
       }
-      await fetch(`http://${process.env.VUE_APP_DOMAIN}:${process.env.VUE_APP_NEST_PORT}/user/updateOnlineStatus`, {
+      await fetch(`${process.env.VUE_APP_URL}:${process.env.VUE_APP_NEST_PORT}/user/updateOnlineStatus`, {
         method: 'POST',
         headers: {
           Authorization: 'Bearer ' + globalFunctions.getToken()

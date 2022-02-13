@@ -6,18 +6,9 @@ import { MoveGameModelDto } from "./dto/move-game-model.dto";
 import { GameManager, GameState, Player, Spectator } from "./game.model";
 import * as jwt from 'jsonwebtoken'
 import { Interval } from '@nestjs/schedule'
-import { UserManager } from "src/user/user.model";
+import { UserManager } from "../user/user.model";
 
-@WebSocketGateway(4001, {
-  cors: {
-    credentials: true,
-    methods: ["GET", "POST"],
-    transports: ['websocket', 'polling'],
-    //origin: `http://${process.env.DOMAIN}:${process.env.VUE_PORT}`
-    origin: `http://localhost:8080`
-  },
-  allowEIO3: true
-})
+@WebSocketGateway({ path: '/pong', namespace: 'pong', cors: true })
 export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
 
   public static clients: Array<Socket> = []
@@ -77,7 +68,7 @@ export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
   }
 
   afterInit(server: Server) {
-    this.logger.log(`Game websocket server is listening on ws://localhost:${process.env.WEBSOCKET_PORT}`);
+    this.logger.log(`Game websocket server is listening on wss://${process.env.DOMAIN}:${process.env.NEST_PORT}`);
   }
 
   @SubscribeMessage("init")

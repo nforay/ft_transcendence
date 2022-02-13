@@ -187,7 +187,7 @@ export default class Chat extends Vue {
     eventBus.$on('sendChallengeEvent', (target: string) => {
       this.showChallengeDialog(target);
     })
-    this.socket = io.connect('ws://' + process.env.VUE_APP_DOMAIN + ':' + process.env.VUE_APP_CHAT_PORT + '')
+    this.socket = io.connect('wss://' + process.env.VUE_APP_DOMAIN + ':' + process.env.VUE_APP_NEST_PORT + '/chat', { path: '/chat'})
     this.chatMsg.token = globalFunctions.getToken()
     this.socket.on('recv_message', (data) => {
       let lines : string[] = []

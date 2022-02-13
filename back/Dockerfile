@@ -14,6 +14,8 @@ FROM node:lts-alpine AS backend-prod
 ARG NODE_ENV=production
 ENV NODE_ENV=${NODE_ENV}
 
+VOLUME /ssl
+
 WORKDIR /app
 COPY --from=backend-builder /app ./
 WORKDIR /app/dist

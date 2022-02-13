@@ -1,6 +1,6 @@
 <template>
   <div class="game-canvas">
-    <md-progress-bar md-mode="determinate" v-if="finished" />
+    <md-progress-bar md-mode="indeterminate" v-if="finished" />
     <canvas v-if="!isSpectator" id="canvas" tabindex="0"
     @keydown.up="leftPaddle.upPressed = true"
     @keydown.down="leftPaddle.downPressed = true"
@@ -152,7 +152,7 @@ export default class GameCanvas extends Vue {
   gameJwt = window.localStorage.getItem('gameJwt')
   @Prop({ type: String }) gameId!: string
 
-  socketManager = new SocketManager('http://' + process.env.VUE_APP_DOMAIN + ':' + process.env.VUE_APP_GAME_PORT + '/?gameJwt=' + this.gameJwt)
+  socketManager = new SocketManager(process.env.VUE_APP_URL + ':' + process.env.VUE_APP_NEST_PORT + '/pong?gameJwt=' + this.gameJwt)
 
   leftPaddle = new Paddle(0, 0, 0, 0)
   rightPaddle = new Paddle(0, 0, 0, 0)
@@ -189,7 +189,7 @@ export default class GameCanvas extends Vue {
     this.gameJwt = window.localStorage.getItem('gameJwt')
     this.gameId = queryid
     this.socketManager.disconnect()
-    this.socketManager = new SocketManager('http://' + process.env.VUE_APP_DOMAIN + ':' + process.env.VUE_APP_GAME_PORT + '/?gameJwt=' + this.gameJwt)
+    this.socketManager = new SocketManager(process.env.VUE_APP_URL + ':' + process.env.VUE_APP_NEST_PORT + '/pong?gameJwt=' + this.gameJwt)
     this.finished = false
     this.initCanvas()
     this.retrievePositions()

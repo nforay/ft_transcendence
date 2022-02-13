@@ -8,7 +8,7 @@ import { GameEntity } from './entities/game.entity'
 import { GameGateway } from './game.gateway'
 import { UserManager, UserStatus } from '../user/user.model'
 import { ResponseGame } from './dto/response-game.dto'
-import { GameSettingsDto } from 'src/matchmaking/matchmaking.dto'
+import { GameSettingsDto } from '../matchmaking/matchmaking.dto'
 
 export class GameManager {
   public static instance: GameManager = new GameManager()

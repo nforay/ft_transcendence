@@ -68,7 +68,7 @@ export default class AdminView extends Vue {
     }
 
     const response = await fetch(
-      'http://' + process.env.VUE_APP_DOMAIN + ':' + process.env.VUE_APP_NEST_PORT + '/user/' + store.state.userId, {
+      process.env.VUE_APP_URL + ':' + process.env.VUE_APP_NEST_PORT + '/user/' + store.state.userId, {
         method: 'GET'
       }
     )
@@ -85,7 +85,7 @@ export default class AdminView extends Vue {
     }
 
     const usersResponse = await fetch(
-      'http://' + process.env.VUE_APP_DOMAIN + ':' + process.env.VUE_APP_NEST_PORT + '/user/', {
+      process.env.VUE_APP_URL + ':' + process.env.VUE_APP_NEST_PORT + '/user/', {
         method: 'GET'
       }
     )
@@ -109,7 +109,7 @@ export default class AdminView extends Vue {
     this.users.sort((a, b) => { return (a.username < b.username ? -1 : 1)})
 
     const chansResponse = await fetch(
-      'http://' + process.env.VUE_APP_DOMAIN + ':' + process.env.VUE_APP_NEST_PORT + '/chan/', {
+      process.env.VUE_APP_URL + ':' + process.env.VUE_APP_NEST_PORT + '/chan/', {
         method: 'GET',
         headers: {
           Authorization: 'Bearer ' + globalFunctions.getToken()
@@ -125,7 +125,7 @@ export default class AdminView extends Vue {
 
   async refreshUsers (): Promise<void> {
     const usersResponse = await fetch(
-      'http://' + process.env.VUE_APP_DOMAIN + ':' + process.env.VUE_APP_NEST_PORT + '/user/', {
+      process.env.VUE_APP_URL + ':' + process.env.VUE_APP_NEST_PORT + '/user/', {
         method: 'GET'
       }
     )
@@ -151,7 +151,7 @@ export default class AdminView extends Vue {
 
   async refreshChans (): Promise<void> {
     const chansResponse = await fetch(
-      'http://' + process.env.VUE_APP_DOMAIN + ':' + process.env.VUE_APP_NEST_PORT + '/chan/', {
+      process.env.VUE_APP_URL + ':' + process.env.VUE_APP_NEST_PORT + '/chan/', {
         method: 'GET',
         headers: {
           Authorization: 'Bearer ' + globalFunctions.getToken()
@@ -167,7 +167,7 @@ export default class AdminView extends Vue {
 
   async deletechan (chan: string): Promise<void> {
     const chanResponse = await fetch(
-      'http://' + process.env.VUE_APP_DOMAIN + ':' + process.env.VUE_APP_NEST_PORT + '/chan/' + chan, {
+      process.env.VUE_APP_URL + ':' + process.env.VUE_APP_NEST_PORT + '/chan/' + chan, {
         method: 'DELETE',
         headers: {
           Authorization: 'Bearer ' + globalFunctions.getToken()
@@ -181,7 +181,7 @@ export default class AdminView extends Vue {
 
   async opuser (id: string): Promise<void> {
     const userResponse = await fetch(
-      'http://' + process.env.VUE_APP_DOMAIN + ':' + process.env.VUE_APP_NEST_PORT + '/user/admin/' + id, {
+      process.env.VUE_APP_URL + ':' + process.env.VUE_APP_NEST_PORT + '/user/admin/' + id, {
         method: 'POST',
         headers: {
           Authorization: 'Bearer ' + globalFunctions.getToken()

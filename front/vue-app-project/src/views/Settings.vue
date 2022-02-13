@@ -65,7 +65,7 @@ export default class Settings extends Vue {
       return
     }
 
-    const response = await fetch(`http://${process.env.VUE_APP_DOMAIN}:${process.env.VUE_APP_NEST_PORT}/user/has2fa`, {
+    const response = await fetch(`${process.env.VUE_APP_URL}:${process.env.VUE_APP_NEST_PORT}/user/has2fa`, {
       method: 'GET',
       headers: {
         Authorization: 'Bearer ' + token
@@ -86,7 +86,7 @@ export default class Settings extends Vue {
     if (this.userId === '') {
       return
     }
-    const response = await fetch(`http://${process.env.VUE_APP_DOMAIN}:${process.env.VUE_APP_NEST_PORT}/user/${this.userId}`, {
+    const response = await fetch(`${process.env.VUE_APP_URL}:${process.env.VUE_APP_NEST_PORT}/user/${this.userId}`, {
       method: 'GET'
     })
     if (response.ok) {
@@ -124,7 +124,7 @@ export default class Settings extends Vue {
       return
     }
     const token = document.cookie.split('Token=')[1].split(';')[0]
-    const response = await fetch(`http://${process.env.VUE_APP_DOMAIN}:${process.env.VUE_APP_NEST_PORT}/user/update`, {
+    const response = await fetch(`${process.env.VUE_APP_URL}:${process.env.VUE_APP_NEST_PORT}/user/update`, {
       method: 'PUT',
       headers: {
         Authorization: 'Bearer ' + token,
@@ -162,7 +162,7 @@ export default class Settings extends Vue {
     const file = target.files[0]
     const formData = new FormData()
     formData.append('file', file)
-    const response = await fetch(`http://${process.env.VUE_APP_DOMAIN}:${process.env.VUE_APP_NEST_PORT}/user/avatar/`, {
+    const response = await fetch(`${process.env.VUE_APP_URL}:${process.env.VUE_APP_NEST_PORT}/user/avatar/`, {
       method: 'POST',
       headers: {
         Authorization: 'Bearer ' + token

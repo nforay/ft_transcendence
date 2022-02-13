@@ -9,16 +9,7 @@ import { ChallengeManager } from '../challenge/challenge.model';
 import { GameManager } from '../game/game.model';
 import { GameSettingsDto } from '../matchmaking/matchmaking.dto';
 
-@WebSocketGateway(8082, {
-	cors: {
-		credentials: true,
-		methods: ["GET", "POST"],
-		transports: ['websocket', 'polling'],
-		// origin: `http://${process.env.DOMAIN}:${process.env.VUE_PORT}`
-		origin: `http://localhost:8080`
-	},
-	allowEIO3: true
-})
+@WebSocketGateway({ path: '/chat', namespace: 'chat', cors: true })
 export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit {
 
 	@WebSocketServer()

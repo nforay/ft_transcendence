@@ -16,7 +16,7 @@ export class SocketManager {
   private messages: SocketMessage[] = []
 
   constructor (url: string) {
-    this.socket = io.connect(url)
+    this.socket = io.connect(url, { path: '/pong'})
     this.socket.on('connect', () => {
       this.messages.forEach(message => {
         this.socket.emit(message.event, message.data)

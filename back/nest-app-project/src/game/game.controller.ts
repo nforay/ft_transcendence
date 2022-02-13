@@ -4,7 +4,7 @@ import { CreateGameDto } from './dto/create-game.dto';
 import { UpdateGameDto } from './dto/update-game.dto';
 import { AdminGuard } from '../shared/admin.guard';
 import { AuthUser } from '../shared/auth-user.decorator';
-import { AuthGuard } from 'src/shared/auth.guard';
+import { AuthGuard } from '../shared/auth.guard';
 
 @Controller('game')
 export class GameController {

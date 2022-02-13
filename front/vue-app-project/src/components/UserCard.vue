@@ -107,7 +107,7 @@ export default class UserCard extends Vue {
     this.isloggeduser = true
 
     const response = await fetch(
-      'http://' + process.env.VUE_APP_DOMAIN + ':' + process.env.VUE_APP_NEST_PORT + '/user/username/' + this.username, {
+      process.env.VUE_APP_URL + ':' + process.env.VUE_APP_NEST_PORT + '/user/username/' + this.username, {
         method: 'GET'
       }
     )
@@ -133,7 +133,7 @@ export default class UserCard extends Vue {
         this.isloggeduser = false
       }
       const resp = await fetch(
-        'http://' + process.env.VUE_APP_DOMAIN + ':' + process.env.VUE_APP_NEST_PORT + '/user/friends/check/' + store.state.userId + '/' + this.username, {
+        process.env.VUE_APP_URL + ':' + process.env.VUE_APP_NEST_PORT + '/user/friends/check/' + store.state.userId + '/' + this.username, {
           method: 'GET'
         }
       )
@@ -147,7 +147,7 @@ export default class UserCard extends Vue {
     if (globalFunctions.getToken() === 'error')
       return
     const isBlocked = await fetch(
-      'http://' + process.env.VUE_APP_DOMAIN + ':' + process.env.VUE_APP_NEST_PORT + '/user/isBlocked?name=' + this.username, {
+      process.env.VUE_APP_URL + ':' + process.env.VUE_APP_NEST_PORT + '/user/isBlocked?name=' + this.username, {
         method: 'GET',
         headers: {
           Authorization: 'Bearer ' + globalFunctions.getToken()
@@ -180,7 +180,7 @@ export default class UserCard extends Vue {
       return
     }
     const response = await fetch(
-      'http://' + process.env.VUE_APP_DOMAIN + ':' + process.env.VUE_APP_NEST_PORT + '/user/friends/' + store.state.userId + '/' + this.username, {
+      process.env.VUE_APP_URL + ':' + process.env.VUE_APP_NEST_PORT + '/user/friends/' + store.state.userId + '/' + this.username, {
         method: 'POST'
       }
     )
@@ -194,7 +194,7 @@ export default class UserCard extends Vue {
       return
     }
     const response = await fetch(
-      'http://' + process.env.VUE_APP_DOMAIN + ':' + process.env.VUE_APP_NEST_PORT + '/user/friends/' + store.state.userId + '/' + this.username, {
+      process.env.VUE_APP_URL + ':' + process.env.VUE_APP_NEST_PORT + '/user/friends/' + store.state.userId + '/' + this.username, {
         method: 'DELETE'
       }
     )
@@ -208,7 +208,7 @@ export default class UserCard extends Vue {
       return
     }
     const response = await fetch(
-      'http://' + process.env.VUE_APP_DOMAIN + ':' + process.env.VUE_APP_NEST_PORT + '/user/block?name=' + this.username, {
+      process.env.VUE_APP_URL + ':' + process.env.VUE_APP_NEST_PORT + '/user/block?name=' + this.username, {
         method: 'POST',
         headers: {
           Authorization: 'Bearer ' + globalFunctions.getToken()
@@ -228,7 +228,7 @@ export default class UserCard extends Vue {
       return
     }
     const response = await fetch(
-      'http://' + process.env.VUE_APP_DOMAIN + ':' + process.env.VUE_APP_NEST_PORT + '/user/unblock?name=' + this.username, {
+      process.env.VUE_APP_URL + ':' + process.env.VUE_APP_NEST_PORT + '/user/unblock?name=' + this.username, {
         method: 'POST',
         headers: {
           Authorization: 'Bearer ' + globalFunctions.getToken()
@@ -249,7 +249,7 @@ export default class UserCard extends Vue {
       return
     }
 
-    const userGameIdResponse = await fetch(`http://${process.env.VUE_APP_DOMAIN}:${process.env.VUE_APP_NEST_PORT}/game/player?name=${this.username}`, {
+    const userGameIdResponse = await fetch(`${process.env.VUE_APP_URL}:${process.env.VUE_APP_NEST_PORT}/game/player?name=${this.username}`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${globalFunctions.getToken()}`
@@ -261,7 +261,7 @@ export default class UserCard extends Vue {
     }
     const id = (await userGameIdResponse.json()).id
 
-    const gameJwtResponse = await fetch(`http://${process.env.VUE_APP_DOMAIN}:${process.env.VUE_APP_NEST_PORT}/game/requestSpectate?id=${id}`, {
+    const gameJwtResponse = await fetch(`${process.env.VUE_APP_URL}:${process.env.VUE_APP_NEST_PORT}/game/requestSpectate?id=${id}`, {
       method: 'GET',
       headers: {
         Authorization: 'Bearer ' + globalFunctions.getToken()

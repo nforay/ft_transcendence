@@ -147,7 +147,7 @@ export default class UserStats extends Vue {
     this.username = (this.$route.query.user ? this.$route.query.user.toString() : store.state.username)
 
     const friendlistResponse = await fetch(
-      'http://' + process.env.VUE_APP_DOMAIN + ':' + process.env.VUE_APP_NEST_PORT + '/user/friends/name/' + this.username, {
+      process.env.VUE_APP_URL + ':' + process.env.VUE_APP_NEST_PORT + '/user/friends/name/' + this.username, {
         method: 'GET'
       }
     )
@@ -167,7 +167,7 @@ export default class UserStats extends Vue {
     })
 
     const matchHistory = await fetch(
-      'http://' + process.env.VUE_APP_DOMAIN + ':' + process.env.VUE_APP_NEST_PORT + '/user/history/name/' + this.username, {
+      process.env.VUE_APP_URL + ':' + process.env.VUE_APP_NEST_PORT + '/user/history/name/' + this.username, {
         method: 'GET'
       }
     )

@@ -54,7 +54,7 @@ export default class LoginForm extends Vue {
   }
 
   loginwith42 () : void {
-    window.location.href = `https://api.intra.42.fr/oauth/authorize?client_id=${process.env.VUE_APP_OAUTH2_UID}&redirect_uri=http%3A%2F%2F${process.env.VUE_APP_DOMAIN}%3A${process.env.VUE_APP_PORT}%2Fauthenticate&response_type=code`
+    window.location.href = `https://api.intra.42.fr/oauth/authorize?client_id=${process.env.VUE_APP_OAUTH2_UID}&redirect_uri=${process.env.VUE_APP_URL}%2Fauthenticate&response_type=code`
   }
 
   async login () : Promise<void> {
@@ -63,7 +63,7 @@ export default class LoginForm extends Vue {
     }
     this.sending = true
 
-    const response = await fetch(`http://${process.env.VUE_APP_DOMAIN}:${process.env.VUE_APP_NEST_PORT}/user/login`, {
+    const response = await fetch(`${process.env.VUE_APP_URL}:${process.env.VUE_APP_NEST_PORT}/user/login`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'

@@ -70,8 +70,8 @@ export class UserService {
       
       return {
         ...x.toResponseGame(),
-        player1Avatar: `http://${process.env.DOMAIN}:${process.env.PORT}/user/avatar/${x.player1Id}`,
-        player2Avatar: `http://${process.env.DOMAIN}:${process.env.PORT}/user/avatar/${x.player2Id}`,
+        player1Avatar: `${process.env.URL}:${process.env.NEST_PORT}/user/avatar/${x.player1Id}`,
+        player2Avatar: `${process.env.URL}:${process.env.NEST_PORT}/user/avatar/${x.player2Id}`,
         player1Name: (x.player1Id == user.id ? user.name : opponentName),
         player2Name: (x.player2Id == user.id ? user.name : opponentName),
       }
@@ -340,7 +340,7 @@ export class UserService {
     + '&client_id=' + process.env.OAUTH2_UID
     + '&client_secret=' + process.env.OAUTH2_SECRET
     + '&code=' + code
-    + '&redirect_uri=http://' + process.env.DOMAIN + ':' + process.env.VUE_PORT + '/authenticate'
+    + '&redirect_uri=https://' + process.env.DOMAIN + '/authenticate'
 
     const genTokenResponse = await fetch('https://api.intra.42.fr/oauth/token', {
       method: 'POST',

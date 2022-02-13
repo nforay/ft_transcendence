@@ -80,7 +80,7 @@ export default class Leaderboard extends Vue {
   }
 
   async created () : Promise<void> {
-    const response = await fetch(`http://${process.env.VUE_APP_DOMAIN}:${process.env.VUE_APP_NEST_PORT}/user/leaderboard?rangeMin=${this.page * this.pageSize}&rangeMax=${(this.page + 1) * this.pageSize}`, {
+    const response = await fetch(`${process.env.VUE_APP_URL}:${process.env.VUE_APP_NEST_PORT}/user/leaderboard?rangeMin=${this.page * this.pageSize}&rangeMax=${(this.page + 1) * this.pageSize}`, {
       method: 'GET'
     })
     if (!response.ok) {
@@ -101,7 +101,7 @@ export default class Leaderboard extends Vue {
   }
 
   userAvatar (id: string) : string {
-    return 'http://' + process.env.VUE_APP_DOMAIN + ':' + process.env.VUE_APP_NEST_PORT + '/user/avatar/' + id
+    return process.env.VUE_APP_URL + ':' + process.env.VUE_APP_NEST_PORT + '/user/avatar/' + id
   }
 
   getXpProgress (level: number) : number {
@@ -117,7 +117,8 @@ export default class Leaderboard extends Vue {
   margin: 20px auto;
 }
 
-.leaderboard-avatar {
+.leaderboard-table img {
+  max-height: 50px;
   max-width: 50px;
 }
 

@@ -67,7 +67,7 @@ export default class AppHeader extends Vue {
   @Prop() role!: string;
 
   public get avatar() {
-    return 'http://' + process.env.VUE_APP_DOMAIN + ':' + process.env.VUE_APP_NEST_PORT + '/user/avatar/' + store.state.userId + '?' + store.state.avatarUpdate
+    return process.env.VUE_APP_URL + ':' + process.env.VUE_APP_NEST_PORT + '/user/avatar/' + store.state.userId + '?' + store.state.avatarUpdate
   }
 
   public logout () : void {

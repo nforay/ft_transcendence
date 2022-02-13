@@ -50,7 +50,7 @@ export class UserEntity {
       win: this.win,
       lose: this.lose,
       level: this.getLevel(),
-      avatar: `http://${process.env.DOMAIN}:${process.env.PORT}/user/avatar/${this.id}`,
+      avatar: `${process.env.URL}:${process.env.NEST_PORT}/user/avatar/${this.id}`,
       status: UserManager.instance.onlineUsersStatus.has(this.id) ? UserManager.instance.onlineUsersStatus.get(this.id).status : 'offline',
       achievements: this.computeAchievements(),
       rank: this.getRankName(),
