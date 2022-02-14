@@ -6,7 +6,7 @@ import { MoveGameModelDto } from "./dto/move-game-model.dto";
 import { GameManager, GameState, Player, Spectator } from "./game.model";
 import * as jwt from 'jsonwebtoken'
 import { Interval } from '@nestjs/schedule'
-import { UserManager } from "src/user/user.model";
+import { UserManager } from "../user/user.model";
 
 @WebSocketGateway(4001, { cors: true })
 export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {

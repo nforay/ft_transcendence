@@ -2,7 +2,7 @@ version: "3"
 services:
   back:
     build:
-      context: ./back
+      context: ./srcs/back
       dockerfile: Dockerfile
     environment:
       - PORT=${NEST_PORT}
@@ -16,8 +16,10 @@ services:
     command: npm run start:prod
     # command: npm run start:prod
     container_name: back
+    depends_on:
+      - "database"
     volumes:
-      - ./back/uploads:/uploads
+      - ./srcs/back/uploads:/uploads
     ports:
       - "${NEST_PORT}:4000"
       - "${GAME_PORT}:4001"
@@ -36,7 +38,7 @@ services:
       - "5432:5432"
   front:
     build:
-      context: ./front
+      context: ./srcs/front
       dockerfile: Dockerfile_Prod
       args:
         - VUE_APP_PORT=${VUE_PORT}

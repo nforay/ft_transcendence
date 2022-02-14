@@ -35,12 +35,6 @@ export class ChatService {
 	}
 
 	async execute(name: string, msg: string, client: Socket) {
-    //! Rajouter:
-    //! /challenge <user>
-    //TODO /y (<user>) accepter le dernier challenge ou le challenge d'un utilisateur
-    //! Bugs:
-    //! Quitter et rejoindre un channel fait perdre le status de ban ou mute
-    //! Si le owner join un autre chan son chan n'est pas supprimé
 
     let uname = this.getUserFromSocket(client);
 		if (uname == null)
@@ -85,7 +79,7 @@ export class ChatService {
       client.emit("recv_message", { name: "", msg: "Command not found.", isCommandResponse: true })
     } else {
       const c = this.users.get(uname).chan;
-      const banData = await this.chanService.checkban(c, uname); //throw
+      const banData = await this.chanService.checkban(c, uname);
       const muteData = await this.chanService.checkmute(c, uname);
 
       if (banData && !banData.expired()) {
@@ -130,19 +124,19 @@ export class ChatService {
       await UserManager.instance.userRepository.save(user);
     }
     try {
-		  await this.chanService.join(client, user.chatLastChannel, uname, null, true);
+      await this.chanService.join(client, user.chatLastChannel, uname, null, true);
       this.users.set(uname, {
         sock: client,
         chan: user.chatLastChannel,
       });
       client.emit('recv_message', { name: "", msg: "Type /help to display command information.", isCommandResponse: true });
-		  await this.chanService.join(client, user.chatLastChannel, uname);
+      await this.chanService.join(client, user.chatLastChannel, uname);
     } catch (err) {
       this.users.set(uname, {
         sock: client,
         chan: 'general',
       });
-		  await this.chanService.join(client, 'general', uname);
+      await this.chanService.join(client, 'general', uname);
       client.emit('recv_message', { name: "", msg: "Type /help to display command information.", isCommandResponse: true });
       user.chatLastChannel = 'general';
       await UserManager.instance.userRepository.save(user);

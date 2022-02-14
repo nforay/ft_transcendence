@@ -1,7 +1,6 @@
-import { Logger } from '@nestjs/common';
 import { Socket } from 'socket.io';
 import { UserManager } from '../user/user.model';
-import { ChanManager, ChanService } from './chan.service';
+import { ChanService } from './chan.service';
 import { ClientIdentifier } from './chat.service';
 
 export class ChatCommandHandlers {
@@ -224,6 +223,24 @@ export class ChatCommandHandlers {
 
     if (!from) {
       msg = "Unknown error"
+      client.emit('recv_message', { name, msg, isCommandResponse: true });
+      return {name , msg};
+    }
+
+    const fromBanData = await chanService.checkban('general', uname);
+    const fromMuteData = await chanService.checkmute('general', uname);
+
+    if ((fromBanData && !fromBanData.expired()) || (fromMuteData && !fromMuteData.expired())) {
+      msg = "You are " + (fromBanData ? "banned" : "muted") + " from the chat";
+      client.emit('recv_message', { name, msg, isCommandResponse: true });
+      return {name , msg};
+    }
+
+    const targetBanData = await chanService.checkban('general', target.id);
+
+
+    if ((targetBanData && !targetBanData.expired())) {
+      msg = target.name + " is banned from the chat";
       client.emit('recv_message', { name, msg, isCommandResponse: true });
       return {name , msg};
     }

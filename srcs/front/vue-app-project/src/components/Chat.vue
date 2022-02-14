@@ -41,7 +41,7 @@
     </md-dialog>
 
     <div class="channel-name">
-      <span>#general</span>
+      <span>#{{ channel }}</span>
       <hr>
     </div>
 
@@ -66,7 +66,7 @@
       <div ref="chatContent" class="chat-content">
         <ul v-for="message in messages" :key="message.id" class="message">
           <md-menu md-direction="bottom-start" md-size="small">
-            <span md-menu-trigger style="color: #478ee6; cursor: pointer;" v-if="!message.message.isCommandResponse">{{ message.message.name + ':'}}&nbsp;</span>
+            <span md-menu-trigger style="color: #478ee6; cursor: pointer;" v-if="message.message.name">{{ message.message.name + ':'}}&nbsp;</span>
             <md-menu-content>
               <md-menu-item @click="redirectTo(`/profile?user=${message.message.name}`)">
                 <md-icon>person</md-icon><span>{{ message.message.name }}'s Profile</span>

@@ -1,6 +1,6 @@
 .vscode
 node_modules/
 dist/
-back/uploads
+srcs/back/uploads
 dbdata
 .env

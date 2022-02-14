@@ -244,16 +244,12 @@ export class ChanService {
 
 	async checkban(cname: string, uname: string): Promise<BanData> {
 		const chan = ChanManager.instance.findByName(cname);
-		if (!chan)
-			throw "Can't find channel"
 		const ret = await chan.checkban(uname);
     return ret;
 	}
 
   async checkmute(cname: string, uname: string): Promise<BanData> {
 		const chan = ChanManager.instance.findByName(cname);
-		if (!chan)
-			throw "Can't find channel"
     const ret = await chan.checkmute(uname);
 		return ret;
 	}
