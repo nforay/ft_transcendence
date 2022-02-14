@@ -8,16 +8,7 @@ import * as jwt from 'jsonwebtoken'
 import { Interval } from '@nestjs/schedule'
 import { UserManager } from "src/user/user.model";
 
-@WebSocketGateway(4001, {
-  cors: {
-    credentials: true,
-    methods: ["GET", "POST"],
-    transports: ['websocket', 'polling'],
-    //origin: `http://${process.env.DOMAIN}:${process.env.VUE_PORT}`
-    origin: `http://localhost:8080`
-  },
-  allowEIO3: true
-})
+@WebSocketGateway(4001, { cors: true })
 export class GameGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
 
   public static clients: Array<Socket> = []

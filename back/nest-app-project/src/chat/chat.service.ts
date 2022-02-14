@@ -135,6 +135,7 @@ export class ChatService {
         sock: client,
         chan: user.chatLastChannel,
       });
+      client.emit('recv_message', { name: "", msg: "Type /help to display command information.", isCommandResponse: true });
 		  await this.chanService.join(client, user.chatLastChannel, uname);
     } catch (err) {
       this.users.set(uname, {
@@ -142,6 +143,7 @@ export class ChatService {
         chan: 'general',
       });
 		  await this.chanService.join(client, 'general', uname);
+      client.emit('recv_message', { name: "", msg: "Type /help to display command information.", isCommandResponse: true });
       user.chatLastChannel = 'general';
       await UserManager.instance.userRepository.save(user);
     }

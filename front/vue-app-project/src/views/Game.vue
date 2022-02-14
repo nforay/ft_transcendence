@@ -1,10 +1,7 @@
 <template>
   <div class="game">
     <GameCanvas :gameId="this.gameId"></GameCanvas>
-    <span
-      >Controls: <kbd>Arrow Up</kbd> Move paddle up, <kbd>Arrow Down</kbd> Move
-      paddle down, <kbd>Space</kbd> Use powerup</span
-    >
+    <span>Controls: <kbd>Arrow Up</kbd> Move paddle up, <kbd>Arrow Down</kbd> Move paddle down, <kbd>Space</kbd> Use powerup</span>
   </div>
 </template>
 

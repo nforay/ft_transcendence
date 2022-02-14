@@ -1,16 +1,16 @@
 <template>
-  <div class="game-canvas" tabindex="1">
+  <div class="game-canvas">
     <md-progress-bar md-mode="indeterminate" v-if="finished" />
     <canvas
       v-if="!isSpectator"
       id="canvas"
       tabindex="1"
-      @keydown.up="leftPaddle.upPressed = true"
-      @keydown.down="leftPaddle.downPressed = true"
-      @keydown.space="usePowerup = true"
-      @keyup.up="leftPaddle.upPressed = false"
-      @keyup.down="leftPaddle.downPressed = false"
-      @keyup.space="usePowerup = false"
+      @keydown.up.prevent="leftPaddle.upPressed = true"
+      @keydown.down.prevent="leftPaddle.downPressed = true"
+      @keydown.space.prevent="usePowerup = true"
+      @keyup.up.prevent="leftPaddle.upPressed = false"
+      @keyup.down.prevent="leftPaddle.downPressed = false"
+      @keyup.space.prevent="usePowerup = false"
     ></canvas>
 
     <canvas v-else id="canvas" tabindex="0"></canvas>
