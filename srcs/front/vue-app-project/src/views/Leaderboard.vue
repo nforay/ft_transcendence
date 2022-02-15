@@ -8,13 +8,13 @@
         <md-table-head>Rank</md-table-head>
         <md-table-head>Avatar</md-table-head>
         <md-table-head>Name</md-table-head>
-        <md-table-head>Grade</md-table-head>
+        <md-table-head class="md-small-hide">Grade</md-table-head>
         <md-table-head>Elo</md-table-head>
         <md-table-head class="md-medium-hide">Play Count</md-table-head>
         <md-table-head class="md-small-hide">Wins</md-table-head>
         <md-table-head class="md-small-hide">Loss</md-table-head>
         <md-table-head>W/L Ratio</md-table-head>
-        <md-table-head style="text-align: center">Level</md-table-head>
+        <md-table-head class="md-xsmall-hide" style="text-align: center">Level</md-table-head>
       </md-table-row>
       <md-table-row v-for="(player, i) of this.leaderboard" :key="i">
         <md-table-cell style="width: 0">#{{ i + 1 }}</md-table-cell>
@@ -28,7 +28,7 @@
             player.username
           }}</router-link></md-table-cell
         >
-        <md-table-cell
+        <md-table-cell class="md-small-hide"
           ><img :title="player.rank" :src="getRankLogo(player.rank)" alt="Rank"
         /></md-table-cell>
         <md-table-cell>{{ player.elo }}</md-table-cell>
@@ -40,7 +40,7 @@
         <md-table-cell>{{
           Math.round((player.win / Math.max(player.loss, 1)) * 100) / 100
         }}</md-table-cell>
-        <md-table-cell style="width: 17%">
+        <md-table-cell class="md-xsmall-hide" style="width: 17%">
           LV {{ Math.floor(player.level) }} -
           {{ Math.floor(Math.floor(getXpProgress(player.level) * 100) / 100) }}%
           <md-progress-bar
